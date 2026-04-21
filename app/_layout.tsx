@@ -3,18 +3,28 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function RootLayout() {
-  const { setSession, fetchProfile, initialized } = useAuthStore();
+  const { setSession, fetchProfile } = useAuthStore();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchProfile();
+    if (!isSupabaseConfigured) {
       useAuthStore.setState({ initialized: true });
-    });
+      return;
+    }
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session) fetchProfile();
+      })
+      .catch(() => {})
+      .finally(() => {
+        useAuthStore.setState({ initialized: true });
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);

@@ -5,10 +5,14 @@ import Constants from 'expo-constants';
 
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl
   ?? process.env.EXPO_PUBLIC_SUPABASE_URL
-  ?? '';
+  ?? 'https://placeholder.supabase.co';
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey
   ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-  ?? '';
+  ?? 'placeholder-anon-key';
+
+export const isSupabaseConfigured =
+  !!(Constants.expoConfig?.extra?.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL) &&
+  !!(Constants.expoConfig?.extra?.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
