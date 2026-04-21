@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, fontSize, radius, spacing } from '@/constants/theme';
@@ -49,6 +50,24 @@ export default function ScanScreen() {
     } catch {
       // camera error
     }
+  }, [isScanning, user, scan]);
+
+  const handlePickFromGallery = useCallback(async () => {
+    if (isScanning || !user) return;
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (picked.canceled || !picked.assets[0]?.base64) return;
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await scan(picked.assets[0].base64, user.id);
   }, [isScanning, user, scan]);
 
   const handleAddToCollection = useCallback(
@@ -149,7 +168,7 @@ export default function ScanScreen() {
         )}
 
         <View style={styles.bottomBar}>
-          <Pressable style={styles.galleryBtn} onPress={() => {/* pick from gallery */}}>
+          <Pressable style={styles.galleryBtn} onPress={handlePickFromGallery}>
             <Text style={styles.galleryIcon}>🖼</Text>
           </Pressable>
 
