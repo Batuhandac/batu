@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { Profile, Tier } from '@/types';
 
 interface AuthState {
@@ -9,6 +9,7 @@ interface AuthState {
   profile: Profile | null;
   loading: boolean;
   initialized: boolean;
+  isGuest: boolean;
 
   setSession: (session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
@@ -17,7 +18,37 @@ interface AuthState {
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  enterGuestMode: () => void;
 }
+
+const GUEST_USER_ID = 'guest-local';
+
+const guestUser = {
+  id: GUEST_USER_ID,
+  email: 'misafir@batu.local',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+} as unknown as User;
+
+const guestSession = {
+  access_token: 'guest',
+  refresh_token: 'guest',
+  expires_in: 999999,
+  expires_at: Date.now() / 1000 + 999999,
+  token_type: 'bearer',
+  user: guestUser,
+} as unknown as Session;
+
+const guestProfile: Profile = {
+  id: GUEST_USER_ID,
+  username: 'misafir',
+  displayName: 'Misafir',
+  tier: 'free',
+  scanCountMonth: 0,
+  createdAt: new Date().toISOString(),
+};
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
@@ -25,6 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   loading: false,
   initialized: false,
+  isGuest: false,
 
   setSession: (session) => {
     set({ session, user: session?.user ?? null });
@@ -36,7 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   fetchProfile: async () => {
     const user = get().user;
-    if (!user) return;
+    if (!user || get().isGuest || !isSupabaseConfigured) return;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -60,6 +92,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email, password) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Giriş için Supabase yapılandırılmamış. Misafir olarak devam edebilirsin.');
+    }
     set({ loading: true });
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     set({ loading: false });
@@ -67,6 +102,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signUp: async (email, password, username) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Kayıt için Supabase yapılandırılmamış. Misafir olarak devam edebilirsin.');
+    }
     set({ loading: true });
     const { error } = await supabase.auth.signUp({
       email,
@@ -80,11 +118,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    if (get().isGuest || !isSupabaseConfigured) {
+      set({ session: null, user: null, profile: null, isGuest: false });
+      return;
+    }
     await supabase.auth.signOut();
-    set({ session: null, user: null, profile: null });
+    set({ session: null, user: null, profile: null, isGuest: false });
   },
 
   updateProfile: async (updates) => {
+    if (get().isGuest || !isSupabaseConfigured) {
+      const current = get().profile;
+      if (current) set({ profile: { ...current, ...updates } });
+      return;
+    }
+
     const user = get().user;
     if (!user) return;
 
@@ -103,4 +151,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const current = get().profile;
     if (current) set({ profile: { ...current, ...updates } });
   },
+
+  enterGuestMode: () => {
+    set({
+      session: guestSession,
+      user: guestUser,
+      profile: guestProfile,
+      isGuest: true,
+    });
+  },
 }));
+

@@ -1,14 +1,22 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { colors, fontSize, spacing } from '@/constants/theme';
+import { useAuthStore } from '@/stores/authStore';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 const GAMES = ['Pokémon', 'Yu-Gi-Oh!', 'One Piece', 'MTG', 'Lorcana'];
 
 export default function WelcomeScreen() {
+  const enterGuestMode = useAuthStore((s) => s.enterGuestMode);
+
+  const handleGuest = () => {
+    enterGuestMode();
+    router.replace('/(main)/');
+  };
   return (
     <LinearGradient colors={['#0D1117', '#0f1f3d', '#0D1117']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
@@ -49,6 +57,11 @@ export default function WelcomeScreen() {
               style={styles.btn}
               onPress={() => router.push('/(auth)/login')}
             />
+            <Pressable onPress={handleGuest} style={styles.guestBtn}>
+              <Text style={styles.guestText}>
+                {isSupabaseConfigured ? 'Hesapsız dene →' : 'Misafir olarak dene →'}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </SafeAreaView>
@@ -131,5 +144,15 @@ const styles = StyleSheet.create({
   },
   btn: {
     width: '100%',
+  },
+  guestBtn: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  guestText: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
 });

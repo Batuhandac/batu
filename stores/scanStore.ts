@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { ScanResult } from '@/types';
 import { scanCardImage } from '@/lib/api/gibltcg';
 import { fetchCardPrice } from '@/lib/api/justtcg';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 
 type ScanPhase = 'idle' | 'scanning' | 'processing' | 'result' | 'error';
 
@@ -41,11 +42,18 @@ export const useScanStore = create<ScanState>((set, get) => ({
       const price = await fetchCardPrice(top.card.game, top.card.apiId);
       const resultWithPrice: ScanResult = { ...top, price: price ?? undefined };
 
-      await supabase.from('scan_history').insert({
-        user_id: userId,
-        confidence: top.confidence,
-        raw_response: results,
-      });
+      const isGuest = useAuthStore.getState().isGuest;
+      if (isSupabaseConfigured && !isGuest) {
+        try {
+          await supabase.from('scan_history').insert({
+            user_id: userId,
+            confidence: top.confidence,
+            raw_response: results,
+          });
+        } catch {
+          // history logging is non-critical
+        }
+      }
 
       set({
         phase: 'result',

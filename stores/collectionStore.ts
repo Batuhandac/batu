@@ -1,7 +1,16 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { Card, Condition, Folder, UserCard } from '@/types';
 import { fetchCardPrice } from '@/lib/api/justtcg';
+import { useAuthStore } from '@/stores/authStore';
+
+function isLocalMode() {
+  return !isSupabaseConfigured || useAuthStore.getState().isGuest;
+}
+
+function genLocalId() {
+  return `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 interface CollectionState {
   cards: UserCard[];
@@ -28,6 +37,11 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   totalValue: 0,
 
   fetchCollection: async (userId) => {
+    if (isLocalMode()) {
+      set({ loading: false });
+      return;
+    }
+
     set({ loading: true });
     const { data, error } = await supabase
       .from('user_cards')
@@ -75,6 +89,8 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   fetchFolders: async (userId) => {
+    if (isLocalMode()) return;
+
     const { data, error } = await supabase
       .from('folders')
       .select('*, folder_cards(count)')
@@ -99,6 +115,29 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
   addCard: async (userId, card, opts = {}) => {
     const { quantity = 1, condition = 'NM', foil = false, purchasePrice } = opts;
+
+    if (isLocalMode()) {
+      const now = new Date().toISOString();
+      const price = await fetchCardPrice(card.game, card.apiId);
+      const userCard: UserCard = {
+        id: genLocalId(),
+        userId,
+        card: { ...card, id: card.id || genLocalId() },
+        quantity,
+        condition,
+        foil,
+        purchasePrice,
+        acquiredAt: now,
+        createdAt: now,
+        price: price ?? undefined,
+      };
+      set((state) => {
+        const nextCards = [userCard, ...state.cards];
+        const total = nextCards.reduce((sum, uc) => sum + (uc.price?.mid ?? 0) * uc.quantity, 0);
+        return { cards: nextCards, totalValue: total };
+      });
+      return userCard;
+    }
 
     let cardRow = await getOrCreateCard(card);
 
@@ -135,6 +174,13 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   updateCard: async (id, updates) => {
+    if (isLocalMode()) {
+      set((state) => ({
+        cards: state.cards.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+      }));
+      return;
+    }
+
     const dbUpdates: Record<string, unknown> = {};
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
     if (updates.condition !== undefined) dbUpdates.condition = updates.condition;
@@ -151,6 +197,15 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   removeCard: async (id) => {
+    if (isLocalMode()) {
+      set((state) => {
+        const nextCards = state.cards.filter((c) => c.id !== id);
+        const total = nextCards.reduce((sum, uc) => sum + (uc.price?.mid ?? 0) * uc.quantity, 0);
+        return { cards: nextCards, totalValue: total };
+      });
+      return;
+    }
+
     const { error } = await supabase.from('user_cards').delete().eq('id', id);
     if (error) throw error;
     set((state) => ({ cards: state.cards.filter((c) => c.id !== id) }));
@@ -158,6 +213,21 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
   createFolder: async (userId, name, opts = {}) => {
     const { description, isTradeFolder = false, isPublic = false } = opts;
+
+    if (isLocalMode()) {
+      const folder: Folder = {
+        id: genLocalId(),
+        userId,
+        name,
+        description,
+        isTradeFolder,
+        isPublic,
+        cardCount: 0,
+        createdAt: new Date().toISOString(),
+      };
+      set((state) => ({ folders: [folder, ...state.folders] }));
+      return folder;
+    }
 
     const { data, error } = await supabase
       .from('folders')
@@ -183,6 +253,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   addCardToFolder: async (folderId, userCardId) => {
+    if (isLocalMode()) return;
     const { error } = await supabase
       .from('folder_cards')
       .insert({ folder_id: folderId, user_card_id: userCardId });
@@ -190,6 +261,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   removeCardFromFolder: async (folderId, userCardId) => {
+    if (isLocalMode()) return;
     const { error } = await supabase
       .from('folder_cards')
       .delete()
@@ -199,6 +271,10 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   deleteFolder: async (folderId) => {
+    if (isLocalMode()) {
+      set((state) => ({ folders: state.folders.filter((f) => f.id !== folderId) }));
+      return;
+    }
     const { error } = await supabase.from('folders').delete().eq('id', folderId);
     if (error) throw error;
     set((state) => ({ folders: state.folders.filter((f) => f.id !== folderId) }));
