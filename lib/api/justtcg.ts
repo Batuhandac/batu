@@ -1,7 +1,9 @@
 import { CardPrice, Game } from '@/types';
 
 const BASE_URL = process.env.EXPO_PUBLIC_JUSTTCG_BASE_URL ?? 'https://api.justtcg.com/v1';
-const API_KEY = process.env.EXPO_PUBLIC_JUSTTCG_API_KEY ?? '';
+const RAW_API_KEY = process.env.EXPO_PUBLIC_JUSTTCG_API_KEY ?? '';
+const PLACEHOLDER_KEYS = new Set(['', 'your-justtcg-key', 'placeholder', 'demo']);
+const API_KEY = PLACEHOLDER_KEYS.has(RAW_API_KEY) ? '' : RAW_API_KEY;
 
 interface JustTCGPriceResponse {
   card_id: string;
