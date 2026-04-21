@@ -6,7 +6,7 @@ import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { TIER_CONFIG } from './settings.config';
+import { TIER_CONFIG } from '@/constants/tiers';
 
 export default function SettingsScreen() {
   const { profile, signOut, loading } = useAuthStore();
