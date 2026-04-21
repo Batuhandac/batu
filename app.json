@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Batu",
+    "slug": "batu-tcg",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0D1117"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.batu.tcg",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Kartlarınızı taramak için kamera erişimi gereklidir.",
+        "NSPhotoLibraryUsageDescription": "Kartlarınızın fotoğraflarını yüklemek için galeri erişimi gereklidir."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1117"
+      },
+      "package": "com.batu.tcg",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Kartlarınızı taramak için kamera erişimi gereklidir."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kartlarınızın fotoğraflarını seçmek için galeri erişimi gereklidir."
+        }
+      ]
+    ],
+    "scheme": "batu",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
