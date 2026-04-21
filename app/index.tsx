@@ -5,5 +5,5 @@ export default function Root() {
   const { session, initialized } = useAuthStore();
 
   if (!initialized) return null;
-  return <Redirect href={session ? '/(main)/' : '/(auth)/'} />;
+  return <Redirect href={session ? '/(main)' : '/(auth)'} />;
 }

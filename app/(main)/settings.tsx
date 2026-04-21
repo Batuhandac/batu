@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useCollectionStore } from '@/stores/collectionStore';
+import { useBadgeStore } from '@/stores/badgeStore';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { TIER_CONFIG } from '@/constants/tiers';
 
-export default function SettingsScreen() {
-  const { profile, signOut, loading } = useAuthStore();
+export default function ProfileScreen() {
+  const { profile, signOut } = useAuthStore();
+  const { cards, folders, totalValue } = useCollectionStore();
+  const { badges, unlockedCount, compute } = useBadgeStore();
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    compute(cards as any, folders, totalValue);
+  }, [cards, folders, totalValue]);
 
   const handleSignOut = () => {
     Alert.alert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
@@ -22,7 +30,7 @@ export default function SettingsScreen() {
           setSigningOut(true);
           try {
             await signOut();
-            router.replace('/(auth)/');
+            router.replace('/(auth)');
           } finally {
             setSigningOut(false);
           }
@@ -32,11 +40,12 @@ export default function SettingsScreen() {
   };
 
   const tierCfg = TIER_CONFIG[profile?.tier ?? 'free'];
+  const totalCards = cards.reduce((s, c) => s + c.quantity, 0);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Ayarlar</Text>
+        <Text style={styles.title}>Profil</Text>
 
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
@@ -50,6 +59,48 @@ export default function SettingsScreen() {
           </View>
           <Badge label={tierCfg.label} variant={tierCfg.badgeVariant as any} />
         </View>
+
+        <View style={styles.statsRow}>
+          <Pressable style={styles.statBox} onPress={() => router.push('/(main)/stats')}>
+            <Text style={styles.statValue}>{totalCards}</Text>
+            <Text style={styles.statLabel}>Kart</Text>
+          </Pressable>
+          <Pressable style={styles.statBox} onPress={() => router.push('/(main)/badges')}>
+            <Text style={styles.statValue}>{unlockedCount}</Text>
+            <Text style={styles.statLabel}>Rozet</Text>
+          </Pressable>
+          <Pressable style={styles.statBox} onPress={() => router.push('/(main)/friends')}>
+            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statLabel}>Arkadaş</Text>
+          </Pressable>
+        </View>
+
+        <SettingsSection title="Keşfet">
+          <SettingsRow
+            label="Pokédex"
+            emoji="🎯"
+            desc="Koleksiyonundaki Pokémon'ları takip et"
+            onPress={() => router.push('/(main)/pokedex')}
+          />
+          <SettingsRow
+            label="Rozetler"
+            emoji="🏅"
+            desc={`${unlockedCount}/${badges.length} rozet kazanıldı`}
+            onPress={() => router.push('/(main)/badges')}
+          />
+          <SettingsRow
+            label="İstatistikler"
+            emoji="📊"
+            desc="Koleksiyonunun detaylı analizi"
+            onPress={() => router.push('/(main)/stats')}
+          />
+          <SettingsRow
+            label="Arkadaşlar"
+            emoji="👥"
+            desc="Arkadaşlarını bul ve karşılaştır"
+            onPress={() => router.push('/(main)/friends')}
+          />
+        </SettingsSection>
 
         <SettingsSection title="Abonelik">
           <View style={styles.tierCard}>
@@ -79,12 +130,12 @@ export default function SettingsScreen() {
 
         <SettingsSection title="API Ayarları">
           <SettingsRow
-            label="GiblTCG API Key"
+            label="GiblTCG API"
             value={process.env.EXPO_PUBLIC_GIBLTCG_API_KEY ? '••••••••' : 'Yapılandırılmadı'}
             onPress={() => {}}
           />
           <SettingsRow
-            label="JustTCG API Key"
+            label="JustTCG API"
             value={process.env.EXPO_PUBLIC_JUSTTCG_API_KEY ? '••••••••' : 'Yapılandırılmadı'}
             onPress={() => {}}
           />
@@ -125,11 +176,15 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 function SettingsRow({
   label,
   value,
+  emoji,
+  desc,
   destructive,
   onPress,
 }: {
   label: string;
   value?: string;
+  emoji?: string;
+  desc?: string;
   destructive?: boolean;
   onPress: () => void;
 }) {
@@ -138,7 +193,11 @@ function SettingsRow({
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       onPress={onPress}
     >
-      <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>{label}</Text>
+      {emoji && <Text style={styles.rowEmoji}>{emoji}</Text>}
+      <View style={styles.rowContent}>
+        <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>{label}</Text>
+        {desc && <Text style={styles.rowDesc}>{desc}</Text>}
+      </View>
       <View style={styles.rowRight}>
         {value && <Text style={styles.rowValue}>{value}</Text>}
         <Text style={styles.rowChevron}>›</Text>
@@ -164,7 +223,7 @@ function ChannelItem({
       onPress={onConnect}
     >
       <Text style={styles.channelEmoji}>{emoji}</Text>
-      <Text style={styles.rowLabel}>{name}</Text>
+      <Text style={[styles.rowLabel, { flex: 1 }]}>{name}</Text>
       <View style={styles.rowRight}>
         <Badge
           label={connected ? 'Bağlı' : 'Bağla'}
@@ -177,16 +236,8 @@ function ChannelItem({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    gap: spacing.xl,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xxl,
-    fontWeight: '800',
-  },
+  content: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, gap: spacing.xl },
+  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '800' },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -198,25 +249,30 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   avatar: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: radius.full,
     backgroundColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    color: colors.primary,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
+  avatarText: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '700' },
   profileInfo: { flex: 1 },
-  displayName: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
+  displayName: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
   username: { color: colors.textMuted, fontSize: fontSize.sm },
+  statsRow: { flexDirection: 'row', gap: spacing.md },
+  statBox: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
+  statLabel: { color: colors.textMuted, fontSize: fontSize.xs },
   tierCard: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.lg,
@@ -256,17 +312,16 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
   },
   rowPressed: { backgroundColor: colors.surfaceHover },
-  rowLabel: { flex: 1, color: colors.text, fontSize: fontSize.md },
+  rowEmoji: { fontSize: 18, marginRight: spacing.md },
+  rowContent: { flex: 1 },
+  rowLabel: { color: colors.text, fontSize: fontSize.md },
   rowLabelDestructive: { color: colors.error },
+  rowDesc: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2 },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowValue: { color: colors.textMuted, fontSize: fontSize.sm },
   rowChevron: { color: colors.textFaint, fontSize: 20, lineHeight: 20 },
   channelEmoji: { fontSize: 20, marginRight: spacing.sm },
   signOutBtn: { marginTop: spacing.sm },
-  version: {
-    color: colors.textFaint,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-  },
+  version: { color: colors.textFaint, fontSize: fontSize.xs, textAlign: 'center' },
   bottomPad: { height: spacing.xxxl },
 });

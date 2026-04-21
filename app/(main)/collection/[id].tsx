@@ -15,20 +15,31 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useCollectionStore } from '@/stores/collectionStore';
 import { usdToTry } from '@/lib/api/justtcg';
-import { CONDITION_LABELS, Condition } from '@/types';
+import { CONDITION_LABELS, VARIANT_LABELS, Condition, CardVariant } from '@/types';
 
 const CONDITIONS: Condition[] = ['NM', 'LP', 'MP', 'HP', 'DMG'];
+const VARIANTS: CardVariant[] = [
+  'normal',
+  'holofoil',
+  'reverseHolofoil',
+  'firstEditionHolofoil',
+  'firstEditionNormal',
+];
 
 export default function CardDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { cards, updateCard, removeCard } = useCollectionStore();
   const userCard = cards.find((c) => c.id === id);
   const [condition, setCondition] = useState<Condition>(userCard?.condition ?? 'NM');
+  const [variant, setVariant] = useState<CardVariant>(userCard?.variant ?? 'normal');
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
-    if (userCard) setCondition(userCard.condition);
+    if (userCard) {
+      setCondition(userCard.condition);
+      setVariant(userCard.variant ?? 'normal');
+    }
   }, [userCard]);
 
   if (!userCard) {
@@ -46,40 +57,37 @@ export default function CardDetailScreen() {
 
   const { card, quantity, foil, price, acquiredAt, purchasePrice } = userCard;
   const midTry = price ? usdToTry(price.mid) : null;
-  const gainLoss = purchasePrice && price
-    ? ((usdToTry(price.mid) - purchasePrice) / purchasePrice) * 100
-    : null;
+  const gainLoss =
+    purchasePrice && price
+      ? ((usdToTry(price.mid) - purchasePrice) / purchasePrice) * 100
+      : null;
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateCard(id, { condition });
+      await updateCard(id, { condition, variant });
     } finally {
       setSaving(false);
     }
   };
 
   const handleRemove = () => {
-    Alert.alert(
-      'Kartı Sil',
-      `${card.name} koleksiyonundan silinsin mi?`,
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: async () => {
-            setRemoving(true);
-            try {
-              await removeCard(id);
-              router.back();
-            } finally {
-              setRemoving(false);
-            }
-          },
+    Alert.alert('Kartı Sil', `${card.name} koleksiyonundan silinsin mi?`, [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          setRemoving(true);
+          try {
+            await removeCard(id);
+            router.back();
+          } finally {
+            setRemoving(false);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -101,11 +109,18 @@ export default function CardDetailScreen() {
             contentFit="contain"
             transition={300}
           />
-          {foil && (
-            <View style={styles.foilTag}>
-              <Text style={styles.foilText}>✦ Foil</Text>
-            </View>
-          )}
+          <View style={styles.heroTags}>
+            {foil && (
+              <View style={styles.foilTag}>
+                <Text style={styles.foilText}>✦ Foil</Text>
+              </View>
+            )}
+            {variant !== 'normal' && (
+              <View style={styles.variantTag}>
+                <Text style={styles.variantTagText}>{VARIANT_LABELS[variant]}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         <View style={styles.content}>
@@ -117,7 +132,7 @@ export default function CardDetailScreen() {
             <View style={styles.priceCard}>
               <View style={styles.priceMain}>
                 <Text style={styles.priceTry}>₺{midTry?.toLocaleString('tr-TR')}</Text>
-                <Text style={styles.priceUsd}>${price.mid.toFixed(2)}</Text>
+                <Text style={styles.priceUsd}>${price.mid.toFixed(2)} · {price.source.split(':')[0].toUpperCase()}</Text>
               </View>
               <View style={styles.priceRange}>
                 <View style={styles.priceItem}>
@@ -132,6 +147,12 @@ export default function CardDetailScreen() {
                   <Text style={styles.priceRangeLabel}>Yüksek</Text>
                   <Text style={styles.priceRangeVal}>${price.high.toFixed(2)}</Text>
                 </View>
+                {price.market && (
+                  <View style={styles.priceItem}>
+                    <Text style={styles.priceRangeLabel}>Market</Text>
+                    <Text style={styles.priceRangeVal}>${price.market.toFixed(2)}</Text>
+                  </View>
+                )}
               </View>
               {gainLoss !== null && (
                 <View style={styles.gainRow}>
@@ -154,9 +175,32 @@ export default function CardDetailScreen() {
             <View style={styles.infoGrid}>
               <InfoRow label="Oyun" value={card.game.toUpperCase()} />
               <InfoRow label="Adet" value={quantity.toString()} />
+              {card.hp && <InfoRow label="HP" value={card.hp.toString()} />}
+              {card.artist && <InfoRow label="Sanatçı" value={card.artist} />}
               <InfoRow label="Eklenme" value={new Date(acquiredAt).toLocaleDateString('tr-TR')} />
-              {purchasePrice && <InfoRow label="Alış Fiyatı" value={`₺${purchasePrice.toLocaleString()}`} />}
+              {purchasePrice && (
+                <InfoRow label="Alış Fiyatı" value={`₺${purchasePrice.toLocaleString()}`} />
+              )}
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Varyant</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.variantRow}>
+                {VARIANTS.map((v) => (
+                  <Pressable
+                    key={v}
+                    style={[styles.variantBtn, v === variant && styles.variantBtnActive]}
+                    onPress={() => setVariant(v)}
+                  >
+                    <Text style={[styles.variantLabel, v === variant && styles.variantLabelActive]}>
+                      {VARIANT_LABELS[v]}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
           </View>
 
           <View style={styles.section}>
@@ -168,7 +212,9 @@ export default function CardDetailScreen() {
                   style={[styles.condBtn, c === condition && styles.condBtnActive]}
                   onPress={() => setCondition(c)}
                 >
-                  <Text style={[styles.condLabel, c === condition && styles.condLabelActive]}>
+                  <Text
+                    style={[styles.condLabel, c === condition && styles.condLabelActive]}
+                  >
                     {c}
                   </Text>
                 </Pressable>
@@ -188,7 +234,7 @@ export default function CardDetailScreen() {
             <Button
               label="Sat / Listele"
               variant="secondary"
-              onPress={() => {}}
+              onPress={() => router.push('/(main)/trade')}
               style={styles.actionBtn}
             />
           </View>
@@ -204,7 +250,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
@@ -228,27 +274,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xl,
     backgroundColor: colors.surface,
+    gap: spacing.sm,
   },
-  cardImage: {
-    width: 200,
-    height: 280,
-    borderRadius: radius.lg,
-  },
+  cardImage: { width: 200, height: 280, borderRadius: radius.lg },
+  heroTags: { flexDirection: 'row', gap: spacing.sm },
   foilTag: {
-    marginTop: spacing.sm,
     backgroundColor: 'rgba(255,203,5,0.2)',
     borderRadius: radius.full,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
   },
   foilText: { color: '#FFCB05', fontSize: fontSize.sm, fontWeight: '700' },
-  content: { padding: spacing.xl },
-  cardName: {
-    color: colors.text,
-    fontSize: fontSize.xxl,
-    fontWeight: '800',
-    marginBottom: 4,
+  variantTag: {
+    backgroundColor: colors.primaryMuted,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
   },
+  variantTagText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
+  content: { padding: spacing.xl },
+  cardName: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '800', marginBottom: 4 },
   setInfo: { color: colors.textMuted, fontSize: fontSize.md },
   rarity: { color: colors.textFaint, fontSize: fontSize.sm, marginBottom: spacing.xl },
   priceCard: {
@@ -261,13 +306,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   priceMain: { alignItems: 'center', gap: 4 },
-  priceTry: {
-    color: colors.text,
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  priceUsd: { color: colors.textMuted, fontSize: fontSize.md },
+  priceTry: { color: colors.text, fontSize: 36, fontWeight: '800', letterSpacing: -1 },
+  priceUsd: { color: colors.textMuted, fontSize: fontSize.sm },
   priceRange: {
     flexDirection: 'row',
     borderTopWidth: 1,
@@ -309,12 +349,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
   },
   infoLabel: { color: colors.textMuted, fontSize: fontSize.sm },
-  infoValue: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
-  conditionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+  infoValue: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600', maxWidth: '55%', textAlign: 'right' },
+  variantRow: { flexDirection: 'row', gap: spacing.sm },
+  variantBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  variantBtnActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+  variantLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '600' },
+  variantLabelActive: { color: colors.primary },
+  conditionRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   condBtn: {
     flex: 1,
     paddingVertical: spacing.sm,
@@ -324,10 +372,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  condBtnActive: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
-  },
+  condBtnActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
   condLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
   condLabelActive: { color: colors.primary },
   condDesc: { color: colors.textFaint, fontSize: fontSize.xs },

@@ -30,7 +30,7 @@ export default function RegisterScreen() {
     setError('');
     try {
       await signUp(email.trim().toLowerCase(), password, username.trim());
-      router.replace('/(main)/');
+      router.replace('/(main)');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Kayıt başarısız.');
     }

@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 export default function AuthLayout() {
   const session = useAuthStore((s) => s.session);
-  if (session) return <Redirect href="/(main)/" />;
+  if (session) return <Redirect href="/(main)" />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

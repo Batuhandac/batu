@@ -21,7 +21,7 @@ interface CollectionState {
   fetchCollection: (userId: string) => Promise<void>;
   fetchFolders: (userId: string) => Promise<void>;
   addCard: (userId: string, card: Card, opts?: { quantity?: number; condition?: Condition; foil?: boolean; purchasePrice?: number }) => Promise<UserCard>;
-  updateCard: (id: string, updates: Partial<Pick<UserCard, 'quantity' | 'condition' | 'foil' | 'notes' | 'purchasePrice'>>) => Promise<void>;
+  updateCard: (id: string, updates: Partial<Pick<UserCard, 'quantity' | 'condition' | 'foil' | 'notes' | 'purchasePrice' | 'variant'>>) => Promise<void>;
   removeCard: (id: string) => Promise<void>;
   createFolder: (userId: string, name: string, opts?: { description?: string; isTradeFolder?: boolean; isPublic?: boolean }) => Promise<Folder>;
   addCardToFolder: (folderId: string, userCardId: string) => Promise<void>;
@@ -187,6 +187,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     if (updates.foil !== undefined) dbUpdates.foil = updates.foil;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.purchasePrice !== undefined) dbUpdates.purchase_price = updates.purchasePrice;
+    if (updates.variant !== undefined) dbUpdates.variant = updates.variant;
 
     const { error } = await supabase.from('user_cards').update(dbUpdates).eq('id', id);
     if (error) throw error;

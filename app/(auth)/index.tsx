@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
 
   const handleGuest = () => {
     enterGuestMode();
-    router.replace('/(main)/');
+    router.replace('/(main)');
   };
   return (
     <LinearGradient colors={['#0D1117', '#0f1f3d', '#0D1117']} style={styles.gradient}>

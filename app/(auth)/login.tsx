@@ -21,7 +21,7 @@ export default function LoginScreen() {
     setError('');
     try {
       await signIn(email.trim().toLowerCase(), password);
-      router.replace('/(main)/');
+      router.replace('/(main)');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Giriş başarısız.');
     }

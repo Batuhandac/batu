@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 export default function MainLayout() {
   const session = useAuthStore((s) => s.session);
-  if (!session) return <Redirect href="/(auth)/" />;
+  if (!session) return <Redirect href="/(auth)" />;
 
   return (
     <Tabs
@@ -22,15 +22,15 @@ export default function MainLayout() {
         name="index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="⬜" label="Ana Sayfa" color={color} focused={focused} />
+            <TabIcon emoji="🏠" label="Ana Sayfa" color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="collection/index"
+        name="browse/index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🗂" label="Koleksiyon" color={color} focused={focused} />
+            <TabIcon emoji="🔍" label="Keşfet" color={color} focused={focused} />
           ),
         }}
       />
@@ -45,10 +45,10 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="trade/index"
+        name="collection/index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🔄" label="Takas" color={color} focused={focused} />
+            <TabIcon emoji="🗂" label="Koleksiyon" color={color} focused={focused} />
           ),
         }}
       />
@@ -56,11 +56,19 @@ export default function MainLayout() {
         name="settings"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="⚙️" label="Ayarlar" color={color} focused={focused} />
+            <TabIcon emoji="👤" label="Profil" color={color} focused={focused} />
           ),
         }}
       />
+
+      {/* Hidden routes — not shown in tab bar */}
       <Tabs.Screen name="collection/[id]" options={{ href: null }} />
+      <Tabs.Screen name="browse/[setCode]" options={{ href: null }} />
+      <Tabs.Screen name="trade/index" options={{ href: null }} />
+      <Tabs.Screen name="pokedex/index" options={{ href: null }} />
+      <Tabs.Screen name="badges/index" options={{ href: null }} />
+      <Tabs.Screen name="stats/index" options={{ href: null }} />
+      <Tabs.Screen name="friends/index" options={{ href: null }} />
     </Tabs>
   );
 }
