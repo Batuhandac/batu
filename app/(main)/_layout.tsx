@@ -60,8 +60,7 @@ export default function MainLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="collection/[id]" options={{ href: undefined }} />
-      <Tabs.Screen name="settings.config" options={{ href: undefined }} />
+      <Tabs.Screen name="collection/[id]" options={{ href: null }} />
     </Tabs>
   );
 }
