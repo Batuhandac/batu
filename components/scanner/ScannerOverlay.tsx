@@ -1,29 +1,20 @@
-import React, { useEffect } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const FRAME_SIZE = width * 0.75;
 
 export function ScannerOverlay() {
-  const lineY = useSharedValue(0);
+  const lineY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    lineY.value = withRepeat(
-      withTiming(FRAME_SIZE - 4, { duration: 1600 }),
-      -1,
-      true,
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(lineY, { toValue: FRAME_SIZE - 4, duration: 1600, useNativeDriver: true }),
+        Animated.timing(lineY, { toValue: 0, duration: 1600, useNativeDriver: true }),
+      ]),
+    ).start();
   }, [lineY]);
-
-  const lineStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: lineY.value }],
-  }));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -35,7 +26,7 @@ export function ScannerOverlay() {
           <View style={[styles.corner, styles.tr]} />
           <View style={[styles.corner, styles.bl]} />
           <View style={[styles.corner, styles.br]} />
-          <Animated.View style={[styles.scanLine, lineStyle]} />
+          <Animated.View style={[styles.scanLine, { transform: [{ translateY: lineY }] }]} />
         </View>
         <View style={styles.mask} />
       </View>
@@ -50,64 +41,13 @@ const CORNER_SIZE = 24;
 const CORNER_THICK = 3;
 
 const styles = StyleSheet.create({
-  mask: {
-    flex: 1,
-    backgroundColor: MASK,
-  },
-  row: {
-    flexDirection: 'row',
-    height: FRAME_SIZE,
-  },
-  frame: {
-    width: FRAME_SIZE,
-    height: FRAME_SIZE,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  corner: {
-    position: 'absolute',
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-  },
-  tl: {
-    top: 0,
-    left: 0,
-    borderTopWidth: CORNER_THICK,
-    borderLeftWidth: CORNER_THICK,
-    borderColor: CORNER_COLOR,
-    borderTopLeftRadius: 4,
-  },
-  tr: {
-    top: 0,
-    right: 0,
-    borderTopWidth: CORNER_THICK,
-    borderRightWidth: CORNER_THICK,
-    borderColor: CORNER_COLOR,
-    borderTopRightRadius: 4,
-  },
-  bl: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: CORNER_THICK,
-    borderLeftWidth: CORNER_THICK,
-    borderColor: CORNER_COLOR,
-    borderBottomLeftRadius: 4,
-  },
-  br: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: CORNER_THICK,
-    borderRightWidth: CORNER_THICK,
-    borderColor: CORNER_COLOR,
-    borderBottomRightRadius: 4,
-  },
-  scanLine: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    height: 2,
-    backgroundColor: CORNER_COLOR,
-    opacity: 0.8,
-    borderRadius: 1,
-  },
+  mask: { flex: 1, backgroundColor: MASK },
+  row: { flexDirection: 'row', height: FRAME_SIZE },
+  frame: { width: FRAME_SIZE, height: FRAME_SIZE, position: 'relative', overflow: 'hidden' },
+  corner: { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE },
+  tl: { top: 0, left: 0, borderTopWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderColor: CORNER_COLOR, borderTopLeftRadius: 4 },
+  tr: { top: 0, right: 0, borderTopWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderColor: CORNER_COLOR, borderTopRightRadius: 4 },
+  bl: { bottom: 0, left: 0, borderBottomWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderColor: CORNER_COLOR, borderBottomLeftRadius: 4 },
+  br: { bottom: 0, right: 0, borderBottomWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderColor: CORNER_COLOR, borderBottomRightRadius: 4 },
+  scanLine: { position: 'absolute', left: 8, right: 8, height: 2, backgroundColor: CORNER_COLOR, opacity: 0.8, borderRadius: 1 },
 });
