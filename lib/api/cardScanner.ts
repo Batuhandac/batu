@@ -136,7 +136,10 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
     if (results.length === 0) continue;
 
     const best = pickBestMatch(results, id);
-    return [buildScanResult(best, results.length === 1 ? 0.97 : 0.9)];
+    const result = buildScanResult(best, results.length === 1 ? 0.97 : 0.9);
+    const fresh = await fetchFreshPrice(best.id, best.tcgplayerUrl, best.rarity);
+    if (fresh) result.price = fresh;
+    return [result];
   }
 
   return [];
@@ -191,24 +194,30 @@ async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
 }
 
 async function findCardByGiblIdentity({ name, setCode, number, confidence }: GiblIdentity): Promise<ScanResult[]> {
-  // Most precise: set.id + number
+  let tcgCard: TCGCard | null = null;
+  let conf = confidence;
+
   if (setCode && number) {
-    const results = await fetchCardsByQuery(`set.id:${setCode} number:${number}`, 3);
-    if (results.length > 0) return [buildScanResult(results[0], Math.min(confidence, 0.99))];
+    const r = await fetchCardsByQuery(`set.id:${setCode} number:${number}`, 3);
+    if (r.length > 0) { tcgCard = r[0]; conf = Math.min(confidence, 0.99); }
   }
-  // Name + number
-  if (name && number) {
-    const nameFilter = buildNameFilter(name);
-    const results = await fetchCardsByQuery(`${nameFilter} number:${number}`, 5);
-    if (results.length > 0) return [buildScanResult(results[0], 0.95)];
+  if (!tcgCard && name && number) {
+    const r = await fetchCardsByQuery(`${buildNameFilter(name)} number:${number}`, 5);
+    if (r.length > 0) { tcgCard = r[0]; conf = 0.95; }
   }
-  // Name only
-  if (name) {
-    const nameFilter = buildNameFilter(name);
-    const results = await fetchCardsByQuery(nameFilter, 5);
-    if (results.length > 0) return [buildScanResult(results[0], 0.7)];
+  if (!tcgCard && name) {
+    const r = await fetchCardsByQuery(buildNameFilter(name), 5);
+    if (r.length > 0) { tcgCard = r[0]; conf = 0.7; }
   }
-  return [];
+  if (!tcgCard) return [];
+
+  const result = buildScanResult(tcgCard, conf);
+
+  // Fetch fresh price from /api/price (supersedes embedded price)
+  const fresh = await fetchFreshPrice(tcgCard.id, tcgCard.tcgplayerUrl, tcgCard.rarity);
+  if (fresh) result.price = fresh;
+
+  return [result];
 }
 
 function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
@@ -222,7 +231,7 @@ function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
     rarity: tcgCard.rarity,
     images: { small: tcgCard.imageSmall, large: tcgCard.imageLarge },
     tcgplayer: tcgCard.prices?.tcgplayer
-      ? { url: '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.tcgplayer as any }
+      ? { url: tcgCard.tcgplayerUrl ?? '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.tcgplayer as any }
       : undefined,
     cardmarket: tcgCard.prices?.cardmarket
       ? { url: '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.cardmarket as any }
@@ -230,4 +239,34 @@ function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
   });
 
   return { confidence, card, price: rawPrice ?? undefined };
+}
+
+export async function fetchFreshPrice(
+  cardId: string,
+  tcgplayerUrl: string | undefined,
+  rarity: string,
+): Promise<import('@/types').CardPrice | null> {
+  if (Platform.OS !== 'web') return null;
+  try {
+    const res = await fetch('/api/price', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cardId, tcgplayerUrl, rarity }),
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    if (!d.market && !d.mid) return null;
+    return {
+      cardId,
+      source: d.source ?? 'api',
+      low: d.low ?? 0,
+      mid: d.mid ?? d.market ?? 0,
+      high: d.high ?? 0,
+      market: d.market ?? d.mid ?? 0,
+      currency: 'USD',
+      cachedAt: d.updatedAt ?? new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
 }

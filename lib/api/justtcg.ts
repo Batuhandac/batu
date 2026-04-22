@@ -1,115 +1,56 @@
 import { CardPrice, Game } from '@/types';
-
-const BASE_URL = process.env.EXPO_PUBLIC_JUSTTCG_BASE_URL ?? 'https://api.justtcg.com/v1';
-const RAW_API_KEY = process.env.EXPO_PUBLIC_JUSTTCG_API_KEY ?? '';
-const PLACEHOLDER_KEYS = new Set(['', 'your-justtcg-key', 'placeholder', 'demo']);
-const API_KEY = PLACEHOLDER_KEYS.has(RAW_API_KEY) ? '' : RAW_API_KEY;
-
-interface JustTCGPriceResponse {
-  card_id: string;
-  prices: {
-    low: number;
-    mid: number;
-    high: number;
-    market?: number;
-  };
-  currency: string;
-  updated_at: string;
-}
+import { fetchCardPrice as pokeFetch, fetchCardsByQuery, extractBestPrice } from './pokemontcg';
 
 const USD_TO_TRY = 38;
 
 export async function fetchCardPrice(game: Game, cardApiId: string): Promise<CardPrice | null> {
-  if (!API_KEY) {
-    return getMockPrice(cardApiId);
-  }
-
-  try {
-    const response = await fetch(`${BASE_URL}/prices/${game}/${cardApiId}`, {
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const data: JustTCGPriceResponse = await response.json();
-
-    return {
-      cardId: cardApiId,
-      source: 'justtcg',
-      low: data.prices.low,
-      mid: data.prices.mid,
-      high: data.prices.high,
-      market: data.prices.market,
-      currency: 'USD',
-      cachedAt: data.updated_at,
-    };
-  } catch {
-    return null;
-  }
+  if (game === 'pokemon') return pokeFetch(cardApiId);
+  return null;
 }
 
 export async function fetchBulkPrices(
   game: Game,
   cardApiIds: string[],
 ): Promise<Record<string, CardPrice>> {
-  if (!API_KEY) {
-    return Object.fromEntries(
-      cardApiIds.map((id) => [id, getMockPrice(id) as CardPrice]),
-    );
+  if (game !== 'pokemon' || !cardApiIds.length) return {};
+
+  // Batch via OR query — avoids N individual requests
+  const chunks: string[][] = [];
+  for (let i = 0; i < cardApiIds.length; i += 20) {
+    chunks.push(cardApiIds.slice(i, i + 20));
   }
 
-  try {
-    const response = await fetch(`${BASE_URL}/prices/${game}/bulk`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ card_ids: cardApiIds }),
-    });
+  const result: Record<string, CardPrice> = {};
 
-    if (!response.ok) return {};
+  await Promise.all(
+    chunks.map(async (ids) => {
+      const q = ids.map((id) => `id:${id}`).join(' OR ');
+      const cards = await fetchCardsByQuery(q, ids.length);
+      for (const card of cards) {
+        const raw = {
+          id: card.id,
+          name: card.name,
+          supertype: card.supertype,
+          set: { id: card.setId, name: card.setName } as any,
+          number: card.number,
+          rarity: card.rarity,
+          images: { small: card.imageSmall, large: card.imageLarge },
+          tcgplayer: card.prices?.tcgplayer
+            ? { url: card.tcgplayerUrl ?? '', updatedAt: new Date().toISOString(), prices: card.prices.tcgplayer as any }
+            : undefined,
+          cardmarket: card.prices?.cardmarket
+            ? { url: '', updatedAt: new Date().toISOString(), prices: card.prices.cardmarket as any }
+            : undefined,
+        };
+        const price = extractBestPrice(raw);
+        if (price) result[card.id] = price;
+      }
+    }),
+  );
 
-    const data: Record<string, JustTCGPriceResponse> = await response.json();
-    const result: Record<string, CardPrice> = {};
-
-    for (const [id, price] of Object.entries(data)) {
-      result[id] = {
-        cardId: id,
-        source: 'justtcg',
-        low: price.prices.low,
-        mid: price.prices.mid,
-        high: price.prices.high,
-        market: price.prices.market,
-        currency: 'USD',
-        cachedAt: price.updated_at,
-      };
-    }
-
-    return result;
-  } catch {
-    return {};
-  }
+  return result;
 }
 
 export function usdToTry(usd: number): number {
   return Math.round(usd * USD_TO_TRY);
-}
-
-function getMockPrice(cardApiId: string): CardPrice {
-  const seed = cardApiId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const base = ((seed % 100) + 5) * 2.5;
-  return {
-    cardId: cardApiId,
-    source: 'mock',
-    low: parseFloat((base * 0.7).toFixed(2)),
-    mid: parseFloat(base.toFixed(2)),
-    high: parseFloat((base * 1.5).toFixed(2)),
-    market: parseFloat((base * 0.95).toFixed(2)),
-    currency: 'USD',
-    cachedAt: new Date().toISOString(),
-  };
 }

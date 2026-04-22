@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { Card, Condition, Folder, UserCard } from '@/types';
-import { fetchCardPrice } from '@/lib/api/justtcg';
+import { fetchCardPrice, fetchBulkPrices } from '@/lib/api/justtcg';
 import { useAuthStore } from '@/stores/authStore';
 
 function isLocalMode() {
@@ -285,16 +285,29 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     const cards = get().cards;
     if (!cards.length) return;
 
-    const updated = await Promise.all(
-      cards.map(async (uc) => {
-        const price = await fetchCardPrice(uc.card.game, uc.card.apiId);
-        return price ? { ...uc, price } : uc;
+    // Group by game for bulk fetch
+    const byGame: Record<string, string[]> = {};
+    for (const uc of cards) {
+      if (!byGame[uc.card.game]) byGame[uc.card.game] = [];
+      byGame[uc.card.game].push(uc.card.apiId);
+    }
+
+    const priceMap: Record<string, import('@/types').CardPrice> = {};
+    await Promise.all(
+      Object.entries(byGame).map(async ([game, ids]) => {
+        const bulk = await fetchBulkPrices(game as import('@/types').Game, ids);
+        Object.assign(priceMap, bulk);
       }),
     );
 
+    const updated = cards.map((uc) => {
+      const price = priceMap[uc.card.apiId];
+      return price ? { ...uc, price } : uc;
+    });
+
     const total = updated.reduce((sum, uc) => {
-      const mid = uc.price?.mid ?? 0;
-      return sum + mid * uc.quantity;
+      const market = uc.price?.market ?? uc.price?.mid ?? 0;
+      return sum + market * uc.quantity;
     }, 0);
 
     set({ cards: updated, totalValue: total });

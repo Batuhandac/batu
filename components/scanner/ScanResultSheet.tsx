@@ -79,7 +79,7 @@ export function ScanResultSheet({
               <Text style={styles.priceTitle}>Piyasa Değeri</Text>
               <View style={styles.priceRow}>
                 <PriceCol label="Düşük" usd={price.low} />
-                <PriceCol label="Piyasa" usd={price.market} highlight />
+                <PriceCol label="Piyasa" usd={price.market ?? price.mid} highlight />
                 <PriceCol label="Yüksek" usd={price.high} />
               </View>
             </View>

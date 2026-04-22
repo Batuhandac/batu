@@ -4,11 +4,13 @@
   "framework": null,
   "functions": {
     "api/scan.js": { "memory": 256, "maxDuration": 15 },
-    "api/gibl-scan.js": { "memory": 256, "maxDuration": 20 }
+    "api/gibl-scan.js": { "memory": 256, "maxDuration": 20 },
+    "api/price.js": { "memory": 256, "maxDuration": 15 }
   },
   "rewrites": [
     { "source": "/api/scan", "destination": "/api/scan" },
     { "source": "/api/gibl-scan", "destination": "/api/gibl-scan" },
+    { "source": "/api/price", "destination": "/api/price" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

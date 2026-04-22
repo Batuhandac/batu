@@ -154,6 +154,7 @@ export interface TCGCard {
   artist?: string;
   imageSmall: string;
   imageLarge: string;
+  tcgplayerUrl?: string;
   prices?: {
     tcgplayer?: Record<string, { low: number; mid: number; high: number; market: number }>;
     cardmarket?: { averageSellPrice: number; lowPrice: number; trendPrice: number };

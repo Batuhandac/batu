@@ -1,6 +1,12 @@
 import { Card, CardPrice, Game, TCGCard, SetInfo } from '@/types';
 
 const BASE = 'https://api.pokemontcg.io/v2';
+const POKE_KEY = process.env.EXPO_PUBLIC_POKEMONTCG_API_KEY ?? '';
+function pokeHeaders(): Record<string, string> {
+  const h: Record<string, string> = { 'Accept': 'application/json' };
+  if (POKE_KEY) h['X-Api-Key'] = POKE_KEY;
+  return h;
+}
 
 export interface RawTCGSet {
   id: string;
@@ -134,6 +140,7 @@ export function rawToTCGCard(raw: RawTCGCard): TCGCard {
     artist: raw.artist,
     imageSmall: raw.images.small,
     imageLarge: raw.images.large,
+    tcgplayerUrl: raw.tcgplayer?.url,
     prices: {
       tcgplayer: raw.tcgplayer?.prices as any,
       cardmarket: raw.cardmarket?.prices as any,
@@ -190,7 +197,7 @@ export async function fetchSetCards(
   try {
     const r = await fetch(
       `${BASE}/cards?q=set.id:${setId}&orderBy=number&page=${page}&pageSize=${pageSize}`,
-      { headers: { 'Accept': 'application/json' } },
+      { headers: pokeHeaders() },
     );
     if (!r.ok) return { cards: [], total: 0 };
     const data: { data: RawTCGCard[]; totalCount: number } = await r.json();
@@ -208,7 +215,7 @@ export async function fetchCardsByQuery(query: string, pageSize = 20): Promise<T
   try {
     const r = await fetch(
       `${BASE}/cards?q=${encodeURIComponent(query)}&pageSize=${pageSize}`,
-      { headers: { 'Accept': 'application/json' } },
+      { headers: pokeHeaders() },
     );
     if (!r.ok) return [];
     const data: { data: RawTCGCard[] } = await r.json();
@@ -224,7 +231,7 @@ export async function searchTCGCards(query: string, page = 1): Promise<{ cards: 
     const q = encodeURIComponent(`name:${query}*`);
     const r = await fetch(
       `${BASE}/cards?q=${q}&orderBy=name&page=${page}&pageSize=36`,
-      { headers: { 'Accept': 'application/json' } },
+      { headers: pokeHeaders() },
     );
     if (!r.ok) return { cards: [], total: 0 };
     const data: { data: RawTCGCard[]; totalCount: number } = await r.json();
