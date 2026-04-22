@@ -38,6 +38,17 @@ function cleanBase64(raw: string): string {
 
 export async function scanCardWithVision(base64: string): Promise<ScanResult[]> {
   const clean = cleanBase64(base64);
+
+  // Web: try GiblTCG vision first (proxied through serverless — no CORS, no key exposure)
+  if (Platform.OS === 'web') {
+    const gibl = await identifyWithGibl(clean);
+    if (gibl) {
+      const results = await findCardByGiblIdentity(gibl);
+      if (results.length > 0) return results;
+    }
+  }
+
+  // Claude Vision fallback (web + mobile)
   const identification = await identifyWithClaude(clean);
   if (!identification || !identification.name || identification.game === 'other') return [];
   return findCardInApi(identification);
@@ -149,6 +160,55 @@ function pickBestMatch(cards: TCGCard[], id: CardIdentification): TCGCard {
 
   scored.sort((a, b) => b.score - a.score);
   return scored[0].card;
+}
+
+interface GiblIdentity {
+  name: string;
+  setCode: string;
+  number: string;
+  confidence: number;
+}
+
+async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
+  try {
+    const res = await fetch('/api/gibl-scan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ image: base64 }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.found || !data.name) return null;
+    return {
+      name: data.name as string,
+      setCode: (data.setCode as string) ?? '',
+      number: (data.number as string) ?? '',
+      confidence: (data.confidence as number) ?? 0.9,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function findCardByGiblIdentity({ name, setCode, number, confidence }: GiblIdentity): Promise<ScanResult[]> {
+  // Most precise: set.id + number
+  if (setCode && number) {
+    const results = await fetchCardsByQuery(`set.id:${setCode} number:${number}`, 3);
+    if (results.length > 0) return [buildScanResult(results[0], Math.min(confidence, 0.99))];
+  }
+  // Name + number
+  if (name && number) {
+    const nameFilter = buildNameFilter(name);
+    const results = await fetchCardsByQuery(`${nameFilter} number:${number}`, 5);
+    if (results.length > 0) return [buildScanResult(results[0], 0.95)];
+  }
+  // Name only
+  if (name) {
+    const nameFilter = buildNameFilter(name);
+    const results = await fetchCardsByQuery(nameFilter, 5);
+    if (results.length > 0) return [buildScanResult(results[0], 0.7)];
+  }
+  return [];
 }
 
 function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
