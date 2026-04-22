@@ -2,5 +2,11 @@
   "buildCommand": "npx expo export --platform web",
   "outputDirectory": "dist",
   "framework": null,
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "functions": {
+    "api/scan.js": { "memory": 256, "maxDuration": 15 }
+  },
+  "rewrites": [
+    { "source": "/api/scan", "destination": "/api/scan" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

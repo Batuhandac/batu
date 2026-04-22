@@ -1,5 +1,6 @@
+import { Platform } from 'react-native';
 import { ScanResult } from '@/types';
-import { searchTCGCards, fetchSetCards, rawToTCGCard, extractBestPrice, tcgCardToCard } from './pokemontcg';
+import { searchTCGCards, extractBestPrice, tcgCardToCard } from './pokemontcg';
 
 const ANTHROPIC_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
 
@@ -11,16 +12,31 @@ interface CardIdentification {
 }
 
 export async function scanCardWithVision(base64: string): Promise<ScanResult[]> {
-  if (!ANTHROPIC_KEY) return [];
-
   const identification = await identifyWithClaude(base64);
-  if (!identification || identification.game !== 'pokemon') return [];
-
+  if (!identification || !identification.name || identification.game === 'other') return [];
   return findCardInApi(identification);
 }
 
 async function identifyWithClaude(base64: string): Promise<CardIdentification | null> {
   try {
+    let text: string;
+
+    if (Platform.OS === 'web') {
+      // On web: use Vercel serverless function to avoid CORS
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.error) return null;
+      return data as CardIdentification;
+    }
+
+    // On mobile: call Anthropic directly (no CORS restriction)
+    if (!ANTHROPIC_KEY) return null;
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -42,7 +58,7 @@ async function identifyWithClaude(base64: string): Promise<CardIdentification | 
               {
                 type: 'text',
                 text: `Identify this TCG card. Reply with ONLY a JSON object, no other text:
-{"name": "exact card name as printed", "number": "card number like 4/102", "set": "set name", "game": "pokemon"}
+{"name": "exact card name as printed on card", "number": "card number like 4/102", "set": "set name", "game": "pokemon"}
 If not a recognizable TCG card, reply: {"game": "other", "name": ""}`,
               },
             ],
@@ -54,9 +70,9 @@ If not a recognizable TCG card, reply: {"game": "other", "name": ""}`,
     if (!res.ok) return null;
 
     const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? '';
+    text = data.content?.[0]?.text ?? '';
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) return null;
 
     return JSON.parse(jsonMatch[0]) as CardIdentification;
@@ -72,7 +88,6 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
     const { cards } = await searchTCGCards(id.name);
     if (!cards.length) return [];
 
-    // Try to find exact match by number
     let best = cards[0];
     if (id.number) {
       const num = id.number.split('/')[0];
@@ -80,7 +95,6 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
       if (exact) best = exact;
     }
 
-    // Build ScanResult with real price
     const card = tcgCardToCard(best);
     const rawPrice = extractBestPrice({
       id: best.id,
@@ -98,13 +112,7 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
         : undefined,
     });
 
-    return [
-      {
-        confidence: 0.95,
-        card,
-        price: rawPrice ?? undefined,
-      },
-    ];
+    return [{ confidence: 0.95, card, price: rawPrice ?? undefined }];
   } catch {
     return [];
   }
