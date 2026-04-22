@@ -195,6 +195,21 @@ export async function fetchSetCards(
   }
 }
 
+export async function fetchCardsByQuery(query: string, pageSize = 20): Promise<TCGCard[]> {
+  if (!query.trim()) return [];
+  try {
+    const r = await fetch(
+      `${BASE}/cards?q=${encodeURIComponent(query)}&pageSize=${pageSize}`,
+      { headers: { 'Accept': 'application/json' } },
+    );
+    if (!r.ok) return [];
+    const data: { data: RawTCGCard[] } = await r.json();
+    return (data.data ?? []).map(rawToTCGCard);
+  } catch {
+    return [];
+  }
+}
+
 export async function searchTCGCards(query: string, page = 1): Promise<{ cards: TCGCard[]; total: number }> {
   if (!query.trim()) return { cards: [], total: 0 };
   try {
