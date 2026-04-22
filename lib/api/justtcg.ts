@@ -17,7 +17,7 @@ interface JustTCGPriceResponse {
   updated_at: string;
 }
 
-const USD_TO_TRY = 40;
+const USD_TO_TRY = 38;
 
 export async function fetchCardPrice(game: Game, cardApiId: string): Promise<CardPrice | null> {
   if (!API_KEY) {

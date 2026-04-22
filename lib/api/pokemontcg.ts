@@ -57,18 +57,23 @@ const PRICE_VARIANT_PRIORITY = [
 ];
 
 export function extractBestPrice(card: RawTCGCard): CardPrice | null {
+  const rarity = (card.rarity ?? '').toLowerCase();
+  const isLowRarity = rarity === 'common' || rarity === 'uncommon';
+
   const tcg = card.tcgplayer?.prices;
   if (tcg) {
     for (const key of PRICE_VARIANT_PRIORITY) {
       const p = tcg[key];
-      if (p?.mid && p.mid > 0) {
+      // Use market price as the reference; fall back to mid if market is absent
+      const ref = p?.market ?? p?.mid;
+      if (ref && ref > 0) {
         return {
           cardId: card.id,
           source: `tcgplayer:${key}`,
-          low: p.low ?? 0,
-          mid: p.mid,
-          high: p.high ?? p.mid * 1.5,
-          market: p.market ?? p.mid,
+          low: p!.low ?? ref * 0.7,
+          mid: p!.mid ?? ref,
+          high: p!.high ?? ref * 1.5,
+          market: ref,
           currency: 'USD',
           cachedAt: card.tcgplayer!.updatedAt,
         };
@@ -77,14 +82,15 @@ export function extractBestPrice(card: RawTCGCard): CardPrice | null {
     const allKeys = Object.keys(tcg);
     for (const key of allKeys) {
       const p = tcg[key];
-      if (p?.mid && p.mid > 0) {
+      const ref = p?.market ?? p?.mid;
+      if (ref && ref > 0) {
         return {
           cardId: card.id,
           source: `tcgplayer:${key}`,
-          low: p.low ?? 0,
-          mid: p.mid,
-          high: p.high ?? p.mid * 1.5,
-          market: p.market ?? p.mid,
+          low: p!.low ?? ref * 0.7,
+          mid: p!.mid ?? ref,
+          high: p!.high ?? ref * 1.5,
+          market: ref,
           currency: 'USD',
           cachedAt: card.tcgplayer!.updatedAt,
         };
@@ -94,8 +100,10 @@ export function extractBestPrice(card: RawTCGCard): CardPrice | null {
 
   const cm = card.cardmarket?.prices;
   if (cm?.averageSellPrice && cm.averageSellPrice > 0) {
-    const EUR_USD = 1.08;
+    const EUR_USD = 1.10;
     const avg = cm.averageSellPrice * EUR_USD;
+    // CardMarket data for Common/Uncommon cards is often stale or wrong in the TCG API
+    if (isLowRarity && avg > 5) return null;
     return {
       cardId: card.id,
       source: 'cardmarket',
