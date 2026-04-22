@@ -72,21 +72,80 @@ export async function scanCardImage(imageBase64: string): Promise<ScanResult[]> 
   }
 }
 
-function getMockScanResult(): ScanResult[] {
-  return [
-    {
-      confidence: 0.97,
-      card: {
-        id: 'mock-001',
-        game: 'pokemon',
-        apiId: 'sv4-1',
-        name: 'Charizard ex',
-        setName: 'Paradox Rift',
-        setCode: 'SV4',
-        number: '234/182',
-        rarity: 'Special Illustration Rare',
-        imageUrl: 'https://images.pokemontcg.io/sv4/234_hires.png',
-      },
+const MOCK_CARDS: ScanResult[] = [
+  {
+    confidence: 0.97,
+    card: {
+      id: 'mock-charizard',
+      game: 'pokemon',
+      apiId: 'base1-4',
+      name: 'Charizard',
+      setName: 'Base Set',
+      setCode: 'base1',
+      number: '4/102',
+      rarity: 'Holo Rare',
+      imageUrl: 'https://images.pokemontcg.io/base1/4_hires.png',
     },
-  ];
+  },
+  {
+    confidence: 0.95,
+    card: {
+      id: 'mock-pikachu',
+      game: 'pokemon',
+      apiId: 'base1-58',
+      name: 'Pikachu',
+      setName: 'Base Set',
+      setCode: 'base1',
+      number: '58/102',
+      rarity: 'Common',
+      imageUrl: 'https://images.pokemontcg.io/base1/58_hires.png',
+    },
+  },
+  {
+    confidence: 0.93,
+    card: {
+      id: 'mock-mewtwo',
+      game: 'pokemon',
+      apiId: 'base1-10',
+      name: 'Mewtwo',
+      setName: 'Base Set',
+      setCode: 'base1',
+      number: '10/102',
+      rarity: 'Holo Rare',
+      imageUrl: 'https://images.pokemontcg.io/base1/10_hires.png',
+    },
+  },
+  {
+    confidence: 0.96,
+    card: {
+      id: 'mock-blastoise',
+      game: 'pokemon',
+      apiId: 'base1-2',
+      name: 'Blastoise',
+      setName: 'Base Set',
+      setCode: 'base1',
+      number: '2/102',
+      rarity: 'Holo Rare',
+      imageUrl: 'https://images.pokemontcg.io/base1/2_hires.png',
+    },
+  },
+  {
+    confidence: 0.94,
+    card: {
+      id: 'mock-venusaur',
+      game: 'pokemon',
+      apiId: 'base1-15',
+      name: 'Venusaur',
+      setName: 'Base Set',
+      setCode: 'base1',
+      number: '15/102',
+      rarity: 'Holo Rare',
+      imageUrl: 'https://images.pokemontcg.io/base1/15_hires.png',
+    },
+  },
+];
+
+function getMockScanResult(): ScanResult[] {
+  const card = MOCK_CARDS[Math.floor(Math.random() * MOCK_CARDS.length)];
+  return [card];
 }
