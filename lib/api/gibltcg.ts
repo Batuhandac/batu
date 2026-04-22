@@ -1,4 +1,5 @@
 import { Card, Game, ScanResult } from '@/types';
+import { scanCardWithVision } from './cardScanner';
 
 const BASE_URL = process.env.EXPO_PUBLIC_GIBLTCG_BASE_URL ?? 'https://api.gibltcg.com/v1';
 const RAW_API_KEY = process.env.EXPO_PUBLIC_GIBLTCG_API_KEY ?? '';
@@ -24,6 +25,10 @@ export interface GiblScanResponse {
 }
 
 export async function scanCardImage(imageBase64: string): Promise<ScanResult[]> {
+  // Try Claude Vision first (works without GiblTCG key)
+  const visionResults = await scanCardWithVision(imageBase64);
+  if (visionResults.length > 0) return visionResults;
+
   if (!API_KEY) {
     return getMockScanResult();
   }
