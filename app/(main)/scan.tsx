@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -88,6 +89,32 @@ export default function ScanScreen() {
     },
     [result, user, addCard, reset],
   );
+
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.centered}>
+        <Text style={{ fontSize: 56, marginBottom: 16 }}>📷</Text>
+        <Text style={styles.permTitle}>Kamera Tarama</Text>
+        <Text style={styles.permText}>
+          Kart tarama özelliği mobil uygulamamızda mevcuttur.{'\n'}
+          Galeri yükleme ile devam edebilirsin.
+        </Text>
+        <Pressable style={styles.permBtn} onPress={handlePickFromGallery}>
+          <Text style={styles.permBtnText}>📁 Galeriden Yükle</Text>
+        </Pressable>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>Geri Dön</Text>
+        </Pressable>
+        <ScanResultSheet
+          result={result}
+          visible={phase === 'result' && !!result}
+          onClose={reset}
+          onAddToCollection={handleAddToCollection}
+          adding={adding}
+        />
+      </SafeAreaView>
+    );
+  }
 
   if (!permission) {
     return (
