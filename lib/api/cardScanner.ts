@@ -11,8 +11,15 @@ interface CardIdentification {
   game: 'pokemon' | 'yugioh' | 'mtg' | 'other';
 }
 
+function cleanBase64(raw: string): string {
+  // Strip data:image/...;base64, prefix if present (web ImagePicker returns this)
+  const idx = raw.indexOf(',');
+  return idx !== -1 ? raw.slice(idx + 1) : raw;
+}
+
 export async function scanCardWithVision(base64: string): Promise<ScanResult[]> {
-  const identification = await identifyWithClaude(base64);
+  const clean = cleanBase64(base64);
+  const identification = await identifyWithClaude(clean);
   if (!identification || !identification.name || identification.game === 'other') return [];
   return findCardInApi(identification);
 }
