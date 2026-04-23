@@ -1,13 +1,26 @@
 const IDENTIFY_PROMPT = `You are analyzing a trading card game (TCG) card image.
 
-Extract EXACTLY these fields from what you see on the card:
-- "name": the card name printed at the top next to HP. DO NOT include "Basic Pokémon", "Stage 1", or evolution labels. For example if the card shows "Basic Pokémon Charmander", the name is "Charmander". If it shows "Ash's Pikachu" as the title, that full text is the name.
-- "hp": the HP number shown next to the name (e.g., "40", "170"). Just the number.
-- "number": the small card number printed at the bottom, usually bottom-right corner (e.g., "87/130", "4/102", "234/182"). Include the slash if visible.
-- "set": the set name if printed on the card or indicated by a visible symbol (leave empty if uncertain).
-- "era": "wizards" if you see "©Wizards of the Coast" or copyright dates 1995-2003. "modern" for newer cards (2004+).
-- "features": any of these if visible, comma-separated: "ex", "GX", "V", "VMAX", "VSTAR", "Full Art", "Secret Rare", "Promo", "Shiny", "Holo", "Reverse Holo", "1st Edition".
-- "game": "pokemon" for Pokémon TCG, "yugioh" for Yu-Gi-Oh!, "mtg" for Magic: The Gathering, "other" otherwise.
+Identify the game first, then extract fields accordingly.
+
+GAME DETECTION:
+- "pokemon": Pokémon TCG (has HP, energy symbols, ©Nintendo/©Wizards)
+- "yugioh": Yu-Gi-Oh! (ATK/DEF numbers, KONAMI copyright)
+- "mtg": Magic: The Gathering (tap symbol, mana cost top-right, ©Wizards of the Coast)
+- "onepiece": One Piece Card Game (Bandai, has DON!! text, leader/character/event card types, card codes like "OP01-001")
+- "naruto": Naruto card games — Naruto Kayou (Chinese cards with Naruto characters, KaYou logo) or old Naruto TCG (Bandai/Naruto US cards)
+- "other": anything else or not a TCG card
+
+Extract these fields:
+- "name": character/card name only. For Pokémon: strip "Basic", "Stage 1/2", "Pokémon VMAX" labels — just the creature name. For One Piece/Naruto: full character name as printed.
+- "hp": HP/life value number only (Pokémon). For One Piece leader cards, the life value. Leave empty if not applicable.
+- "number":
+  • Pokémon: bottom corner number e.g. "87/130", "234/182"
+  • One Piece: full card code e.g. "OP01-001", "ST13-003", "P-001"
+  • Naruto Kayou: card code e.g. "NT-R001", "BT1-001"
+  • Yu-Gi-Oh!/MTG: card number if visible
+- "set": set name or expansion name printed on card. For One Piece: e.g. "Romance Dawn", "Paramount War". For Naruto Kayou: series name.
+- "era": "wizards" if ©Wizards of the Coast or 1995-2003 dates. "modern" for 2004+. "kayou" for Naruto Kayou cards.
+- "features": comma-separated visible features: "Leader", "ex", "GX", "V", "VMAX", "VSTAR", "Full Art", "Secret Rare", "Promo", "Holo", "Reverse Holo", "1st Edition", "Parallel", "Alt Art", "SP"
 
 Reply with ONLY a JSON object. No prose, no markdown, no code fences:
 {"name":"...","hp":"...","number":"...","set":"...","era":"...","features":"...","game":"pokemon"}

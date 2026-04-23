@@ -23,6 +23,7 @@ export const colors = {
   onepiece: '#E63946',
   mtg: '#7C3AED',
   lorcana: '#0EA5E9',
+  naruto: '#FF6B35',
 } as const;
 
 export const spacing = {

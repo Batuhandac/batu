@@ -67,6 +67,17 @@ export const GAME_CONFIG: Record<Game, { label: string; color: string; sets: str
       'The First Chapter',
     ],
   },
+  naruto: {
+    label: 'Naruto',
+    color: colors.naruto,
+    sets: [
+      'Naruto Kayou BT-01',
+      'Naruto Kayou BT-02',
+      'Naruto Kayou BT-03',
+      'Naruto Kayou BT-04',
+      'Naruto Kayou SP',
+    ],
+  },
 };
 
 export const FREE_SCAN_LIMIT = 25;

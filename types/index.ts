@@ -1,4 +1,4 @@
-export type Game = 'pokemon' | 'yugioh' | 'onepiece' | 'mtg' | 'lorcana';
+export type Game = 'pokemon' | 'yugioh' | 'onepiece' | 'mtg' | 'lorcana' | 'naruto';
 export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG';
 export type Tier = 'free' | 'premium' | 'pro_starter' | 'pro_growth' | 'pro_enterprise';
 export type Currency = 'TRY' | 'USD' | 'EUR';
@@ -215,4 +215,5 @@ export const GAME_LABELS: Record<Game, string> = {
   onepiece: 'One Piece',
   mtg: 'Magic: The Gathering',
   lorcana: 'Lorcana',
+  naruto: 'Naruto',
 };
