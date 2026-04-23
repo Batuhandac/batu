@@ -17,6 +17,7 @@ Extract these fields:
   • Pokémon: bottom corner number e.g. "87/130", "234/182"
   • One Piece: full card code e.g. "OP01-001", "ST13-003", "P-001"
   • Naruto Kayou: card code e.g. "NT-R001", "BT1-001"
+  • Old Naruto TCG (2002-2006, Score/Bandai US): bottom-left code like "PR001", "N-001", "M-HOU-001". IMPORTANT: battle stats printed at the bottom (like "3/1", "1/0", "4/2") are NOT the card number — ignore those completely.
   • Yu-Gi-Oh!/MTG: card number if visible
 - "set": set name or expansion name printed on card. For One Piece: e.g. "Romance Dawn", "Paramount War". For Naruto Kayou: series name.
 - "era": "wizards" if ©Wizards of the Coast or 1995-2003 dates. "modern" for 2004+. "kayou" for Naruto Kayou cards.
