@@ -279,17 +279,22 @@ function buildEbayQuery(name: string, number: string, game: string): string {
 async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: import('@/types').CardPrice }> {
   if (Platform.OS !== 'web') return {};
   try {
-    const query = buildEbayQuery(card.name, card.number, card.game);
-    const data = await callEbayLookup(query);
+    // Validation payload — eBay endpoint filters results to titles containing
+    // these (with number-format variants handled server-side). Prevents
+    // "Kunai NS003" from matching a different "Special Kunai" listing.
+    const validate = { name: card.name, number: card.number };
 
-    // If no image, retry with name-only query (broader)
-    let fallback = data;
-    if (!data?.image && card.name) {
-      fallback = await callEbayLookup(buildEbayQuery(card.name, '', card.game)) ?? data;
+    // Primary: strict query with number + name + game
+    const primary = await callEbayLookup(buildEbayQuery(card.name, card.number, card.game), validate);
+
+    // Fallback: broader query (name + game only) — still validated against number
+    let fallback = primary;
+    if (!primary?.image && card.name) {
+      fallback = await callEbayLookup(buildEbayQuery(card.name, '', card.game), validate);
     }
 
     const result: { imageUrl?: string; price?: import('@/types').CardPrice } = {};
-    const best = (data?.price?.sampleSize ?? 0) >= (fallback?.price?.sampleSize ?? 0) ? data : fallback;
+    const best = (primary?.price?.sampleSize ?? 0) >= (fallback?.price?.sampleSize ?? 0) ? primary : fallback;
 
     if (best?.image) result.imageUrl = best.image;
     const p = best?.price;
@@ -311,12 +316,12 @@ async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: 
   }
 }
 
-async function callEbayLookup(query: string) {
+async function callEbayLookup(query: string, validate?: { name: string; number: string }) {
   try {
     const res = await fetch('/api/ebay-lookup', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, validate }),
     });
     if (!res.ok) return null;
     return await res.json();

@@ -9,6 +9,7 @@ import { useCollectionStore } from '@/stores/collectionStore';
 import { useBadgeStore } from '@/stores/badgeStore';
 import { usdToTry } from '@/lib/api/justtcg';
 import { GEN1 } from '@/constants/pokemon';
+import { versionLabel } from '@/constants/version';
 
 export default function DashboardScreen() {
   const { profile, user } = useAuthStore();
@@ -68,6 +69,7 @@ export default function DashboardScreen() {
           <View>
             <Text style={styles.greeting}>Merhaba, {profile?.displayName ?? '👋'}</Text>
             <Text style={styles.subGreeting}>Koleksiyonun seni bekliyor</Text>
+            <Text style={styles.versionBadge}>build {versionLabel()}</Text>
           </View>
           <Pressable style={styles.avatar} onPress={() => router.push('/(main)/settings')}>
             <Text style={styles.avatarText}>
@@ -250,6 +252,7 @@ const styles = StyleSheet.create({
   },
   greeting: { color: colors.text, fontSize: fontSize.xl, fontWeight: '700' },
   subGreeting: { color: colors.textMuted, fontSize: fontSize.sm, marginTop: 2 },
+  versionBadge: { color: colors.textFaint, fontSize: 10, marginTop: 4, fontFamily: 'monospace' },
   avatar: {
     width: 40,
     height: 40,
