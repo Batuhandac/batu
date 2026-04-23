@@ -70,7 +70,14 @@ export default async function handler(req, res) {
     const browseItems = filterValidated(browseItemsRaw, validate, 'browse');
 
     const price = extractPriceStats(soldItems);
-    const image = extractBrowseImage(browseItems) ?? extractBestImage([...activeItems, ...soldItems]);
+
+    // Image: prefer validated results; if none found, fall back to unvalidated
+    // first result (image-only fallback — price is never relaxed this way)
+    let image = extractBrowseImage(browseItems) ?? extractBestImage([...activeItems, ...soldItems]);
+    if (!image && validate) {
+      image = extractBrowseImage(browseItemsRaw) ?? extractBestImage([...activeItemsRaw, ...soldItemsRaw]);
+    }
+
     const listings = formatListings(activeItems.slice(0, 3));
 
     return res.status(200).json({

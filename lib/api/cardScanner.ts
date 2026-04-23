@@ -336,6 +336,7 @@ interface GiblIdentity {
   number: string;
   confidence: number;
   cardType?: string;
+  imageUrl?: string;
 }
 
 async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
@@ -354,18 +355,33 @@ async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
       number: (data.number as string) ?? '',
       confidence: (data.confidence as number) ?? 0.9,
       cardType: (data.cardType as string) ?? 'pokemon',
+      imageUrl: (data.imageUrl as string) ?? undefined,
     };
   } catch {
     return null;
   }
 }
 
-async function findCardByGiblIdentity({ name, setCode, number, confidence, cardType }: GiblIdentity): Promise<ScanResult[]> {
+async function findCardByGiblIdentity({ name, setCode, number, confidence, cardType, imageUrl }: GiblIdentity): Promise<ScanResult[]> {
   // Route non-pokemon games
   if (cardType === 'onepiece') {
     const opId: CardIdentification = { name, number: setCode && number ? `${setCode.toUpperCase()}-${number.padStart(3,'0')}` : number, set: setCode, game: 'onepiece' };
     const r = await findOPCard(opId);
     if (r.length > 0) return r;
+  }
+
+  if (cardType === 'naruto') {
+    const narutoId: CardIdentification = { name, number, set: setCode, game: 'naruto' };
+    const results = buildNarutoResult(narutoId);
+    if (!results.length) return [];
+    // Use GiblTCG image as primary source — it's already card-accurate
+    if (imageUrl) results[0].card = { ...results[0].card, imageUrl };
+    // Enrich with eBay price (and image fallback if GiblTCG had none)
+    const ebay = await enrichWithEbay(results[0].card);
+    if (ebay.imageUrl && !results[0].card.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
+    if (ebay.price) results[0].price = ebay.price;
+    results[0].confidence = confidence;
+    return results;
   }
 
   let tcgCard: TCGCard | null = null;
