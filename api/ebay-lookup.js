@@ -1,5 +1,46 @@
 const EBAY_APP_ID = process.env.EBAY_APP_ID ?? '';
+const EBAY_CLIENT_SECRET = process.env.EBAY_CLIENT_SECRET ?? '';
 const FINDING_BASE = 'https://svcs.ebay.com/services/search/FindingService/v1';
+const BROWSE_BASE = 'https://api.ebay.com/buy/browse/v1';
+
+// Module-level token cache
+let _browseToken = null;
+let _browseTokenExp = 0;
+
+async function getBrowseToken() {
+  if (_browseToken && Date.now() < _browseTokenExp) return _browseToken;
+  if (!EBAY_APP_ID || !EBAY_CLIENT_SECRET) return null;
+  try {
+    const creds = Buffer.from(`${EBAY_APP_ID}:${EBAY_CLIENT_SECRET}`).toString('base64');
+    const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${creds}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials&scope=https%3A%2F%2Fapi.ebay.com%2Foauth%2Fapi_scope',
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    _browseToken = d.access_token;
+    _browseTokenExp = Date.now() + (d.expires_in - 120) * 1000;
+    return _browseToken;
+  } catch {
+    return null;
+  }
+}
+
+async function browseSearch(query, token) {
+  try {
+    const url = `${BROWSE_BASE}/item_summary/search?q=${encodeURIComponent(query)}&limit=5&filter=categoryIds:{183454}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d.itemSummaries ?? [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,13 +54,17 @@ export default async function handler(req, res) {
   if (!query) return res.status(400).json({ error: 'query required' });
 
   try {
-    const [soldItems, activeItems] = await Promise.all([
+    const browseToken = await getBrowseToken();
+
+    const [soldItems, activeItems, browseItems] = await Promise.all([
       findItems('findCompletedItems', query, true),
       findItems('findItemsByKeywords', query, false),
+      browseToken ? browseSearch(query, browseToken) : Promise.resolve([]),
     ]);
 
     const price = extractPriceStats(soldItems);
-    const image = extractBestImage([...activeItems, ...soldItems]);
+    // Browse API returns full-size images — prefer those
+    const image = extractBrowseImage(browseItems) ?? extractBestImage([...activeItems, ...soldItems]);
     const listings = formatListings(activeItems.slice(0, 3));
 
     return res.status(200).json({ price, image, listings, soldCount: soldItems.length });
@@ -94,6 +139,14 @@ function extractBestImage(items) {
     if (large?.startsWith('http')) return large;
     const gallery = item.galleryURL?.[0];
     if (gallery?.startsWith('http')) return gallery;
+  }
+  return null;
+}
+
+function extractBrowseImage(items) {
+  for (const item of items) {
+    const img = item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl;
+    if (img?.startsWith('http')) return img;
   }
   return null;
 }
