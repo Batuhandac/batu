@@ -72,7 +72,14 @@ export async function scanCardWithVision(base64: string): Promise<ScanResult[]> 
 async function routeByGame(id: CardIdentification): Promise<ScanResult[]> {
   switch (id.game) {
     case 'onepiece': return findOPCard(id);
-    case 'naruto': return buildNarutoResult(id);
+    case 'naruto': {
+      const results = buildNarutoResult(id);
+      if (!results.length) return [];
+      const ebay = await enrichWithEbay(results[0].card);
+      if (ebay.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
+      if (ebay.price) results[0].price = ebay.price;
+      return results;
+    }
     case 'pokemon': return findCardInApi(id);
     default: return findCardInApi(id);
   }
@@ -191,27 +198,28 @@ function pickBestMatch(cards: TCGCard[], id: CardIdentification): TCGCard {
 
 async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
   const num = id.number?.trim();
+  let card: Card | null = null;
+  let conf = 0.75;
 
-  // If number looks like a full OP card code (OP01-001, ST01-001, P-001)
   if (num && /^[A-Z0-9]+-\d+$/i.test(num)) {
-    const card = await fetchOPCardById(num);
-    if (card) return [{ card, confidence: 0.97 }];
+    card = await fetchOPCardById(num);
+    if (card) conf = 0.97;
   }
-
-  // Try set + number reconstruction
-  if (num && id.set) {
+  if (!card && num && id.set) {
     const setCode = id.set.replace(/\s+/g, '').toUpperCase();
-    const card = await fetchOPCardBySetAndNumber(setCode, num);
-    if (card) return [{ card, confidence: 0.92 }];
+    card = await fetchOPCardBySetAndNumber(setCode, num);
+    if (card) conf = 0.92;
   }
-
-  // Name search fallback
-  if (id.name) {
+  if (!card && id.name) {
     const cards = await searchOPCards(id.name, 5);
-    if (cards.length > 0) return [{ card: cards[0], confidence: 0.75 }];
+    if (cards.length > 0) { card = cards[0]; conf = 0.75; }
   }
+  if (!card) return [];
 
-  return [];
+  // Enrich with eBay price (OPTCG API has no pricing)
+  const ebay = await enrichWithEbay(card);
+  if (ebay.imageUrl && !card.imageUrl) card = { ...card, imageUrl: ebay.imageUrl };
+  return [{ card, confidence: conf, price: ebay.price }];
 }
 
 function buildNarutoResult(id: CardIdentification): ScanResult[] {
@@ -240,6 +248,47 @@ function buildNarutoResult(id: CardIdentification): ScanResult[] {
     supertype: 'Ninja',
   };
   return [{ card, confidence: 0.85 }];
+}
+
+function buildEbayQuery(name: string, number: string, game: string): string {
+  const parts: string[] = [];
+  if (name) parts.push(`"${name}"`);
+  if (number) parts.push(number);
+  if (game === 'naruto') parts.push('naruto card TCG');
+  else if (game === 'onepiece') parts.push('one piece card game');
+  else if (game === 'yugioh') parts.push('yugioh card');
+  return parts.join(' ');
+}
+
+async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: import('@/types').CardPrice }> {
+  if (Platform.OS !== 'web') return {};
+  try {
+    const query = buildEbayQuery(card.name, card.number, card.game);
+    const res = await fetch('/api/ebay-lookup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    if (!res.ok) return {};
+    const data = await res.json();
+    const result: { imageUrl?: string; price?: import('@/types').CardPrice } = {};
+    if (data.image) result.imageUrl = data.image;
+    if (data.price?.market) {
+      result.price = {
+        cardId: card.apiId,
+        source: 'ebay_sold',
+        low: data.price.low,
+        mid: data.price.mid,
+        high: data.price.high,
+        market: data.price.market,
+        currency: 'USD',
+        cachedAt: new Date().toISOString(),
+      };
+    }
+    return result;
+  } catch {
+    return {};
+  }
 }
 
 interface GiblIdentity {
