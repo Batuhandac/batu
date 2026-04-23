@@ -370,19 +370,10 @@ async function findCardByGiblIdentity({ name, setCode, number, confidence, cardT
     if (r.length > 0) return r;
   }
 
-  if (cardType === 'naruto') {
-    const narutoId: CardIdentification = { name, number, set: setCode, game: 'naruto' };
-    const results = buildNarutoResult(narutoId);
-    if (!results.length) return [];
-    // Use GiblTCG image as primary source — it's already card-accurate
-    if (imageUrl) results[0].card = { ...results[0].card, imageUrl };
-    // Enrich with eBay price (and image fallback if GiblTCG had none)
-    const ebay = await enrichWithEbay(results[0].card);
-    if (ebay.imageUrl && !results[0].card.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
-    if (ebay.price) results[0].price = ebay.price;
-    results[0].confidence = confidence;
-    return results;
-  }
+  // Naruto: GiblTCG doesn't carry old Naruto TCG (2002 Bandai) — it mismatches
+  // to Kayou cards. Always fall through to Claude Vision for naruto so the
+  // actual card number (PR001, N-001, etc.) is read from the card text.
+  if (cardType === 'naruto') return [];
 
   let tcgCard: TCGCard | null = null;
   let conf = confidence;
