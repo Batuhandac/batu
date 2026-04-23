@@ -252,11 +252,27 @@ function buildNarutoResult(id: CardIdentification): ScanResult[] {
 
 function buildEbayQuery(name: string, number: string, game: string): string {
   const parts: string[] = [];
-  if (name) parts.push(`"${name}"`);
-  if (number) parts.push(number);
-  if (game === 'naruto') parts.push('naruto card TCG');
-  else if (game === 'onepiece') parts.push('one piece card game');
-  else if (game === 'yugioh') parts.push('yugioh card');
+
+  if (game === 'naruto') {
+    // Naruto CCG/TCG: use number (NS003), name, and game keyword
+    // Don't quote short names — too restrictive on eBay
+    if (number) parts.push(number);
+    if (name) parts.push(name);
+    parts.push('naruto');
+  } else if (game === 'onepiece') {
+    // One Piece: card code is the most specific identifier
+    if (number) parts.push(number);
+    if (name) parts.push(name);
+    parts.push('one piece card');
+  } else if (game === 'yugioh') {
+    if (name) parts.push(name);
+    if (number) parts.push(number);
+    parts.push('yugioh');
+  } else {
+    if (name) parts.push(`"${name}"`);
+    if (number) parts.push(number);
+  }
+
   return parts.join(' ');
 }
 
@@ -264,23 +280,27 @@ async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: 
   if (Platform.OS !== 'web') return {};
   try {
     const query = buildEbayQuery(card.name, card.number, card.game);
-    const res = await fetch('/api/ebay-lookup', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query }),
-    });
-    if (!res.ok) return {};
-    const data = await res.json();
+    const data = await callEbayLookup(query);
+
+    // If no image, retry with name-only query (broader)
+    let fallback = data;
+    if (!data?.image && card.name) {
+      fallback = await callEbayLookup(buildEbayQuery(card.name, '', card.game)) ?? data;
+    }
+
     const result: { imageUrl?: string; price?: import('@/types').CardPrice } = {};
-    if (data.image) result.imageUrl = data.image;
-    if (data.price?.market) {
+    const best = (data?.price?.sampleSize ?? 0) >= (fallback?.price?.sampleSize ?? 0) ? data : fallback;
+
+    if (best?.image) result.imageUrl = best.image;
+    const p = best?.price;
+    if (p?.market) {
       result.price = {
         cardId: card.apiId,
         source: 'ebay_sold',
-        low: data.price.low,
-        mid: data.price.mid,
-        high: data.price.high,
-        market: data.price.market,
+        low: p.low,
+        mid: p.mid,
+        high: p.high,
+        market: p.market,
         currency: 'USD',
         cachedAt: new Date().toISOString(),
       };
@@ -288,6 +308,20 @@ async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: 
     return result;
   } catch {
     return {};
+  }
+}
+
+async function callEbayLookup(query: string) {
+  try {
+    const res = await fetch('/api/ebay-lookup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
   }
 }
 
