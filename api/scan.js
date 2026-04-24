@@ -1,32 +1,33 @@
-const IDENTIFY_PROMPT = `You are analyzing a trading card game (TCG) card image.
-
-Identify the game first, then extract fields accordingly.
+const IDENTIFY_PROMPT = `You are analyzing a trading card game (TCG) card image. Identify the game first, then extract fields.
 
 GAME DETECTION:
-- "pokemon": Pokémon TCG (has HP, energy symbols, ©Nintendo/©Wizards)
-- "yugioh": Yu-Gi-Oh! (ATK/DEF numbers, KONAMI copyright)
-- "mtg": Magic: The Gathering (tap symbol, mana cost top-right, ©Wizards of the Coast)
-- "onepiece": One Piece Card Game (Bandai, has DON!! text, leader/character/event card types, card codes like "OP01-001")
-- "naruto": Naruto card games — Naruto Kayou (Chinese cards with Naruto characters, KaYou logo) or old Naruto TCG (Bandai/Naruto US cards)
-- "other": anything else or not a TCG card
+- "pokemon": Pokémon TCG — has HP value, energy symbols, ©Nintendo/©Wizards
+- "yugioh": Yu-Gi-Oh! — ATK/DEF numbers at bottom, KONAMI copyright, horizontal landscape layout or portrait with colored border
+- "mtg": Magic: The Gathering — mana cost top-right, tap symbol, ©Wizards of the Coast, collector number bottom-left like "233/273"
+- "onepiece": One Piece Card Game — BANDAI copyright, DON!! mechanic text, card codes like "OP01-001" or "P-001", ONE PIECE branding
+- "lorcana": Disney Lorcana — Disney copyright, ink drop symbols, lore/strength values, Disney character art
+- "naruto": Naruto card games — Naruto Kayou (KaYou logo, Chinese) or old Naruto TCG (Bandai/Score US, ©2002 Masashi Kishimoto)
+- "other": not a TCG card
 
-Extract these fields:
-- "name": character/card name only. For Pokémon: strip "Basic", "Stage 1/2", "Pokémon VMAX" labels — just the creature name. For One Piece/Naruto: full character name as printed.
-- "hp": HP/life value number only (Pokémon). For One Piece leader cards, the life value. Leave empty if not applicable.
+FIELD EXTRACTION:
+- "name": character/card name only. Strip "Basic", "Stage 1/2", "VMAX" labels — just the creature/character name.
+- "hp": HP/life value (Pokémon only).
 - "number":
-  • Pokémon: bottom corner number e.g. "87/130", "234/182"
+  • Pokémon: bottom corner e.g. "87/130", "234/182"
   • One Piece: full card code e.g. "OP01-001", "ST13-003", "P-001"
+  • Yu-Gi-Oh!: the 8-DIGIT PASSCODE at the very bottom-left corner (e.g. "46986414"). This is NOT the ATK or DEF value. Do NOT confuse with ATK/DEF numbers.
+  • Magic: The Gathering: collector number bottom-left e.g. "233/273" or "233"
+  • Lorcana: collector number if visible
   • Naruto Kayou: card code e.g. "NT-R001", "BT1-001"
-  • Old Naruto TCG (2002-2006, Score/Bandai US): bottom-left code like "PR001", "N-001", "M-HOU-001". IMPORTANT: battle stats printed at the bottom (like "3/1", "1/0", "4/2") are NOT the card number — ignore those completely.
-  • Yu-Gi-Oh!/MTG: card number if visible
-- "set": set name or expansion name printed on card. For One Piece: e.g. "Romance Dawn", "Paramount War". For Naruto Kayou: series name.
-- "era": "wizards" if ©Wizards of the Coast or 1995-2003 dates. "modern" for 2004+. "kayou" for Naruto Kayou cards.
-- "features": comma-separated visible features: "Leader", "ex", "GX", "V", "VMAX", "VSTAR", "Full Art", "Secret Rare", "Promo", "Holo", "Reverse Holo", "1st Edition", "Parallel", "Alt Art", "SP"
+  • Old Naruto TCG (2002-2006): bottom-left code like "PR001", "N-001", "M-HOU-001". IMPORTANT: battle stats at the bottom (like "3/1", "1/0", "4/2") are NOT card numbers — ignore them.
+- "set": set name or code printed on the card.
+- "era": "wizards" for ©Wizards or 1995-2003 Pokémon. "modern" for 2004+ Pokémon. "kayou" for Naruto Kayou.
+- "features": comma-separated: ex, GX, V, VMAX, VSTAR, Leader, Holo, Reverse Holo, Secret Rare, Full Art, Alt Art, 1st Edition, Promo, Enchanted, SP, Parallel
 
-Reply with ONLY a JSON object. No prose, no markdown, no code fences:
+Reply with ONLY valid JSON. No prose, no markdown, no code fences:
 {"name":"...","hp":"...","number":"...","set":"...","era":"...","features":"...","game":"pokemon"}
 
-If image is not a TCG card at all, reply: {"name":"","game":"other"}`;
+If it is not a TCG card at all: {"name":"","game":"other"}`;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

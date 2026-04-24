@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 import { ScanResult, Card } from '@/types';
 import { fetchCardsByQuery, extractBestPrice, tcgCardToCard } from './pokemontcg';
 import { fetchOPCardById, fetchOPCardBySetAndNumber, searchOPCards } from './onepiece';
+import { fetchYGOCard } from './yugioh';
+import { fetchMTGCard } from './mtg';
 import type { TCGCard } from '@/types';
 
 const ANTHROPIC_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
@@ -13,38 +15,39 @@ interface CardIdentification {
   set?: string;
   era?: 'wizards' | 'modern' | 'kayou' | string;
   features?: string;
-  game: 'pokemon' | 'yugioh' | 'mtg' | 'onepiece' | 'naruto' | 'other';
+  game: 'pokemon' | 'yugioh' | 'mtg' | 'onepiece' | 'lorcana' | 'naruto' | 'other';
 }
 
-const IDENTIFY_PROMPT = `You are analyzing a trading card game (TCG) card image.
-
-Identify the game first, then extract fields accordingly.
+const IDENTIFY_PROMPT = `You are analyzing a trading card game (TCG) card image. Identify the game first, then extract fields.
 
 GAME DETECTION:
-- "pokemon": Pokémon TCG (has HP, energy symbols, ©Nintendo/©Wizards)
-- "yugioh": Yu-Gi-Oh! (ATK/DEF numbers, KONAMI copyright)
-- "mtg": Magic: The Gathering (tap symbol, mana cost top-right, ©Wizards of the Coast)
-- "onepiece": One Piece Card Game (Bandai, has DON!! text, leader/character/event card types, card codes like "OP01-001")
-- "naruto": Naruto card games — Naruto Kayou (Chinese cards with Naruto characters, KaYou logo) or old Naruto TCG (Bandai/Naruto US cards)
-- "other": anything else or not a TCG card
+- "pokemon": Pokémon TCG — has HP value, energy symbols, ©Nintendo/©Wizards
+- "yugioh": Yu-Gi-Oh! — ATK/DEF numbers at bottom, KONAMI copyright, horizontal landscape layout or portrait with colored border
+- "mtg": Magic: The Gathering — mana cost top-right, tap symbol, ©Wizards of the Coast, collector number bottom-left like "233/273"
+- "onepiece": One Piece Card Game — BANDAI copyright, DON!! mechanic text, card codes like "OP01-001" or "P-001", ONE PIECE branding
+- "lorcana": Disney Lorcana — Disney copyright, ink drop symbols, lore/strength values, Disney character art
+- "naruto": Naruto card games — Naruto Kayou (KaYou logo, Chinese) or old Naruto TCG (Bandai/Score US, ©2002 Masashi Kishimoto)
+- "other": not a TCG card
 
-Extract these fields:
-- "name": character/card name only. For Pokémon: strip "Basic", "Stage 1/2", "Pokémon VMAX" labels — just the creature name. For One Piece/Naruto: full character name as printed.
-- "hp": HP/life value number only (Pokémon). For One Piece leader cards, the life value. Leave empty if not applicable.
+FIELD EXTRACTION:
+- "name": character/card name only. Strip "Basic", "Stage 1/2", "VMAX" labels — just the creature/character name.
+- "hp": HP/life value (Pokémon only).
 - "number":
-  • Pokémon: bottom corner number e.g. "87/130", "234/182"
+  • Pokémon: bottom corner e.g. "87/130", "234/182"
   • One Piece: full card code e.g. "OP01-001", "ST13-003", "P-001"
+  • Yu-Gi-Oh!: the 8-DIGIT PASSCODE at the very bottom-left corner (e.g. "46986414"). This is NOT the ATK or DEF value. Do NOT confuse with ATK/DEF numbers.
+  • Magic: The Gathering: collector number bottom-left e.g. "233/273" or "233"
+  • Lorcana: collector number if visible
   • Naruto Kayou: card code e.g. "NT-R001", "BT1-001"
-  • Old Naruto TCG (2002-2006, Score/Bandai US): bottom-left code like "PR001", "N-001", "M-HOU-001". IMPORTANT: battle stats printed at the bottom (like "3/1", "1/0", "4/2") are NOT the card number — ignore those completely.
-  • Yu-Gi-Oh!/MTG: card number if visible
-- "set": set name or expansion name printed on card. For One Piece: e.g. "Romance Dawn", "Paramount War". For Naruto Kayou: series name.
-- "era": "wizards" if ©Wizards of the Coast or 1995-2003 dates. "modern" for 2004+. "kayou" for Naruto Kayou cards.
-- "features": comma-separated visible features: "Leader", "ex", "GX", "V", "VMAX", "VSTAR", "Full Art", "Secret Rare", "Promo", "Holo", "Reverse Holo", "1st Edition", "Parallel", "Alt Art", "SP"
+  • Old Naruto TCG (2002-2006): bottom-left code like "PR001", "N-001", "M-HOU-001". IMPORTANT: battle stats at the bottom (like "3/1", "1/0", "4/2") are NOT card numbers — ignore them.
+- "set": set name or code printed on the card.
+- "era": "wizards" for ©Wizards or 1995-2003 Pokémon. "modern" for 2004+ Pokémon. "kayou" for Naruto Kayou.
+- "features": comma-separated: ex, GX, V, VMAX, VSTAR, Leader, Holo, Reverse Holo, Secret Rare, Full Art, Alt Art, 1st Edition, Promo, Enchanted, SP, Parallel
 
-Reply with ONLY a JSON object. No prose, no markdown, no code fences:
+Reply with ONLY valid JSON. No prose, no markdown, no code fences:
 {"name":"...","hp":"...","number":"...","set":"...","era":"...","features":"...","game":"pokemon"}
 
-If image is not a TCG card at all, reply: {"name":"","game":"other"}`;
+If it is not a TCG card at all: {"name":"","game":"other"}`;
 
 function cleanBase64(raw: string): string {
   const idx = raw.indexOf(',');
@@ -63,7 +66,7 @@ export async function scanCardWithVision(base64: string): Promise<ScanResult[]> 
 
     const cvGame = identification?.game;
 
-    // GiblTCG's predict-card model is reliable only for Pokemon.
+    // GiblTCG predict-card is reliable only for Pokémon.
     // If Claude Vision disagrees on the game, trust Claude Vision.
     const useGibl =
       gibl &&
@@ -90,76 +93,17 @@ export async function scanCardWithVision(base64: string): Promise<ScanResult[]> 
 
 async function routeByGame(id: CardIdentification): Promise<ScanResult[]> {
   switch (id.game) {
-    case 'onepiece': return findOPCard(id);
-    case 'naruto': {
-      const results = buildNarutoResult(id);
-      if (!results.length) return [];
-      const ebay = await enrichWithEbay(results[0].card);
-      if (ebay.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
-      if (ebay.price) results[0].price = ebay.price;
-      return results;
-    }
     case 'pokemon': return findCardInApi(id);
+    case 'onepiece': return findOPCard(id);
+    case 'yugioh': return findYGOCard(id);
+    case 'mtg': return findMTGCard(id);
+    case 'naruto': return findNarutoCard(id);
+    case 'lorcana': return findLorcanaCard(id);
     default: return findCardInApi(id);
   }
 }
 
-async function identifyWithClaude(base64: string): Promise<CardIdentification | null> {
-  try {
-    if (Platform.OS === 'web') {
-      const res = await fetch('/api/scan', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.error) return null;
-      return data as CardIdentification;
-    }
-
-    if (!ANTHROPIC_KEY) return null;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-              { type: 'text', text: IDENTIFY_PROMPT },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? '';
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-
-    return JSON.parse(jsonMatch[0]) as CardIdentification;
-  } catch {
-    return null;
-  }
-}
-
-function buildNameFilter(name: string): string {
-  const needsQuotes = /[\s']/.test(name);
-  return needsQuotes ? `name:"${name}"` : `name:${name}`;
-}
+// ── POKEMON ────────────────────────────────────────────────────────────────
 
 async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
   if (!id.name) return [];
@@ -169,9 +113,7 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
   const hp = id.hp?.trim();
   const setFilter = id.set?.trim() ? `set.name:"${id.set.trim()}"` : '';
 
-  // Try progressively broader queries — most specific first
   const queries: string[] = [];
-
   if (num && hp && setFilter) queries.push(`${nameFilter} number:${num} hp:${hp} ${setFilter}`);
   if (num && hp) queries.push(`${nameFilter} number:${num} hp:${hp}`);
   if (num && setFilter) queries.push(`${nameFilter} number:${num} ${setFilter}`);
@@ -183,8 +125,7 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
 
   for (const q of queries) {
     const results = await fetchCardsByQuery(q, 10);
-    if (results.length === 0) continue;
-
+    if (!results.length) continue;
     const best = pickBestMatch(results, id);
     const result = buildScanResult(best, results.length === 1 ? 0.97 : 0.9);
     const fresh = await fetchFreshPrice(best.id, best.tcgplayerUrl, best.rarity);
@@ -197,8 +138,6 @@ async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
 
 function pickBestMatch(cards: TCGCard[], id: CardIdentification): TCGCard {
   if (cards.length === 1) return cards[0];
-
-  // Score each card
   const scored = cards.map((c) => {
     let score = 0;
     const num = id.number?.split('/')[0];
@@ -210,10 +149,31 @@ function pickBestMatch(cards: TCGCard[], id: CardIdentification): TCGCard {
     if (id.era === 'modern' && !/base|jungle|fossil|rocket|gym|neo|wizards/i.test(c.setName)) score += 2;
     return { card: c, score };
   });
-
   scored.sort((a, b) => b.score - a.score);
   return scored[0].card;
 }
+
+function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
+  const card = tcgCardToCard(tcgCard);
+  const rawPrice = extractBestPrice({
+    id: tcgCard.id,
+    name: tcgCard.name,
+    supertype: tcgCard.supertype,
+    set: { id: tcgCard.setId, name: tcgCard.setName } as any,
+    number: tcgCard.number,
+    rarity: tcgCard.rarity,
+    images: { small: tcgCard.imageSmall, large: tcgCard.imageLarge },
+    tcgplayer: tcgCard.prices?.tcgplayer
+      ? { url: tcgCard.tcgplayerUrl ?? '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.tcgplayer as any }
+      : undefined,
+    cardmarket: tcgCard.prices?.cardmarket
+      ? { url: '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.cardmarket as any }
+      : undefined,
+  });
+  return { confidence, card, price: rawPrice ?? undefined };
+}
+
+// ── ONE PIECE ───────────────────────────────────────────────────────────────
 
 async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
   const num = id.number?.trim();
@@ -235,10 +195,49 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
   }
   if (!card) return [];
 
-  // Enrich with eBay price (OPTCG API has no pricing)
   const ebay = await enrichWithEbay(card);
   if (ebay.imageUrl && !card.imageUrl) card = { ...card, imageUrl: ebay.imageUrl };
   return [{ card, confidence: conf, price: ebay.price }];
+}
+
+// ── YU-GI-OH ────────────────────────────────────────────────────────────────
+
+async function findYGOCard(id: CardIdentification): Promise<ScanResult[]> {
+  if (!id.name) return [];
+
+  // id.number may be the 8-digit passcode OR a set code like "LOB-005"
+  const isPasscode = id.number ? /^\d{7,8}$/.test(id.number.trim()) : false;
+  const passcode = isPasscode ? id.number : undefined;
+  const setCode = !isPasscode && id.number ? id.number : undefined;
+
+  const result = await fetchYGOCard(id.name, passcode, setCode);
+  if (!result) return [];
+
+  const { card, price } = result;
+  return [{ card, confidence: isPasscode ? 0.99 : 0.9, price: price ?? undefined }];
+}
+
+// ── MAGIC: THE GATHERING ────────────────────────────────────────────────────
+
+async function findMTGCard(id: CardIdentification): Promise<ScanResult[]> {
+  if (!id.name) return [];
+
+  const result = await fetchMTGCard(id.name, id.set, id.number);
+  if (!result) return [];
+
+  const { card, price } = result;
+  return [{ card, confidence: id.number ? 0.95 : 0.88, price: price ?? undefined }];
+}
+
+// ── NARUTO ──────────────────────────────────────────────────────────────────
+
+async function findNarutoCard(id: CardIdentification): Promise<ScanResult[]> {
+  const results = buildNarutoResult(id);
+  if (!results.length) return [];
+  const ebay = await enrichWithEbay(results[0].card);
+  if (ebay.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
+  if (ebay.price) results[0].price = ebay.price;
+  return results;
 }
 
 function buildNarutoResult(id: CardIdentification): ScanResult[] {
@@ -269,44 +268,78 @@ function buildNarutoResult(id: CardIdentification): ScanResult[] {
   return [{ card, confidence: 0.85 }];
 }
 
+// ── LORCANA ─────────────────────────────────────────────────────────────────
+
+async function findLorcanaCard(id: CardIdentification): Promise<ScanResult[]> {
+  if (!id.name) return [];
+  const features = id.features ?? '';
+  const rarity = features.includes('Enchanted') ? 'Enchanted'
+    : features.includes('Super Rare') ? 'Super Rare'
+    : features.includes('Rare') ? 'Rare'
+    : features.includes('Uncommon') ? 'Uncommon'
+    : 'Common';
+
+  const card: Card = {
+    id: '',
+    game: 'lorcana',
+    apiId: id.number || `lorcana-${Date.now()}`,
+    name: id.name,
+    setName: id.set ?? '',
+    setCode: '',
+    number: id.number ?? '',
+    rarity,
+    imageUrl: '',
+    supertype: 'Character',
+  };
+
+  const ebay = await enrichWithEbay(card);
+  if (ebay.imageUrl) card.imageUrl = ebay.imageUrl;
+  return [{ card, confidence: 0.82, price: ebay.price }];
+}
+
+// ── EBAY ENRICHMENT ─────────────────────────────────────────────────────────
+
 function buildEbayQuery(name: string, number: string, game: string): string {
   const parts: string[] = [];
-
-  if (game === 'naruto') {
-    // Naruto CCG/TCG: use number (NS003), name, and game keyword
-    // Don't quote short names — too restrictive on eBay
-    if (number) parts.push(number);
-    if (name) parts.push(name);
-    parts.push('naruto');
-  } else if (game === 'onepiece') {
-    // One Piece: card code is the most specific identifier
-    if (number) parts.push(number);
-    if (name) parts.push(name);
-    parts.push('one piece card');
-  } else if (game === 'yugioh') {
-    if (name) parts.push(name);
-    if (number) parts.push(number);
-    parts.push('yugioh');
-  } else {
-    if (name) parts.push(`"${name}"`);
-    if (number) parts.push(number);
+  switch (game) {
+    case 'naruto':
+      if (number) parts.push(number);
+      if (name) parts.push(name);
+      parts.push('naruto');
+      break;
+    case 'onepiece':
+      if (number) parts.push(number);
+      if (name) parts.push(name);
+      parts.push('one piece card');
+      break;
+    case 'yugioh':
+      if (name) parts.push(`"${name}"`);
+      // Skip 8-digit passcode on eBay — it's internal YGO numbering, not in listing titles
+      if (number && !/^\d{7,8}$/.test(number)) parts.push(number);
+      parts.push('yugioh');
+      break;
+    case 'mtg':
+      if (name) parts.push(`"${name}"`);
+      parts.push('mtg magic');
+      break;
+    case 'lorcana':
+      if (name) parts.push(`"${name}"`);
+      parts.push('lorcana');
+      break;
+    default:
+      if (name) parts.push(`"${name}"`);
+      if (number) parts.push(number);
   }
-
   return parts.join(' ');
 }
 
 async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: import('@/types').CardPrice }> {
   if (Platform.OS !== 'web') return {};
   try {
-    // Validation payload — eBay endpoint filters results to titles containing
-    // these (with number-format variants handled server-side). Prevents
-    // "Kunai NS003" from matching a different "Special Kunai" listing.
     const validate = { name: card.name, number: card.number };
 
-    // Primary: strict query with number + name + game
     const primary = await callEbayLookup(buildEbayQuery(card.name, card.number, card.game), validate);
 
-    // Fallback: broader query (name + game only) — still validated against number
     let fallback = primary;
     if (!primary?.image && card.name) {
       fallback = await callEbayLookup(buildEbayQuery(card.name, '', card.game), validate);
@@ -349,6 +382,8 @@ async function callEbayLookup(query: string, validate?: { name: string; number: 
   }
 }
 
+// ── GIBL TCG ────────────────────────────────────────────────────────────────
+
 interface GiblIdentity {
   name: string;
   setCode: string;
@@ -381,44 +416,16 @@ async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
   }
 }
 
-async function findCardByGiblIdentity({ name, setCode, number, confidence, cardType, imageUrl }: GiblIdentity): Promise<ScanResult[]> {
-  // Route non-pokemon games
-  if (cardType === 'onepiece') {
-    const fullId = setCode && number
-      ? `${setCode.toUpperCase()}-${number.padStart(3, '0')}`
-      : number;
-    const opId: CardIdentification = { name, number: fullId, set: setCode, game: 'onepiece' };
-    const r = await findOPCard(opId);
-    if (r.length > 0) {
-      // GiblTCG image is already matched to the exact card — always prefer it
-      if (imageUrl) r[0].card = { ...r[0].card, imageUrl };
-      r[0].confidence = confidence;
-      return r;
-    }
-    // OPTCG API failed — build card from GiblTCG data + eBay enrichment
-    if (name || imageUrl) {
-      const card: Card = {
-        id: '',
-        game: 'onepiece',
-        apiId: fullId || `onepiece-${Date.now()}`,
-        name,
-        setName: setCode,
-        setCode: setCode.toUpperCase(),
-        number: fullId,
-        rarity: 'Common',
-        imageUrl: imageUrl ?? '',
-        supertype: 'Character',
-      };
-      const ebay = await enrichWithEbay(card);
-      if (ebay.imageUrl && !card.imageUrl) card.imageUrl = ebay.imageUrl;
-      return [{ card, confidence, price: ebay.price }];
-    }
-  }
-
-  // Naruto: GiblTCG doesn't carry old Naruto TCG (2002 Bandai) — it mismatches
-  // to Kayou cards. Always fall through to Claude Vision for naruto so the
-  // actual card number (PR001, N-001, etc.) is read from the card text.
-  if (cardType === 'naruto') return [];
+async function findCardByGiblIdentity({
+  name,
+  setCode,
+  number,
+  confidence,
+  cardType,
+}: GiblIdentity): Promise<ScanResult[]> {
+  // GiblTCG predict-card is only reliable for Pokémon — all other games
+  // are handled by Claude Vision via routeByGame.
+  if (cardType !== 'pokemon') return [];
 
   let tcgCard: TCGCard | null = null;
   let conf = confidence;
@@ -438,33 +445,68 @@ async function findCardByGiblIdentity({ name, setCode, number, confidence, cardT
   if (!tcgCard) return [];
 
   const result = buildScanResult(tcgCard, conf);
-
-  // Fetch fresh price from /api/price (supersedes embedded price)
   const fresh = await fetchFreshPrice(tcgCard.id, tcgCard.tcgplayerUrl, tcgCard.rarity);
   if (fresh) result.price = fresh;
 
   return [result];
 }
 
-function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
-  const card = tcgCardToCard(tcgCard);
-  const rawPrice = extractBestPrice({
-    id: tcgCard.id,
-    name: tcgCard.name,
-    supertype: tcgCard.supertype,
-    set: { id: tcgCard.setId, name: tcgCard.setName } as any,
-    number: tcgCard.number,
-    rarity: tcgCard.rarity,
-    images: { small: tcgCard.imageSmall, large: tcgCard.imageLarge },
-    tcgplayer: tcgCard.prices?.tcgplayer
-      ? { url: tcgCard.tcgplayerUrl ?? '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.tcgplayer as any }
-      : undefined,
-    cardmarket: tcgCard.prices?.cardmarket
-      ? { url: '', updatedAt: new Date().toISOString(), prices: tcgCard.prices.cardmarket as any }
-      : undefined,
-  });
+// ── CLAUDE VISION ───────────────────────────────────────────────────────────
 
-  return { confidence, card, price: rawPrice ?? undefined };
+async function identifyWithClaude(base64: string): Promise<CardIdentification | null> {
+  try {
+    if (Platform.OS === 'web') {
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.error) return null;
+      return data as CardIdentification;
+    }
+
+    if (!ANTHROPIC_KEY) return null;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+              { type: 'text', text: IDENTIFY_PROMPT },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text: string = data.content?.[0]?.text ?? '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]) as CardIdentification;
+  } catch {
+    return null;
+  }
+}
+
+// ── UTILITIES ────────────────────────────────────────────────────────────────
+
+function buildNameFilter(name: string): string {
+  const needsQuotes = /[\s']/.test(name);
+  return needsQuotes ? `name:"${name}"` : `name:${name}`;
 }
 
 export async function fetchFreshPrice(
