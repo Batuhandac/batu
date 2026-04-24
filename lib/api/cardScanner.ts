@@ -54,16 +54,35 @@ function cleanBase64(raw: string): string {
 export async function scanCardWithVision(base64: string): Promise<ScanResult[]> {
   const clean = cleanBase64(base64);
 
-  // Web: try GiblTCG vision first (proxied through serverless — no CORS, no key exposure)
   if (Platform.OS === 'web') {
-    const gibl = await identifyWithGibl(clean);
-    if (gibl) {
-      const results = await findCardByGiblIdentity(gibl);
+    // Run GiblTCG and Claude Vision in parallel — no added latency
+    const [gibl, identification] = await Promise.all([
+      identifyWithGibl(clean),
+      identifyWithClaude(clean),
+    ]);
+
+    const cvGame = identification?.game;
+
+    // GiblTCG's predict-card model is reliable only for Pokemon.
+    // If Claude Vision disagrees on the game, trust Claude Vision.
+    const useGibl =
+      gibl &&
+      gibl.cardType === 'pokemon' &&
+      (cvGame === 'pokemon' || cvGame === 'other' || !cvGame);
+
+    if (useGibl) {
+      const results = await findCardByGiblIdentity(gibl!);
       if (results.length > 0) return results;
     }
+
+    if (identification && identification.name && identification.game !== 'other') {
+      return routeByGame(identification);
+    }
+
+    return [];
   }
 
-  // Claude Vision fallback (web + mobile)
+  // Mobile: Claude Vision only
   const identification = await identifyWithClaude(clean);
   if (!identification || !identification.name || identification.game === 'other') return [];
   return routeByGame(identification);
