@@ -71,12 +71,9 @@ export default async function handler(req, res) {
 
     const price = extractPriceStats(soldItems);
 
-    // Image: prefer validated results; if none found, fall back to unvalidated
-    // first result (image-only fallback — price is never relaxed this way)
-    let image = extractBrowseImage(browseItems) ?? extractBestImage([...activeItems, ...soldItems]);
-    if (!image && validate) {
-      image = extractBrowseImage(browseItemsRaw) ?? extractBestImage([...activeItemsRaw, ...soldItemsRaw]);
-    }
+    // Image: validated results only. Never fall back to unvalidated items —
+    // a different card with the same character name would produce a wrong image.
+    const image = extractBrowseImage(browseItems) ?? extractBestImage([...activeItems, ...soldItems]);
 
     const listings = formatListings(activeItems.slice(0, 3));
 
@@ -121,11 +118,16 @@ function filterValidated(items, validate, apiType) {
 function termsFor(name) {
   if (!name) return [];
   const n = name.toLowerCase().trim();
-  const terms = [n];
-  // Also allow partial name (first word, useful for "Naruto Uzumaki" → "naruto")
-  const first = n.split(/\s+/)[0];
-  if (first !== n && first.length > 2) terms.push(first);
-  return terms;
+  const set = new Set();
+  set.add(n);
+  // Normalize dots/hyphens to spaces: "Monkey.D.Luffy" → "monkey d luffy"
+  const normalized = n.replace(/[.\-_]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (normalized !== n) set.add(normalized);
+  // Individual meaningful words (length > 2), useful for compound names
+  const words = normalized.split(/\s+/).filter((w) => w.length > 2);
+  if (words.length > 1) set.add(words[0]); // first word: "monkey"
+  if (words.length > 2) set.add(words[words.length - 1]); // last word: "luffy"
+  return Array.from(set);
 }
 
 function numberVariants(num) {

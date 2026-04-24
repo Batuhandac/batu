@@ -330,6 +330,8 @@ function buildEbayQuery(name: string, number: string, game: string): string {
     case 'onepiece':
       if (number) parts.push(number);
       if (name) parts.push(name);
+      // Promo codes (P-001, P-002...) add "promo" since sellers often omit the code
+      if (number && /^P-\d+$/i.test(number)) parts.push('promo');
       parts.push('one piece card');
       break;
     case 'yugioh':
