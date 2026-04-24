@@ -44,11 +44,19 @@ export function rawToOPCard(raw: OPRawCard): Card {
 export async function fetchOPCardById(cardId: string): Promise<Card | null> {
   try {
     const normalized = cardId.toUpperCase();
+    // Try direct card endpoint first
     const r = await fetch(`${BASE}/sets/card/${normalized}/`);
-    if (!r.ok) return null;
-    const data: OPRawCard = await r.json();
-    if (!data.card_id && !data.id && !data.name && !data.card_name) return null;
-    return rawToOPCard({ ...data, card_id: data.card_id ?? normalized });
+    if (r.ok) {
+      const data: OPRawCard = await r.json();
+      if (data.card_id || data.id || data.name || data.card_name) {
+        return rawToOPCard({ ...data, card_id: data.card_id ?? normalized });
+      }
+    }
+    // Promo cards (P-001, P-002...) may not be in the direct endpoint —
+    // fall back to name search using the card ID as query
+    const search = await searchOPCards(normalized.replace(/-/g, ' '), 5);
+    const match = search.find((c) => c.number?.toUpperCase() === normalized) ?? search[0] ?? null;
+    return match;
   } catch {
     return null;
   }
