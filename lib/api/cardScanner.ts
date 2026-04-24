@@ -2,8 +2,8 @@ import { Platform } from 'react-native';
 import { ScanResult, Card } from '@/types';
 import { fetchCardsByQuery, extractBestPrice, tcgCardToCard } from './pokemontcg';
 import { fetchOPCardById, fetchOPCardBySetAndNumber, searchOPCards } from './onepiece';
-import { fetchYGOCard } from './yugioh';
-import { fetchMTGCard } from './mtg';
+import { fetchYGOCard, ygoToCard, extractYGOPrice } from './yugioh';
+import { fetchMTGCard, scryfallToCard, extractMTGPrice } from './mtg';
 import type { TCGCard } from '@/types';
 
 const ANTHROPIC_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
@@ -225,7 +225,6 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
 async function findYGOCard(id: CardIdentification): Promise<ScanResult[]> {
   if (!id.name) return [];
 
-  // id.number may be the 8-digit passcode OR a set code like "LOB-005"
   const isPasscode = id.number ? /^\d{7,8}$/.test(id.number.trim()) : false;
   const passcode = isPasscode ? id.number : undefined;
   const setCode = !isPasscode && id.number ? id.number : undefined;
@@ -233,8 +232,37 @@ async function findYGOCard(id: CardIdentification): Promise<ScanResult[]> {
   const result = await fetchYGOCard(id.name, passcode, setCode);
   if (!result) return [];
 
-  const { card, price } = result;
-  return [{ card, confidence: isPasscode ? 0.99 : 0.9, price: price ?? undefined }];
+  const conf = isPasscode ? 0.99 : 0.9;
+  const primary: ScanResult = { card: result.card, confidence: conf, price: result.price ?? undefined };
+
+  // If not matched by passcode, fetch alternative printings (different sets/rarities)
+  // so user can pick the exact version they have
+  if (!isPasscode) {
+    const alts = await fetchYGOAlternatives(id.name, result.card.apiId);
+    if (alts.length) return [primary, ...alts];
+  }
+
+  return [primary];
+}
+
+async function fetchYGOAlternatives(name: string, excludeApiId: string): Promise<ScanResult[]> {
+  try {
+    const r = await fetch(
+      `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(name)}&num=4&offset=0`,
+    );
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data ?? [])
+      .filter((raw: any) => String(raw.id) !== excludeApiId)
+      .slice(0, 2)
+      .map((raw: any) => ({
+        card: ygoToCard(raw),
+        confidence: 0.75,
+        price: extractYGOPrice(raw) ?? undefined,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 // ── MAGIC: THE GATHERING ────────────────────────────────────────────────────
@@ -245,8 +273,35 @@ async function findMTGCard(id: CardIdentification): Promise<ScanResult[]> {
   const result = await fetchMTGCard(id.name, id.set, id.number);
   if (!result) return [];
 
-  const { card, price } = result;
-  return [{ card, confidence: id.number ? 0.95 : 0.88, price: price ?? undefined }];
+  const conf = id.number ? 0.95 : 0.88;
+  const primary: ScanResult = { card: result.card, confidence: conf, price: result.price ?? undefined };
+
+  // Fetch other printings as alternatives (Scryfall has all reprints)
+  const alts = await fetchMTGAlternatives(id.name, result.card.apiId);
+  if (alts.length) return [primary, ...alts];
+
+  return [primary];
+}
+
+async function fetchMTGAlternatives(name: string, excludeApiId: string): Promise<ScanResult[]> {
+  try {
+    const q = `!"${name}"`;
+    const r = await fetch(
+      `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&order=released&dir=desc&unique=prints`,
+    );
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data ?? [])
+      .filter((raw: any) => raw.id !== excludeApiId)
+      .slice(0, 2)
+      .map((raw: any) => ({
+        card: scryfallToCard(raw),
+        confidence: 0.75,
+        price: extractMTGPrice(raw) ?? undefined,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 // ── NARUTO ──────────────────────────────────────────────────────────────────

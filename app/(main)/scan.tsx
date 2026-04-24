@@ -28,11 +28,12 @@ export default function ScanScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   const { user } = useAuthStore();
-  const { phase, result, error, scan, reset, clearError } = useScanStore();
+  const { phase, results, activeIndex, error, scan, setActiveIndex, reset, clearError } = useScanStore();
   const { addCard } = useCollectionStore();
 
+  const result = results[activeIndex] ?? null;
   const isScanning = phase === 'scanning' || phase === 'processing';
-  const showResult = phase === 'result' && !!result;
+  const showResult = phase === 'result' && results.length > 0;
 
   const handleCapture = useCallback(async () => {
     if (!cameraRef.current || isScanning || !user) return;
@@ -76,7 +77,7 @@ export default function ScanScreen() {
       if (!result || !user) return;
       setAdding(true);
       try {
-        await addCard(user.id, result.card, { condition, quantity, foil });
+        await addCard(user.id, result.card, { condition, quantity, foil: foil });
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setAddedToast(true);
         reset();
@@ -106,8 +107,10 @@ export default function ScanScreen() {
           <Text style={styles.backBtnText}>Geri Dön</Text>
         </Pressable>
         <ScanResultSheet
-          result={result}
-          visible={phase === 'result' && !!result}
+          results={results}
+          activeIndex={activeIndex}
+          onSelectIndex={setActiveIndex}
+          visible={phase === 'result' && results.length > 0}
           onClose={reset}
           onAddToCollection={handleAddToCollection}
           adding={adding}
@@ -212,7 +215,9 @@ export default function ScanScreen() {
       </SafeAreaView>
 
       <ScanResultSheet
-        result={result}
+        results={results}
+        activeIndex={activeIndex}
+        onSelectIndex={setActiveIndex}
         visible={showResult}
         onClose={reset}
         onAddToCollection={handleAddToCollection}
