@@ -52,10 +52,10 @@ export async function fetchOPCardById(cardId: string): Promise<Card | null> {
         return rawToOPCard({ ...data, card_id: data.card_id ?? normalized });
       }
     }
-    // Promo cards (P-001, P-002...) may not be in the direct endpoint —
-    // fall back to name search using the card ID as query
-    const search = await searchOPCards(normalized.replace(/-/g, ' '), 5);
-    const match = search.find((c) => c.number?.toUpperCase() === normalized) ?? search[0] ?? null;
+    // Promo cards (P-001...) may not be indexed — search by exact ID only.
+    // Never fall back to "first result" as it could be a completely different card.
+    const search = await searchOPCards(normalized, 5);
+    const match = search.find((c) => c.number?.toUpperCase() === normalized) ?? null;
     return match;
   } catch {
     return null;

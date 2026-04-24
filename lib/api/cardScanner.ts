@@ -189,9 +189,29 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
     card = await fetchOPCardBySetAndNumber(setCode, num);
     if (card) conf = 0.92;
   }
-  if (!card && id.name) {
+  // Only name-search when we have NO specific card number.
+  // With a number (e.g. P-001), a name search returns a different printing of
+  // the same character — which is a wrong card, not a fallback.
+  if (!card && id.name && !num) {
     const cards = await searchOPCards(id.name, 5);
     if (cards.length > 0) { card = cards[0]; conf = 0.75; }
+  }
+  // OPTCG doesn't have the card (e.g. promo P-001) — build from Claude Vision
+  // data and let eBay provide the image and price for this specific number.
+  if (!card && id.name) {
+    card = {
+      id: '',
+      game: 'onepiece',
+      apiId: num || `onepiece-${Date.now()}`,
+      name: id.name,
+      setName: id.set ?? '',
+      setCode: num?.split('-')[0] ?? '',
+      number: num ?? '',
+      rarity: id.features?.includes('Promo') ? 'Promo' : 'Common',
+      imageUrl: '',
+      supertype: 'Character',
+    };
+    conf = 0.80;
   }
   if (!card) return [];
 
