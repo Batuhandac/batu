@@ -365,9 +365,35 @@ async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
 async function findCardByGiblIdentity({ name, setCode, number, confidence, cardType, imageUrl }: GiblIdentity): Promise<ScanResult[]> {
   // Route non-pokemon games
   if (cardType === 'onepiece') {
-    const opId: CardIdentification = { name, number: setCode && number ? `${setCode.toUpperCase()}-${number.padStart(3,'0')}` : number, set: setCode, game: 'onepiece' };
+    const fullId = setCode && number
+      ? `${setCode.toUpperCase()}-${number.padStart(3, '0')}`
+      : number;
+    const opId: CardIdentification = { name, number: fullId, set: setCode, game: 'onepiece' };
     const r = await findOPCard(opId);
-    if (r.length > 0) return r;
+    if (r.length > 0) {
+      // GiblTCG image is already matched to the exact card — always prefer it
+      if (imageUrl) r[0].card = { ...r[0].card, imageUrl };
+      r[0].confidence = confidence;
+      return r;
+    }
+    // OPTCG API failed — build card from GiblTCG data + eBay enrichment
+    if (name || imageUrl) {
+      const card: Card = {
+        id: '',
+        game: 'onepiece',
+        apiId: fullId || `onepiece-${Date.now()}`,
+        name,
+        setName: setCode,
+        setCode: setCode.toUpperCase(),
+        number: fullId,
+        rarity: 'Common',
+        imageUrl: imageUrl ?? '',
+        supertype: 'Character',
+      };
+      const ebay = await enrichWithEbay(card);
+      if (ebay.imageUrl && !card.imageUrl) card.imageUrl = ebay.imageUrl;
+      return [{ card, confidence, price: ebay.price }];
+    }
   }
 
   // Naruto: GiblTCG doesn't carry old Naruto TCG (2002 Bandai) — it mismatches

@@ -38,7 +38,8 @@ export default async function handler(req, res) {
     const topId = predict.identity[0];
     const cardIdentityId = topId.card_identity;
     const confidence = topId.card_identity_confidence / 100;
-    const cardType = predict.card_type ?? 'pokemon';
+    // Normalize card_type: "one_piece" → "onepiece", "yu_gi_oh" → "yugioh", etc.
+    const cardType = (predict.card_type ?? 'pokemon').replace(/_/g, '');
 
     const cardInfo = await lookupCard(cardType, cardIdentityId);
 
