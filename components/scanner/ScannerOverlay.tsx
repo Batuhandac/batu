@@ -35,8 +35,8 @@ export function ScannerOverlay() {
   );
 }
 
-const MASK = 'rgba(0,0,0,0.6)';
-const CORNER_COLOR = '#2F81F7';
+const MASK = 'rgba(0,0,0,0.62)';
+const CORNER_COLOR = '#47EAED';
 const CORNER_SIZE = 24;
 const CORNER_THICK = 3;
 

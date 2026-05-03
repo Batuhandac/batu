@@ -9,8 +9,10 @@ export interface OPRawCard {
   card_name?: string;
   card_image?: string;
   image?: string;
+  card_set_id?: string;
   rarity?: string;
   set?: string;
+  set_name?: string;
   set_id?: string;
   type?: string;
   cost?: string | number;
@@ -21,7 +23,7 @@ export interface OPRawCard {
 }
 
 export function rawToOPCard(raw: OPRawCard): Card {
-  const cardId = raw.card_id ?? raw.id ?? '';
+  const cardId = raw.card_set_id ?? raw.card_id ?? raw.id ?? '';
   // OP01-001 → setCode=OP01, number=001
   const parts = cardId.split('-');
   const setCode = parts.length >= 2 ? parts.slice(0, -1).join('-') : '';
@@ -32,7 +34,7 @@ export function rawToOPCard(raw: OPRawCard): Card {
     game: 'onepiece',
     apiId: cardId,
     name: raw.card_name ?? raw.name ?? '',
-    setName: raw.set ?? raw.set_id ?? setCode,
+    setName: raw.set_name ?? raw.set ?? raw.set_id ?? setCode,
     setCode,
     number: cardId, // full code like OP01-001
     rarity: raw.rarity ?? 'Common',
@@ -47,9 +49,10 @@ export async function fetchOPCardById(cardId: string): Promise<Card | null> {
     // Try direct card endpoint first
     const r = await fetch(`${BASE}/sets/card/${normalized}/`);
     if (r.ok) {
-      const data: OPRawCard = await r.json();
-      if (data.card_id || data.id || data.name || data.card_name) {
-        return rawToOPCard({ ...data, card_id: data.card_id ?? normalized });
+      const rawData = await r.json();
+      const data: OPRawCard = Array.isArray(rawData) ? rawData[0] : rawData;
+      if (data.card_set_id || data.card_id || data.id || data.name || data.card_name) {
+        return rawToOPCard({ ...data, card_set_id: data.card_set_id ?? normalized });
       }
     }
     // Promo cards (P-001...) may not be indexed — search by exact ID only.

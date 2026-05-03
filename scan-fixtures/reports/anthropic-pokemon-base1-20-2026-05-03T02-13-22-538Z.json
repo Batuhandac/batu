@@ -1,0 +1,576 @@
+{
+  "createdAt": "2026-05-03T02:13:22.537Z",
+  "provider": "anthropic",
+  "apiBase": "https://batu-tcg.vercel.app",
+  "setIds": [
+    "base1"
+  ],
+  "limit": 20,
+  "totals": {
+    "correct": 19,
+    "wrong": 1
+  },
+  "correctRate": 0.95,
+  "results": [
+    {
+      "id": "base1-1",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Alakazam",
+        "number": "1",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/1_hires.png"
+      },
+      "actual": {
+        "name": "Alakazam",
+        "hp": "80",
+        "number": "1/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-2",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Blastoise",
+        "number": "2",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/2_hires.png"
+      },
+      "actual": {
+        "name": "Blastoise",
+        "hp": "100",
+        "number": "2/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-3",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Chansey",
+        "number": "3",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/3_hires.png"
+      },
+      "actual": {
+        "name": "Chansey",
+        "hp": "120",
+        "number": "3/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-4",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Charizard",
+        "number": "4",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/4_hires.png"
+      },
+      "actual": {
+        "name": "Charizard",
+        "hp": "120",
+        "number": "4/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-5",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Clefairy",
+        "number": "5",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/5_hires.png"
+      },
+      "actual": {
+        "name": "Clefairy",
+        "hp": "40",
+        "number": "51/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-6",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Gyarados",
+        "number": "6",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/6_hires.png"
+      },
+      "actual": {
+        "name": "Gyarados",
+        "hp": "100",
+        "number": "6/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-7",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Hitmonchan",
+        "number": "7",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/7_hires.png"
+      },
+      "actual": {
+        "name": "Hitmonchan",
+        "hp": "70",
+        "number": "7/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-8",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Machamp",
+        "number": "8",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/8_hires.png"
+      },
+      "actual": {
+        "name": "Machamp",
+        "hp": "100",
+        "number": "8/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-9",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Magneton",
+        "number": "9",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/9_hires.png"
+      },
+      "actual": {
+        "name": "Magneton",
+        "hp": "60",
+        "number": "9/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-10",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Mewtwo",
+        "number": "10",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/10_hires.png"
+      },
+      "actual": {
+        "name": "Mewtwo",
+        "hp": "60",
+        "number": "10/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-11",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Nidoking",
+        "number": "11",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/11_hires.png"
+      },
+      "actual": {
+        "name": "Nidoking",
+        "hp": "90",
+        "number": "11/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-12",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Ninetales",
+        "number": "12",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/12_hires.png"
+      },
+      "actual": {
+        "name": "Ninetales",
+        "hp": "80",
+        "number": "12/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-13",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Poliwrath",
+        "number": "13",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/13_hires.png"
+      },
+      "actual": {
+        "name": "Poliwrath",
+        "hp": "90",
+        "number": "13/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-14",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Raichu",
+        "number": "14",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/14_hires.png"
+      },
+      "actual": {
+        "name": "Raichu",
+        "hp": "80",
+        "number": "14/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-15",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Venusaur",
+        "number": "15",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/15_hires.png"
+      },
+      "actual": {
+        "name": "Venusaur",
+        "hp": "100",
+        "number": "15/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-16",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Zapdos",
+        "number": "16",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/16_hires.png"
+      },
+      "actual": {
+        "name": "Zapdos",
+        "hp": "90",
+        "number": "16/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-17",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Beedrill",
+        "number": "17",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/17_hires.png"
+      },
+      "actual": {
+        "name": "Beedrill",
+        "hp": "80",
+        "number": "17/102",
+        "set": "Base Set 2",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-18",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Dragonair",
+        "number": "18",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/18_hires.png"
+      },
+      "actual": {
+        "name": "Dragonair",
+        "hp": "80",
+        "number": "18/102",
+        "set": "Base Set 2",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-19",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Dugtrio",
+        "number": "19",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/19_hires.png"
+      },
+      "actual": {
+        "name": "Dugtrio",
+        "hp": "70",
+        "number": "19/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-20",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Electabuzz",
+        "number": "20",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/20_hires.png"
+      },
+      "actual": {
+        "name": "Electabuzz",
+        "hp": "70",
+        "number": "20/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    }
+  ]
+}

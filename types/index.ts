@@ -99,6 +99,11 @@ export interface ScanResult {
   card: Card;
   confidence: number;
   price?: CardPrice;
+  verification?: {
+    status: 'verified' | 'needs_review' | 'unidentified';
+    provider: string;
+    reasons: string[];
+  };
 }
 
 export interface TradeSetup {
@@ -149,6 +154,7 @@ export interface TCGCard {
   types?: string[];
   setId: string;
   setName: string;
+  printedTotal?: number;
   number: string;
   rarity: string;
   artist?: string;

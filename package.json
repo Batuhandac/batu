@@ -1,12 +1,16 @@
 {
-  "name": "batu",
+  "name": "cardory",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "scan:verify": "node scripts/verify-scan-fixtures.js",
+    "scan:bench:pokemon": "node scripts/benchmark-pokemon-scanner.js",
+    "scan:bench:anthropic": "node scripts/benchmark-anthropic-pokemon.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.0.0",
@@ -37,7 +41,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "~19.1.10",
     "typescript": "^5.3.3"
   }
 }

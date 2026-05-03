@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Image as RNImage,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,16 +14,28 @@ import {
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontSize, radius, spacing } from '@/constants/theme';
+import { ExpansionRegion, inferExpansionRegion } from '@/lib/collection/dexFeatures';
 import { useBrowseStore } from '@/stores/browseStore';
 import { SetInfo } from '@/types';
 
-type GameFilter = 'all' | 'pokemon' | 'yugioh' | 'onepiece' | 'mtg' | 'lorcana';
+type GameFilter = 'all' | 'pokemon' | 'yugioh' | 'onepiece' | 'mtg' | 'lorcana' | 'naruto';
+type RegionFilter = 'all' | ExpansionRegion;
+
+const GAMES: { key: GameFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'pokemon', label: 'Pokemon' },
+  { key: 'yugioh', label: 'Yu-Gi-Oh!' },
+  { key: 'onepiece', label: 'One Piece' },
+  { key: 'mtg', label: 'MTG' },
+  { key: 'lorcana', label: 'Lorcana' },
+  { key: 'naruto', label: 'Naruto' },
+];
 
 export default function BrowseScreen() {
   const { sets, loading, loadSets } = useBrowseStore();
   const [search, setSearch] = useState('');
   const [gameFilter, setGameFilter] = useState<GameFilter>('pokemon');
-  const [searchMode, setSearchMode] = useState(false);
+  const [regionFilter, setRegionFilter] = useState<RegionFilter>('all');
 
   useEffect(() => {
     loadSets();
@@ -30,98 +43,104 @@ export default function BrowseScreen() {
 
   const filtered = useMemo(() => {
     let result = sets;
-    if (gameFilter !== 'all') result = result.filter((s) => s.game === gameFilter);
+    if (gameFilter !== 'all') result = result.filter((set) => set.game === gameFilter);
+    if (regionFilter !== 'all') {
+      result = result.filter((set) => inferExpansionRegion(set.name, set.series) === regionFilter);
+    }
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const query = search.toLowerCase();
       result = result.filter(
-        (s) => s.name.toLowerCase().includes(q) || s.series.toLowerCase().includes(q),
+        (set) =>
+          set.name.toLowerCase().includes(query) ||
+          set.series.toLowerCase().includes(query) ||
+          set.id.toLowerCase().includes(query),
       );
     }
     return result;
-  }, [sets, gameFilter, search]);
+  }, [sets, gameFilter, regionFilter, search]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, SetInfo[]>();
-    filtered.forEach((s) => {
-      const list = map.get(s.series) ?? [];
-      list.push(s);
-      map.set(s.series, list);
+  const rows = useMemo(() => {
+    const grouped = new Map<string, SetInfo[]>();
+    for (const set of filtered) {
+      const list = grouped.get(set.series) ?? [];
+      list.push(set);
+      grouped.set(set.series, list);
+    }
+
+    const flat: ({ type: 'header'; series: string } | { type: 'set'; set: SetInfo })[] = [];
+    grouped.forEach((items, series) => {
+      flat.push({ type: 'header', series });
+      items.forEach((set) => flat.push({ type: 'set', set }));
     });
-    return Array.from(map.entries()).map(([series, items]) => ({ series, items }));
+    return flat;
   }, [filtered]);
-
-  const flat = useMemo(() => {
-    const rows: ({ type: 'header'; series: string } | { type: 'set'; set: SetInfo })[] = [];
-    grouped.forEach(({ series, items }) => {
-      rows.push({ type: 'header', series });
-      items.forEach((set) => rows.push({ type: 'set', set }));
-    });
-    return rows;
-  }, [grouped]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Keşfet</Text>
-        <Pressable
-          style={styles.searchToggle}
-          onPress={() => {
-            setSearchMode(!searchMode);
-            setSearch('');
-          }}
-        >
-          <Text style={styles.searchToggleText}>{searchMode ? '✕' : '🔍'}</Text>
-        </Pressable>
+      <View style={styles.topBar}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>C</Text>
+        </View>
+        <Text style={styles.brand}>Cardory</Text>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>SR</Text>
+        </View>
       </View>
 
-      {searchMode && (
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+      <View style={styles.filters}>
+        <View style={styles.searchBox}>
+          <Text style={styles.searchIcon}>SRCH</Text>
           <TextInput
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
-            placeholder="Set ara..."
+            placeholder="Search sets by name or code..."
             placeholderTextColor={colors.textFaint}
-            autoFocus
           />
         </View>
-      )}
 
-      <View style={styles.gameFilters}>
-        {(
-          [
-            { key: 'pokemon', emoji: '⚡', label: 'Pokémon' },
-            { key: 'yugioh', emoji: '⭐', label: 'Yu-Gi-Oh!' },
-            { key: 'onepiece', emoji: '🏴‍☠️', label: 'One Piece' },
-            { key: 'mtg', emoji: '🔮', label: 'MTG' },
-            { key: 'lorcana', emoji: '🌙', label: 'Lorcana' },
-          ] as { key: GameFilter; emoji: string; label: string }[]
-        ).map(({ key, emoji, label }) => (
-          <Pressable
-            key={key}
-            style={[styles.gameChip, gameFilter === key && styles.gameChipActive]}
-            onPress={() => setGameFilter(key)}
-          >
-            <Text style={styles.gameChipEmoji}>{emoji}</Text>
-            <Text style={[styles.gameChipLabel, gameFilter === key && styles.gameChipLabelActive]}>
-              {label}
-            </Text>
-          </Pressable>
-        ))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          {GAMES.map((game) => (
+            <Chip
+              key={game.key}
+              label={game.label}
+              active={gameFilter === game.key}
+              onPress={() => setGameFilter(game.key)}
+            />
+          ))}
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          {(
+            [
+              { key: 'all', label: 'Region: All' },
+              { key: 'international', label: 'International' },
+              { key: 'japan', label: 'Japan' },
+              { key: 'china', label: 'China' },
+            ] as { key: RegionFilter; label: string }[]
+          ).map((region) => (
+            <Chip
+              key={region.key}
+              label={region.label}
+              active={regionFilter === region.key}
+              onPress={() => setRegionFilter(region.key)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
       {loading && sets.length === 0 ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Setler yükleniyor...</Text>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={styles.loadingText}>Loading sets...</Text>
         </View>
       ) : (
         <FlatList
-          data={flat}
-          keyExtractor={(item, i) =>
-            item.type === 'header' ? `h-${item.series}` : `s-${item.set.id}-${i}`
-          }
+          data={rows}
+          keyExtractor={(item, index) => (item.type === 'header' ? `h-${item.series}` : `s-${item.set.id}-${index}`)}
+          renderItem={({ item }) => (item.type === 'header' ? <SeriesHeader title={item.series} /> : <SetRow set={item.set} />)}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={loading}
@@ -132,18 +151,10 @@ export default function BrowseScreen() {
               tintColor={colors.primary}
             />
           }
-          renderItem={({ item }) => {
-            if (item.type === 'header') {
-              return <Text style={styles.seriesHeader}>{item.series}</Text>;
-            }
-            return <SetRow set={item.set} />;
-          }}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyEmoji}>🔍</Text>
-              <Text style={styles.emptyText}>Set bulunamadı</Text>
+              <Text style={styles.emptyTitle}>No sets found</Text>
+              <Text style={styles.emptyText}>Try a different game, region or search term.</Text>
             </View>
           }
         />
@@ -152,132 +163,159 @@ export default function BrowseScreen() {
   );
 }
 
-function SetRow({ set }: { set: SetInfo }) {
+function SeriesHeader({ title }: { title: string }) {
   return (
-    <Pressable
-      style={({ pressed }) => [styles.setRow, pressed && styles.setRowPressed]}
-      onPress={() => router.push(`/(main)/browse/${set.id}`)}
-    >
-      {set.logoUrl ? (
-        <RNImage source={{ uri: set.logoUrl }} style={styles.setLogo} resizeMode="contain" />
-      ) : (
-        <View style={[styles.setLogo, styles.setLogoPlaceholder]}>
-          <Text style={styles.setLogoEmoji}>🃏</Text>
-        </View>
-      )}
-      <View style={styles.setInfo}>
-        <Text style={styles.setName}>{set.name}</Text>
-        <Text style={styles.setMeta}>
-          {set.releaseDate?.replace(/\//g, '.')} · {set.total} kart
-        </Text>
+    <View style={styles.seriesHeader}>
+      <View style={styles.seriesAccent} />
+      <Text style={styles.seriesText}>{title}</Text>
+    </View>
+  );
+}
+
+function SetRow({ set }: { set: SetInfo }) {
+  const month = set.releaseDate ? set.releaseDate.replace(/\//g, '.') : 'Unknown';
+  const code = set.id.toUpperCase();
+
+  return (
+    <Pressable style={({ pressed }) => [styles.setRow, pressed && styles.setPressed]} onPress={() => router.push(`/(main)/browse/${set.id}`)}>
+      <View style={styles.logoBox}>
+        {set.logoUrl ? (
+          <RNImage source={{ uri: set.logoUrl }} style={styles.logo} resizeMode="contain" />
+        ) : (
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoPlaceholderText}>{code.slice(0, 3)}</Text>
+          </View>
+        )}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <View style={styles.setInfo}>
+        <Text style={styles.setName} numberOfLines={1}>{set.name}</Text>
+        <Text style={styles.setMeta} numberOfLines={1}>{code} - {month} - {set.total} cards</Text>
+      </View>
+      <View style={styles.progressBlock}>
+        <Text style={styles.progressText}>0%</Text>
+        <View style={styles.progressTrack}>
+          <View style={styles.progressFill} />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  header: {
+  topBar: {
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    backgroundColor: colors.surfaceLowest,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '800' },
-  searchToggle: {
-    width: 36,
-    height: 36,
+  avatar: {
+    width: 34,
+    height: 34,
     borderRadius: radius.full,
-    backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  searchToggleText: { fontSize: 16 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: spacing.xl,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  searchIcon: { fontSize: 15, marginRight: spacing.sm },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: fontSize.md,
-    paddingVertical: spacing.md,
-  },
-  gameFilters: {
-    flexDirection: 'row',
+  avatarText: { color: colors.textMuted, fontSize: 9, fontWeight: '900' },
+  brand: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '900' },
+  filters: {
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: colors.bg,
     gap: spacing.sm,
-    marginBottom: spacing.md,
-    flexWrap: 'wrap',
   },
-  gameChip: {
+  searchBox: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
   },
-  gameChipActive: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
+  searchIcon: { color: colors.textFaint, fontSize: 9, fontWeight: '900' },
+  searchInput: { flex: 1, height: '100%', color: colors.text, fontSize: fontSize.sm },
+  chipRow: { gap: spacing.sm, paddingRight: spacing.xl },
+  chip: {
+    height: 34,
+    justifyContent: 'center',
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
   },
-  gameChipEmoji: { fontSize: 13 },
-  gameChipLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '600' },
-  gameChipLabelActive: { color: colors.primary },
-  list: { paddingBottom: 100 },
+  chipActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+  chipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '900' },
+  chipTextActive: { color: colors.primary },
+  list: { paddingBottom: 112 },
   seriesHeader: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
   },
+  seriesAccent: { width: 3, height: 22, borderRadius: radius.full, backgroundColor: colors.primary },
+  seriesText: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     gap: spacing.md,
+    minHeight: 78,
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
-  setRowPressed: { backgroundColor: colors.surfaceHover },
-  setLogo: { width: 80, height: 40 },
-  setLogoPlaceholder: {
-    backgroundColor: colors.surfaceAlt,
+  setPressed: { backgroundColor: colors.surfaceHover },
+  logoBox: {
+    width: 58,
+    height: 58,
     borderRadius: radius.sm,
+    backgroundColor: colors.surfaceHover,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  setLogoEmoji: { fontSize: 20 },
-  setInfo: { flex: 1 },
-  setName: { color: colors.text, fontSize: fontSize.md, fontWeight: '600' },
-  setMeta: { color: colors.textMuted, fontSize: fontSize.sm, marginTop: 2 },
-  chevron: { color: colors.textFaint, fontSize: 20 },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: spacing.xxxl * 2,
-    gap: spacing.md,
-  },
-  loadingText: { color: colors.textMuted, fontSize: fontSize.md },
-  emptyEmoji: { fontSize: 40 },
-  emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+  logo: { width: 52, height: 42 },
+  logoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  logoPlaceholderText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '900' },
+  setInfo: { flex: 1, minWidth: 0 },
+  setName: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  setMeta: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 3 },
+  progressBlock: { width: 54, alignItems: 'flex-end', gap: 5 },
+  progressText: { color: colors.textFaint, fontSize: fontSize.xs, fontWeight: '900' },
+  progressTrack: { width: 54, height: 4, backgroundColor: colors.surfaceHover, borderRadius: radius.full },
+  progressFill: { width: 0, height: '100%', backgroundColor: colors.primary },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
+  loadingText: { color: colors.textMuted, fontSize: fontSize.sm },
+  emptyTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '900' },
+  emptyText: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center' },
 });

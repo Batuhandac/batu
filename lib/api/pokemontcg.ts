@@ -135,6 +135,7 @@ export function rawToTCGCard(raw: RawTCGCard): TCGCard {
     types: raw.types,
     setId: raw.set.id,
     setName: raw.set.name,
+    printedTotal: raw.set.printedTotal,
     number: raw.number,
     rarity: raw.rarity ?? 'Common',
     artist: raw.artist,

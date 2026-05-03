@@ -1,4 +1,4 @@
-import { Card, Game, ScanResult } from '@/types';
+import { Game, ScanResult } from '@/types';
 import { scanCardWithVision } from './cardScanner';
 
 const BASE_URL = process.env.EXPO_PUBLIC_GIBLTCG_BASE_URL ?? 'https://api.gibltcg.com/v1';
@@ -25,19 +25,16 @@ export interface GiblScanResponse {
 }
 
 export async function scanCardImage(imageBase64: string): Promise<ScanResult[]> {
-  // Try Claude Vision first (works without GiblTCG key)
   const visionResults = await scanCardWithVision(imageBase64);
   if (visionResults.length > 0) return visionResults;
 
-  if (!API_KEY) {
-    return getMockScanResult();
-  }
+  if (!API_KEY) return [];
 
   try {
     const response = await fetch(`${BASE_URL}/scan`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        Authorization: `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -47,15 +44,12 @@ export async function scanCardImage(imageBase64: string): Promise<ScanResult[]> 
     });
 
     if (!response.ok) {
-      console.warn(`GiblTCG scan failed: ${response.status}, falling back to mock`);
-      return getMockScanResult();
+      console.warn(`GiblTCG scan failed: ${response.status}`);
+      return [];
     }
 
     const data: GiblScanResponse = await response.json();
-
-    if (!data.success || !data.results?.length) {
-      return [];
-    }
+    if (!data.success || !data.results?.length) return [];
 
     return data.results.map((r) => ({
       confidence: r.confidence,
@@ -72,85 +66,7 @@ export async function scanCardImage(imageBase64: string): Promise<ScanResult[]> 
       },
     }));
   } catch (err) {
-    console.warn('GiblTCG network error, falling back to mock:', err);
-    return getMockScanResult();
+    console.warn('GiblTCG network error:', err);
+    return [];
   }
-}
-
-const MOCK_CARDS: ScanResult[] = [
-  {
-    confidence: 0.97,
-    card: {
-      id: 'mock-charizard',
-      game: 'pokemon',
-      apiId: 'base1-4',
-      name: 'Charizard',
-      setName: 'Base Set',
-      setCode: 'base1',
-      number: '4/102',
-      rarity: 'Holo Rare',
-      imageUrl: 'https://images.pokemontcg.io/base1/4_hires.png',
-    },
-  },
-  {
-    confidence: 0.95,
-    card: {
-      id: 'mock-pikachu',
-      game: 'pokemon',
-      apiId: 'base1-58',
-      name: 'Pikachu',
-      setName: 'Base Set',
-      setCode: 'base1',
-      number: '58/102',
-      rarity: 'Common',
-      imageUrl: 'https://images.pokemontcg.io/base1/58_hires.png',
-    },
-  },
-  {
-    confidence: 0.93,
-    card: {
-      id: 'mock-mewtwo',
-      game: 'pokemon',
-      apiId: 'base1-10',
-      name: 'Mewtwo',
-      setName: 'Base Set',
-      setCode: 'base1',
-      number: '10/102',
-      rarity: 'Holo Rare',
-      imageUrl: 'https://images.pokemontcg.io/base1/10_hires.png',
-    },
-  },
-  {
-    confidence: 0.96,
-    card: {
-      id: 'mock-blastoise',
-      game: 'pokemon',
-      apiId: 'base1-2',
-      name: 'Blastoise',
-      setName: 'Base Set',
-      setCode: 'base1',
-      number: '2/102',
-      rarity: 'Holo Rare',
-      imageUrl: 'https://images.pokemontcg.io/base1/2_hires.png',
-    },
-  },
-  {
-    confidence: 0.94,
-    card: {
-      id: 'mock-venusaur',
-      game: 'pokemon',
-      apiId: 'base1-15',
-      name: 'Venusaur',
-      setName: 'Base Set',
-      setCode: 'base1',
-      number: '15/102',
-      rarity: 'Holo Rare',
-      imageUrl: 'https://images.pokemontcg.io/base1/15_hires.png',
-    },
-  },
-];
-
-function getMockScanResult(): ScanResult[] {
-  const card = MOCK_CARDS[Math.floor(Math.random() * MOCK_CARDS.length)];
-  return [card];
 }

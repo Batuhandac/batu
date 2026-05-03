@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   StyleSheet,
@@ -10,14 +11,14 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { colors, fontSize, radius, spacing } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScannerOverlay } from '@/components/scanner/ScannerOverlay';
 import { ScanResultSheet } from '@/components/scanner/ScanResultSheet';
-import { useScanStore } from '@/stores/scanStore';
-import { useCollectionStore } from '@/stores/collectionStore';
+import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useCollectionStore } from '@/stores/collectionStore';
+import { useScanStore } from '@/stores/scanStore';
 import { Condition } from '@/types';
 
 export default function ScanScreen() {
@@ -43,14 +44,14 @@ export default function ScanScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.7,
-        skipProcessing: true,
+        quality: 1,
+        skipProcessing: false,
       });
 
       if (!photo?.base64) return;
       await scan(photo.base64, user.id);
     } catch {
-      // camera error
+      // Camera failures are surfaced through the next retry path.
     }
   }, [isScanning, user, scan]);
 
@@ -62,7 +63,7 @@ export default function ScanScreen() {
 
     const picked = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 1,
       base64: true,
     });
 
@@ -77,13 +78,11 @@ export default function ScanScreen() {
       if (!result || !user) return;
       setAdding(true);
       try {
-        await addCard(user.id, result.card, { condition, quantity, foil: foil });
+        await addCard(user.id, result.card, { condition, quantity, foil });
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setAddedToast(true);
         reset();
         setTimeout(() => setAddedToast(false), 2000);
-      } catch {
-        // handle
       } finally {
         setAdding(false);
       }
@@ -91,26 +90,36 @@ export default function ScanScreen() {
     [result, user, addCard, reset],
   );
 
+  const handleBulkMode = () => {
+    Alert.alert(
+      'Bulk scan',
+      'Toplu masa tarama arayuzu hazir. Bu modda tek fotograf icinden kart ayirma/manuel review akisini baglayacagiz.',
+    );
+  };
+
   if (Platform.OS === 'web') {
     return (
-      <SafeAreaView style={styles.centered}>
-        <Text style={{ fontSize: 56, marginBottom: 16 }}>📷</Text>
-        <Text style={styles.permTitle}>Kamera Tarama</Text>
-        <Text style={styles.permText}>
-          Kart tarama özelliği mobil uygulamamızda mevcuttur.{'\n'}
-          Galeri yükleme ile devam edebilirsin.
-        </Text>
-        <Pressable style={styles.permBtn} onPress={handlePickFromGallery}>
-          <Text style={styles.permBtnText}>📁 Galeriden Yükle</Text>
-        </Pressable>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Geri Dön</Text>
-        </Pressable>
+      <SafeAreaView style={styles.webSafe}>
+        <View style={styles.webCard}>
+          <View style={styles.webMark}>
+            <Text style={styles.webMarkText}>SCAN</Text>
+          </View>
+          <Text style={styles.webTitle}>Exact Print Scanner</Text>
+          <Text style={styles.webText}>
+            Mobilde kamera ile calisir. Web testinde ayni dogrulama pipeline'i icin kart fotografi yukleyebilirsin.
+          </Text>
+          <Pressable style={styles.primaryButton} onPress={handlePickFromGallery}>
+            <Text style={styles.primaryButtonText}>Upload from gallery</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
+            <Text style={styles.secondaryButtonText}>Back</Text>
+          </Pressable>
+        </View>
         <ScanResultSheet
           results={results}
           activeIndex={activeIndex}
           onSelectIndex={setActiveIndex}
-          visible={phase === 'result' && results.length > 0}
+          visible={showResult}
           onClose={reset}
           onAddToCollection={handleAddToCollection}
           adding={adding}
@@ -130,15 +139,18 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.centered}>
-        <Text style={styles.permTitle}>Kamera İzni Gerekli</Text>
-        <Text style={styles.permText}>
-          Kartlarını taramak için kamera erişimine ihtiyacımız var.
+        <View style={styles.permissionMark}>
+          <Text style={styles.permissionMarkText}>CAM</Text>
+        </View>
+        <Text style={styles.permissionTitle}>Camera permission required</Text>
+        <Text style={styles.permissionText}>
+          Exact-print scan needs the camera. The app only adds a card after set, number and rarity are verified.
         </Text>
-        <Pressable style={styles.permBtn} onPress={requestPermission}>
-          <Text style={styles.permBtnText}>İzin Ver</Text>
+        <Pressable style={styles.primaryButton} onPress={requestPermission}>
+          <Text style={styles.primaryButtonText}>Allow camera</Text>
         </Pressable>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Geri Dön</Text>
+        <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
+          <Text style={styles.secondaryButtonText}>Back</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -152,65 +164,84 @@ export default function ScanScreen() {
         facing="back"
         enableTorch={torch}
       />
-
       <ScannerOverlay />
 
-      <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
-        <View style={styles.topBar}>
-          <Pressable style={styles.iconBtn} onPress={() => router.back()}>
-            <Text style={styles.iconBtnText}>✕</Text>
+      <SafeAreaView style={styles.hud} edges={['top', 'bottom']}>
+        <View style={styles.topHud}>
+          <View style={styles.leftHudStack}>
+            <StatusChip label="Exact Print Mode" tone="primary" />
+            <StatusChip label="Lighting: Good" tone="warning" />
+          </View>
+          <View style={styles.providerChip}>
+            <Text style={styles.providerText}>TCGPlayer / Cardmarket</Text>
+          </View>
+        </View>
+
+        <View style={styles.titleBar}>
+          <Pressable style={styles.iconButton} onPress={() => router.back()}>
+            <Text style={styles.iconButtonText}>X</Text>
           </Pressable>
-          <Text style={styles.topTitle}>Kart Tara</Text>
+          <View style={styles.scanState}>
+            <Text style={styles.scanTitle}>Scan Center</Text>
+            <Text style={styles.scanSubtitle}>
+              {isScanning
+                ? phase === 'scanning'
+                  ? 'Capturing image...'
+                  : 'Verifying exact print...'
+                : 'Align the card and keep the collector number visible'}
+            </Text>
+          </View>
           <Pressable
-            style={[styles.iconBtn, torch && styles.iconBtnActive]}
+            style={[styles.iconButton, torch && styles.iconButtonActive]}
             onPress={() => setTorch(!torch)}
           >
-            <Text style={styles.iconBtnText}>⚡</Text>
+            <Text style={styles.iconButtonText}>LGT</Text>
           </Pressable>
         </View>
 
-        <View style={styles.hint}>
-          {isScanning ? (
-            <View style={styles.scanningRow}>
+        <View style={styles.midLayer}>
+          {isScanning && (
+            <View style={styles.processingPill}>
               <ActivityIndicator color={colors.primary} size="small" />
-              <Text style={styles.hintText}>
-                {phase === 'scanning' ? 'Görüntü alınıyor...' : 'Kart tanınıyor...'}
-              </Text>
+              <Text style={styles.processingText}>Cross-checking print data</Text>
             </View>
-          ) : (
-            <Text style={styles.hintText}>Kartı çerçeve içine al</Text>
+          )}
+          {error && (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{error}</Text>
+              <Pressable onPress={clearError}>
+                <Text style={styles.errorAction}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
+          {addedToast && (
+            <View style={styles.toast}>
+              <Text style={styles.toastText}>Added to collection</Text>
+            </View>
           )}
         </View>
 
-        {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable onPress={clearError}>
-              <Text style={styles.errorDismiss}>Tekrar Dene</Text>
+        <View style={styles.bottomControls}>
+          <View style={styles.recentStrip}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <View key={i} style={styles.miniThumb} />
+            ))}
+          </View>
+          <View style={styles.controlsRow}>
+            <Pressable style={styles.roundControl} onPress={handlePickFromGallery}>
+              <Text style={styles.roundControlText}>PHOTO</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.captureButton, isScanning && styles.disabled]}
+              onPress={handleCapture}
+              disabled={isScanning}
+            >
+              <View style={styles.captureInner} />
+            </Pressable>
+            <Pressable style={styles.roundControl} onPress={handleBulkMode}>
+              <Text style={styles.roundControlText}>BULK</Text>
             </Pressable>
           </View>
-        )}
-
-        {addedToast && (
-          <View style={styles.toast}>
-            <Text style={styles.toastText}>✓ Koleksiyona eklendi!</Text>
-          </View>
-        )}
-
-        <View style={styles.bottomBar}>
-          <Pressable style={styles.galleryBtn} onPress={handlePickFromGallery}>
-            <Text style={styles.galleryIcon}>🖼</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.captureBtn, isScanning && styles.captureBtnDisabled]}
-            onPress={handleCapture}
-            disabled={isScanning}
-          >
-            <View style={styles.captureInner} />
-          </Pressable>
-
-          <View style={styles.galleryBtn} />
         </View>
       </SafeAreaView>
 
@@ -227,6 +258,16 @@ export default function ScanScreen() {
   );
 }
 
+function StatusChip({ label, tone }: { label: string; tone: 'primary' | 'warning' }) {
+  const color = tone === 'primary' ? colors.primary : colors.warning;
+  return (
+    <View style={[styles.statusChip, { borderColor: color }]}>
+      <View style={[styles.statusDot, { backgroundColor: color }]} />
+      <Text style={styles.statusText}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   centered: {
@@ -237,148 +278,206 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.lg,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-  },
-  topBar: {
-    flexDirection: 'row',
+  webSafe: {
+    flex: 1,
+    backgroundColor: colors.bg,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    justifyContent: 'center',
+    padding: spacing.xl,
   },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  webCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.xxl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  webMark: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.xl,
+    backgroundColor: colors.primaryMuted,
+    borderWidth: 1,
+    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBtnActive: {
-    backgroundColor: 'rgba(47,129,247,0.6)',
+  webMarkText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
+  webTitle: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
+  webText: { color: colors.textMuted, fontSize: fontSize.md, lineHeight: 22, textAlign: 'center' },
+  hud: { ...StyleSheet.absoluteFillObject, justifyContent: 'space-between' },
+  topHud: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    gap: spacing.md,
   },
-  iconBtnText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  topTitle: {
-    color: '#fff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  hint: {
-    alignItems: 'center',
-    marginTop: -40,
-  },
-  scanningRow: {
+  leftHudStack: { gap: spacing.xs },
+  statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(32,31,33,0.72)',
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  hintText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    overflow: 'hidden',
+  statusDot: { width: 7, height: 7, borderRadius: radius.full },
+  statusText: { color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  providerChip: {
+    maxWidth: '45%',
+    backgroundColor: 'rgba(32,31,33,0.72)',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  errorBanner: {
-    marginHorizontal: spacing.xl,
-    backgroundColor: colors.errorMuted,
-    borderRadius: radius.lg,
-    padding: spacing.md,
+  providerText: { color: colors.textMuted, fontSize: 10, fontWeight: '900', textAlign: 'right' },
+  titleBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  iconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(32,31,33,0.82)',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonActive: { borderColor: colors.primary, backgroundColor: colors.primaryMuted },
+  iconButtonText: { color: colors.text, fontSize: 10, fontWeight: '900' },
+  scanState: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.md },
+  scanTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '900' },
+  scanSubtitle: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center', marginTop: 2 },
+  midLayer: { alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.xl },
+  processingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(14,14,16,0.84)',
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  processingText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
+  errorBanner: {
+    width: '100%',
+    backgroundColor: colors.errorMuted,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.error,
+    padding: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
   },
-  errorText: {
-    color: colors.error,
-    fontSize: fontSize.sm,
-    flex: 1,
-  },
-  errorDismiss: {
-    color: colors.error,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    marginLeft: spacing.md,
-  },
+  errorText: { color: colors.error, flex: 1, fontSize: fontSize.sm },
+  errorAction: { color: colors.error, fontSize: fontSize.sm, fontWeight: '900' },
   toast: {
-    alignSelf: 'center',
     backgroundColor: colors.successMuted,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
     borderWidth: 1,
     borderColor: colors.success,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
   },
-  toastText: {
-    color: colors.success,
-    fontWeight: '700',
-    fontSize: fontSize.sm,
+  toastText: { color: colors.success, fontSize: fontSize.sm, fontWeight: '900' },
+  bottomControls: {
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.64)',
+    gap: spacing.md,
   },
-  bottomBar: {
+  recentStrip: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    opacity: 0.42,
+  },
+  miniThumb: {
+    width: 34,
+    height: 48,
+    borderRadius: 3,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xxxl,
-    paddingBottom: spacing.xl,
   },
-  galleryBtn: {
-    width: 48,
-    height: 48,
+  roundControl: {
+    width: 54,
+    height: 54,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(32,31,33,0.86)',
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  galleryIcon: { fontSize: 22 },
-  captureBtn: {
+  roundControlText: { color: colors.textMuted, fontSize: 9, fontWeight: '900' },
+  captureButton: {
+    width: 84,
+    height: 84,
+    borderRadius: radius.full,
+    borderWidth: 3,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureInner: {
+    width: 68,
+    height: 68,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  disabled: { opacity: 0.5 },
+  permissionMark: {
     width: 72,
     height: 72,
-    borderRadius: radius.full,
-    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.4)',
   },
-  captureBtnDisabled: { opacity: 0.5 },
-  captureInner: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: '#fff',
-  },
-  permTitle: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  permText: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  permBtn: {
+  permissionMarkText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
+  permissionTitle: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900', textAlign: 'center' },
+  permissionText: { color: colors.textMuted, fontSize: fontSize.md, lineHeight: 22, textAlign: 'center' },
+  primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.lg,
+    minWidth: 210,
+    alignItems: 'center',
   },
-  permBtnText: { color: '#fff', fontSize: fontSize.md, fontWeight: '600' },
-  backBtn: { paddingVertical: spacing.md },
-  backBtnText: { color: colors.primary, fontSize: fontSize.md },
+  primaryButtonText: { color: colors.onPrimary, fontSize: fontSize.md, fontWeight: '900' },
+  secondaryButton: { paddingVertical: spacing.sm },
+  secondaryButtonText: { color: colors.textMuted, fontSize: fontSize.md, fontWeight: '800' },
 });

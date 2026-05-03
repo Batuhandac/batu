@@ -11,14 +11,14 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { colors, fontSize, radius, spacing } from '@/constants/theme';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { Condition, CONDITION_LABELS, ScanResult } from '@/types';
 import { usdToTry } from '@/lib/api/justtcg';
 
 const { height: SCREEN_H } = Dimensions.get('window');
-const SHEET_H = SCREEN_H * 0.78;
+const SHEET_H = Math.min(SCREEN_H * 0.82, 720);
+const CONDITIONS: Condition[] = ['NM', 'LP', 'MP', 'HP', 'DMG'];
 
 interface ScanResultSheetProps {
   results: ScanResult[];
@@ -29,8 +29,6 @@ interface ScanResultSheetProps {
   onAddToCollection: (condition: Condition, quantity: number, foil: boolean) => void;
   adding?: boolean;
 }
-
-const CONDITIONS: Condition[] = ['NM', 'LP', 'MP', 'HP', 'DMG'];
 
 export function ScanResultSheet({
   results,
@@ -50,12 +48,11 @@ export function ScanResultSheet({
     Animated.spring(translateY, {
       toValue: visible ? 0 : SHEET_H,
       useNativeDriver: true,
-      damping: 20,
-      stiffness: 200,
+      damping: 22,
+      stiffness: 210,
     }).start();
   }, [visible, translateY]);
 
-  // Reset state when a new scan result appears
   useEffect(() => {
     if (visible) {
       setCondition('NM');
@@ -68,158 +65,166 @@ export function ScanResultSheet({
 
   const result = results[activeIndex];
   const { card, price, confidence } = result;
-  const qty = Math.max(1, parseInt(quantity) || 1);
-  const hasAlternatives = results.length > 1;
+  const verification = result.verification;
+  const qty = Math.max(1, parseInt(quantity, 10) || 1);
+  const canAdd = verification?.status === 'verified';
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} />
       <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.handle} />
-        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-
-          {/* ── Alternatives strip ── */}
-          {hasAlternatives && (
-            <View style={styles.altSection}>
-              <Text style={styles.altLabel}>Alternatifler</Text>
+        <View style={styles.scanStripe} />
+        <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={styles.content}>
+          {results.length > 1 && (
+            <View style={styles.altBlock}>
+              <Text style={styles.labelCaps}>Candidates</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.altRow}>
-                {results.map((r, i) => (
+                {results.map((candidate, index) => (
                   <Pressable
-                    key={i}
-                    onPress={() => onSelectIndex(i)}
-                    style={[styles.altThumb, i === activeIndex && styles.altThumbActive]}
+                    key={`${candidate.card.apiId}-${index}`}
+                    onPress={() => onSelectIndex(index)}
+                    style={[styles.altThumb, index === activeIndex && styles.altThumbActive]}
                   >
-                    {r.card.imageUrl ? (
-                      <Image source={{ uri: r.card.imageUrl }} style={styles.altImg} contentFit="contain" />
+                    {candidate.card.imageUrl ? (
+                      <Image source={{ uri: candidate.card.imageUrl }} style={styles.altImage} contentFit="cover" />
                     ) : (
-                      <View style={[styles.altImg, styles.altImgPlaceholder]}>
-                        <Text style={styles.altImgPlaceholderText}>{r.card.name.slice(0, 2)}</Text>
+                      <View style={[styles.altImage, styles.placeholder]}>
+                        <Text style={styles.placeholderText}>NA</Text>
                       </View>
                     )}
-                    {i === activeIndex && <View style={styles.altActiveDot} />}
                   </Pressable>
                 ))}
               </ScrollView>
             </View>
           )}
 
-          {/* ── Main card header ── */}
           <View style={styles.header}>
-            <View style={styles.cardImageWrap}>
+            <View style={styles.imageFrame}>
               {card.imageUrl ? (
-                <Image source={{ uri: card.imageUrl }} style={styles.cardImage} contentFit="contain" transition={300} />
+                <Image source={{ uri: card.imageUrl }} style={styles.cardImage} contentFit="cover" transition={250} />
               ) : (
-                <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-                  <Text style={styles.placeholderIcon}>🃏</Text>
-                  <Text style={styles.placeholderText}>Görsel{'\n'}Bulunamadı</Text>
+                <View style={[styles.cardImage, styles.placeholder]}>
+                  <Text style={styles.placeholderText}>NO IMAGE</Text>
                 </View>
               )}
+              <View style={styles.imageBorder} />
             </View>
-            <View style={styles.cardInfo}>
+
+            <View style={styles.meta}>
+              <StatusBadge verified={canAdd} />
               <Text style={styles.cardName} numberOfLines={2}>{card.name}</Text>
-              {card.setName ? <Text style={styles.setName}>{card.setName}</Text> : null}
-              {card.number ? <Text style={styles.cardNumber}>#{card.number}</Text> : null}
-              <Text style={styles.rarity}>{card.rarity}</Text>
-              <View style={styles.badges}>
-                <Badge
-                  label={`${Math.round(confidence * 100)}% eşleşme`}
-                  variant={confidence >= 0.9 ? 'success' : confidence >= 0.75 ? 'warning' : 'error'}
-                />
-              </View>
+              <Text style={styles.metaLine} numberOfLines={1}>{card.game.toUpperCase()}</Text>
+              <Text style={styles.metaLine} numberOfLines={1}>
+                {card.setName || 'Unknown set'} {card.number ? `- #${card.number}` : ''}
+              </Text>
+              <Text style={styles.metaLine} numberOfLines={1}>{card.rarity || 'Unknown rarity'}</Text>
+              <Text style={styles.confidence}>{Math.round(confidence * 100)}% visual match</Text>
             </View>
           </View>
 
-          {/* ── Price ── */}
-          {price ? (
+          <View style={[styles.verificationBox, canAdd ? styles.verifiedBox : styles.reviewBox]}>
+            <Text style={styles.verificationTitle}>
+              {canAdd ? 'Exact print verified' : 'Manual review required'}
+            </Text>
+            <Text style={styles.verificationText}>
+              {canAdd
+                ? `${verification?.provider ?? 'Provider'} matched ${verification?.reasons.join(', ') || 'set and print data'}.`
+                : 'The app blocks collection add until game, set, card number and rarity are clear enough to prevent wrong-card inventory.'}
+            </Text>
+          </View>
+
+          {canAdd && price ? (
             <View style={styles.priceBox}>
-              <Text style={styles.priceTitle}>Piyasa Değeri</Text>
-              <View style={styles.priceRow}>
-                <PriceCol label="Düşük" usd={price.low} />
-                <PriceCol label="Piyasa" usd={price.market ?? price.mid} highlight />
-                <PriceCol label="Yüksek" usd={price.high} />
+              <View style={styles.priceHeader}>
+                <Text style={styles.sectionTitle}>Market valuation</Text>
+                <Text style={styles.sourceText}>{price.source}</Text>
               </View>
-              <Text style={styles.priceSource}>{price.source}</Text>
+              <View style={styles.priceRow}>
+                <PriceCol label="Low" usd={price.low} />
+                <PriceCol label="Market" usd={price.market ?? price.mid} highlight />
+                <PriceCol label="High" usd={price.high} />
+              </View>
             </View>
           ) : (
             <View style={styles.noPriceBox}>
-              <Text style={styles.noPriceText}>Fiyat bilgisi bulunamadı</Text>
+              <Text style={styles.noPriceText}>
+                {canAdd ? 'Price data not found yet.' : 'Pricing unlocks after exact-print verification.'}
+              </Text>
             </View>
           )}
 
-          {/* ── Bilgiler ── */}
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Bilgiler</Text>
-            <InfoRow label="Oyun" value={card.game.toUpperCase()} />
-            {card.setName ? <InfoRow label="Set" value={card.setName} /> : null}
-            {card.number ? <InfoRow label="Numara" value={`#${card.number}`} /> : null}
-            {card.supertype ? <InfoRow label="Tür" value={card.supertype} /> : null}
+          <View style={styles.actionRow}>
+            <Pressable style={styles.secondaryAction}>
+              <Text style={styles.secondaryActionText}>Manual Correct</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryAction}>
+              <Text style={styles.secondaryActionText}>Compare Ref</Text>
+            </Pressable>
           </View>
 
-          {/* ── Condition ── */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Durum</Text>
+            <Text style={styles.sectionTitle}>Condition</Text>
             <View style={styles.conditionRow}>
-              {CONDITIONS.map((c) => (
+              {CONDITIONS.map((item) => (
                 <Pressable
-                  key={c}
-                  style={[styles.conditionBtn, c === condition && styles.conditionBtnActive]}
-                  onPress={() => setCondition(c)}
+                  key={item}
+                  style={[styles.conditionButton, condition === item && styles.conditionButtonActive]}
+                  onPress={() => setCondition(item)}
                 >
-                  <Text style={[styles.conditionLabel, c === condition && styles.conditionLabelActive]}>{c}</Text>
+                  <Text style={[styles.conditionText, condition === item && styles.conditionTextActive]}>
+                    {item}
+                  </Text>
                 </Pressable>
               ))}
             </View>
-            <Text style={styles.conditionDesc}>{CONDITION_LABELS[condition]}</Text>
+            <Text style={styles.conditionHint}>{CONDITION_LABELS[condition]}</Text>
           </View>
 
-          {/* ── Quantity + Foil ── */}
-          <View style={styles.row}>
-            <View style={styles.quantityWrap}>
-              <Text style={styles.sectionTitle}>Adet</Text>
+          <View style={styles.inventoryRow}>
+            <View style={styles.quantityBlock}>
+              <Text style={styles.sectionTitle}>Quantity</Text>
               <View style={styles.quantityRow}>
-                <Pressable style={styles.qBtn} onPress={() => setQuantity(String(Math.max(1, qty - 1)))}>
-                  <Text style={styles.qBtnLabel}>−</Text>
+                <Pressable style={styles.stepper} onPress={() => setQuantity(String(Math.max(1, qty - 1)))}>
+                  <Text style={styles.stepperText}>-</Text>
                 </Pressable>
                 <TextInput
-                  style={styles.qInput}
+                  style={styles.quantityInput}
                   value={quantity}
                   onChangeText={setQuantity}
                   keyboardType="numeric"
                   maxLength={3}
                 />
-                <Pressable style={styles.qBtn} onPress={() => setQuantity(String(qty + 1))}>
-                  <Text style={styles.qBtnLabel}>+</Text>
+                <Pressable style={styles.stepper} onPress={() => setQuantity(String(qty + 1))}>
+                  <Text style={styles.stepperText}>+</Text>
                 </Pressable>
               </View>
             </View>
-            <Pressable
-              style={[styles.foilBtn, foil && styles.foilBtnActive]}
-              onPress={() => setFoil(!foil)}
-            >
-              <Text style={[styles.foilLabel, foil && styles.foilLabelActive]}>✦ Foil</Text>
+            <Pressable style={[styles.foilButton, foil && styles.foilButtonActive]} onPress={() => setFoil(!foil)}>
+              <Text style={[styles.foilText, foil && styles.foilTextActive]}>Foil</Text>
             </Pressable>
           </View>
 
           <Button
-            label="Koleksiyona Ekle"
+            label={canAdd ? 'Add to Collection' : 'Verification Required'}
             variant="primary"
             size="lg"
             loading={adding}
-            style={styles.addBtn}
+            disabled={!canAdd}
+            style={styles.addButton}
             onPress={() => onAddToCollection(condition, qty, foil)}
           />
-          <View style={styles.bottomPad} />
         </ScrollView>
       </Animated.View>
     </Modal>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function StatusBadge({ verified }: { verified: boolean }) {
   return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={[styles.statusBadge, verified ? styles.statusVerified : styles.statusReview]}>
+      <Text style={[styles.statusBadgeText, verified ? styles.statusVerifiedText : styles.statusReviewText]}>
+        {verified ? 'VERIFIED' : 'REVIEW'}
+      </Text>
     </View>
   );
 }
@@ -229,137 +234,200 @@ function PriceCol({ label, usd, highlight }: { label: string; usd: number; highl
     <View style={[styles.priceCol, highlight && styles.priceColHighlight]}>
       <Text style={styles.priceLabel}>{label}</Text>
       <Text style={[styles.priceUsd, highlight && styles.priceUsdHighlight]}>${usd.toFixed(2)}</Text>
-      <Text style={styles.priceTry}>₺{usdToTry(usd).toLocaleString()}</Text>
+      <Text style={styles.priceTry}>TL {usdToTry(usd).toLocaleString('tr-TR')}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.62)' },
   sheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: SHEET_H,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: SHEET_H,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl + 4,
-    borderTopRightRadius: radius.xl + 4,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    overflow: 'hidden',
   },
-  handle: {
-    width: 40, height: 4, backgroundColor: colors.border,
-    borderRadius: radius.full, alignSelf: 'center', marginBottom: spacing.md,
+  scanStripe: {
+    height: 3,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
   },
-
-  // Alternatives
-  altSection: { marginBottom: spacing.lg },
-  altLabel: {
-    color: colors.textMuted, fontSize: fontSize.xs,
-    fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5,
-    marginBottom: spacing.sm,
+  content: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.lg },
+  altBlock: { gap: spacing.sm },
+  labelCaps: {
+    color: colors.textFaint,
+    fontSize: fontSize.xs,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  altRow: { gap: spacing.sm, paddingVertical: 2 },
+  altRow: { gap: spacing.sm },
   altThumb: {
-    width: 52, height: 72, borderRadius: radius.sm,
-    borderWidth: 2, borderColor: 'transparent',
-    overflow: 'hidden', position: 'relative',
+    width: 48,
+    height: 68,
+    borderRadius: radius.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    overflow: 'hidden',
   },
   altThumbActive: { borderColor: colors.primary },
-  altImg: { width: '100%', height: '100%', borderRadius: radius.sm - 2 },
-  altImgPlaceholder: {
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center', justifyContent: 'center',
+  altImage: { width: '100%', height: '100%' },
+  header: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
+  imageFrame: {
+    width: 106,
+    height: 148,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceLowest,
+    position: 'relative',
   },
-  altImgPlaceholderText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  altActiveDot: {
-    position: 'absolute', bottom: 2, alignSelf: 'center',
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: colors.primary,
+  cardImage: { width: '100%', height: '100%' },
+  imageBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    borderRadius: radius.sm,
   },
-
-  // Header
-  header: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.lg },
-  cardImageWrap: {},
-  cardImage: { width: 100, height: 140, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
-  cardImagePlaceholder: {
-    alignItems: 'center', justifyContent: 'center', gap: 4,
+  placeholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover },
+  placeholderText: { color: colors.textFaint, fontSize: 9, fontWeight: '900', textAlign: 'center' },
+  meta: { flex: 1, paddingTop: 2, gap: 4 },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
+    borderWidth: 1,
   },
-  placeholderIcon: { fontSize: 28 },
-  placeholderText: { color: colors.textMuted, fontSize: 10, textAlign: 'center', lineHeight: 14 },
-  cardInfo: { flex: 1, justifyContent: 'center', gap: 4 },
-  cardName: { color: colors.text, fontSize: fontSize.xl, fontWeight: '700', lineHeight: 26 },
-  setName: { color: colors.textMuted, fontSize: fontSize.sm },
-  cardNumber: { color: colors.textMuted, fontSize: fontSize.xs },
-  rarity: { color: colors.textMuted, fontSize: fontSize.xs },
-  badges: { flexDirection: 'row', gap: spacing.xs, marginTop: 2 },
-
-  // Price
+  statusVerified: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+  statusReview: { backgroundColor: colors.warningMuted, borderColor: colors.warning },
+  statusBadgeText: { fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  statusVerifiedText: { color: colors.primary },
+  statusReviewText: { color: colors.warning },
+  cardName: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900', lineHeight: 30 },
+  metaLine: { color: colors.textMuted, fontSize: fontSize.sm },
+  confidence: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '900', marginTop: 2 },
+  verificationBox: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    gap: 4,
+  },
+  verifiedBox: { backgroundColor: colors.successMuted, borderColor: colors.success },
+  reviewBox: { backgroundColor: colors.warningMuted, borderColor: colors.warning },
+  verificationTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  verificationText: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
   priceBox: {
-    backgroundColor: colors.surfaceAlt, borderRadius: radius.lg,
-    padding: spacing.lg, marginBottom: spacing.lg, gap: spacing.sm,
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  priceTitle: {
-    color: colors.textMuted, fontSize: fontSize.sm,
-    fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5,
+  priceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sectionTitle: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
+  sourceText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '900' },
   priceRow: { flexDirection: 'row' },
-  priceCol: { flex: 1, alignItems: 'center', gap: 2 },
-  priceColHighlight: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.border },
-  priceLabel: { color: colors.textMuted, fontSize: fontSize.xs },
-  priceUsd: { color: colors.text, fontSize: fontSize.lg, fontWeight: '600' },
-  priceUsdHighlight: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '700' },
+  priceCol: { flex: 1, alignItems: 'center', gap: 3 },
+  priceColHighlight: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  priceLabel: { color: colors.textFaint, fontSize: fontSize.xs },
+  priceUsd: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  priceUsdHighlight: { color: colors.primary, fontSize: fontSize.xl },
   priceTry: { color: colors.textMuted, fontSize: fontSize.xs },
-  priceSource: { color: colors.textFaint, fontSize: 10, textAlign: 'right' },
   noPriceBox: {
-    backgroundColor: colors.surfaceAlt, borderRadius: radius.lg,
-    padding: spacing.lg, marginBottom: spacing.lg,
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.lg,
     alignItems: 'center',
   },
-  noPriceText: { color: colors.textMuted, fontSize: fontSize.sm },
-
-  // Info rows
-  infoSection: { marginBottom: spacing.lg, gap: spacing.xs },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6,
-    borderBottomWidth: 1, borderBottomColor: colors.borderLight },
-  infoLabel: { color: colors.textMuted, fontSize: fontSize.sm },
-  infoValue: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
-
-  // Condition
-  section: { marginBottom: spacing.xl, gap: spacing.sm },
-  sectionTitle: {
-    color: colors.textMuted, fontSize: fontSize.sm,
-    fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5,
+  noPriceText: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center' },
+  actionRow: { flexDirection: 'row', gap: spacing.sm },
+  secondaryAction: {
+    flex: 1,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceLowest,
   },
+  secondaryActionText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '900' },
+  section: { gap: spacing.sm },
   conditionRow: { flexDirection: 'row', gap: spacing.sm },
-  conditionBtn: {
-    flex: 1, paddingVertical: spacing.sm, backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md, alignItems: 'center', borderWidth: 1, borderColor: 'transparent',
+  conditionButton: {
+    flex: 1,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
-  conditionBtnActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
-  conditionLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
-  conditionLabelActive: { color: colors.primary },
-  conditionDesc: { color: colors.textFaint, fontSize: fontSize.xs },
-
-  // Quantity
-  row: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl, alignItems: 'flex-end' },
-  quantityWrap: { flex: 1, gap: spacing.sm },
-  quantityRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  qBtn: {
-    width: 40, height: 40, backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md, alignItems: 'center', justifyContent: 'center',
+  conditionButtonActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+  conditionText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '900' },
+  conditionTextActive: { color: colors.primary },
+  conditionHint: { color: colors.textFaint, fontSize: fontSize.xs },
+  inventoryRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
+  quantityBlock: { flex: 1, gap: spacing.sm },
+  quantityRow: { flexDirection: 'row', gap: spacing.sm },
+  stepper: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  qBtnLabel: { color: colors.text, fontSize: 20, fontWeight: '400', lineHeight: 24 },
-  qInput: {
-    flex: 1, backgroundColor: colors.surfaceAlt, borderRadius: radius.md,
-    color: colors.text, textAlign: 'center',
-    fontSize: fontSize.lg, fontWeight: '600', height: 40,
+  stepperText: { color: colors.text, fontSize: fontSize.xl, fontWeight: '700' },
+  quantityInput: {
+    flex: 1,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    color: colors.text,
+    textAlign: 'center',
+    fontSize: fontSize.lg,
+    fontWeight: '900',
   },
-  foilBtn: {
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm + 2,
-    backgroundColor: colors.surfaceAlt, borderRadius: radius.md,
-    borderWidth: 1, borderColor: 'transparent', height: 40, justifyContent: 'center',
+  foilButton: {
+    height: 42,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceLow,
   },
-  foilBtnActive: { backgroundColor: 'rgba(255,203,5,0.12)', borderColor: '#FFCB05' },
-  foilLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
-  foilLabelActive: { color: '#FFCB05' },
-  addBtn: { marginBottom: spacing.sm },
-  bottomPad: { height: spacing.xl },
+  foilButtonActive: { backgroundColor: colors.accentMuted, borderColor: colors.accent },
+  foilText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '900' },
+  foilTextActive: { color: colors.accent },
+  addButton: { marginTop: spacing.sm },
 });

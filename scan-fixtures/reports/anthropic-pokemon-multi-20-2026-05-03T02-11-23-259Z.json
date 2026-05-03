@@ -1,0 +1,299 @@
+{
+  "createdAt": "2026-05-03T02:11:23.259Z",
+  "provider": "anthropic",
+  "apiBase": "https://batu-tcg.vercel.app",
+  "setIds": [
+    "base1",
+    "jungle",
+    "fossil",
+    "sv3pt5"
+  ],
+  "limit": 20,
+  "totals": {
+    "correct": 4,
+    "wrong": 6
+  },
+  "correctRate": 0.4,
+  "results": [
+    {
+      "id": "base1-1",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Alakazam",
+        "number": "1",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/1_hires.png"
+      },
+      "actual": {
+        "name": "Alakazam",
+        "hp": "80",
+        "number": "1/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-2",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Blastoise",
+        "number": "2",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/2_hires.png"
+      },
+      "actual": {
+        "name": "Blastoise",
+        "hp": "100",
+        "number": "2/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-3",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Chansey",
+        "number": "3",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/3_hires.png"
+      },
+      "actual": {
+        "name": "Chansey",
+        "hp": "120",
+        "number": "3/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-4",
+      "status": "correct",
+      "expected": {
+        "game": "pokemon",
+        "name": "Charizard",
+        "number": "4",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/4_hires.png"
+      },
+      "actual": {
+        "name": "Charizard",
+        "hp": "120",
+        "number": "4/102",
+        "set": "Base Set",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-5",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Clefairy",
+        "number": "5",
+        "printedTotal": "102",
+        "setCode": "base1",
+        "setName": "Base",
+        "imageUrl": "https://images.pokemontcg.io/base1/5_hires.png"
+      },
+      "actual": {
+        "name": "Clefairy",
+        "hp": "40",
+        "number": "51/102",
+        "set": "",
+        "era": "wizards",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "sv3pt5-1",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Bulbasaur",
+        "number": "1",
+        "printedTotal": "165",
+        "setCode": "sv3pt5",
+        "setName": "151",
+        "imageUrl": "https://images.pokemontcg.io/sv3pt5/1_hires.png"
+      },
+      "actual": {
+        "name": "Bulbasaur",
+        "hp": "70",
+        "number": "001/165",
+        "set": "",
+        "era": "modern",
+        "features": "",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "sv3pt5-2",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Ivysaur",
+        "number": "2",
+        "printedTotal": "165",
+        "setCode": "sv3pt5",
+        "setName": "151",
+        "imageUrl": "https://images.pokemontcg.io/sv3pt5/2_hires.png"
+      },
+      "actual": {
+        "name": "Ivysaur",
+        "hp": "100",
+        "number": "002/165",
+        "set": "",
+        "era": "modern",
+        "features": "",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "sv3pt5-3",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Venusaur ex",
+        "number": "3",
+        "printedTotal": "165",
+        "setCode": "sv3pt5",
+        "setName": "151",
+        "imageUrl": "https://images.pokemontcg.io/sv3pt5/3_hires.png"
+      },
+      "actual": {
+        "name": "Venusaur ex",
+        "hp": "340",
+        "number": "003/165",
+        "set": "",
+        "era": "modern",
+        "features": "ex,Full Art",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "sv3pt5-4",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Charmander",
+        "number": "4",
+        "printedTotal": "165",
+        "setCode": "sv3pt5",
+        "setName": "151",
+        "imageUrl": "https://images.pokemontcg.io/sv3pt5/4_hires.png"
+      },
+      "actual": {
+        "name": "Charmander",
+        "hp": "70",
+        "number": "004/165",
+        "set": "",
+        "era": "modern",
+        "features": "",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "sv3pt5-5",
+      "status": "wrong",
+      "expected": {
+        "game": "pokemon",
+        "name": "Charmeleon",
+        "number": "5",
+        "printedTotal": "165",
+        "setCode": "sv3pt5",
+        "setName": "151",
+        "imageUrl": "https://images.pokemontcg.io/sv3pt5/5_hires.png"
+      },
+      "actual": {
+        "name": "Charmeleon",
+        "hp": "100",
+        "number": "005/165",
+        "set": "151",
+        "era": "modern",
+        "features": "Holo",
+        "game": "pokemon"
+      },
+      "checks": {
+        "gameOk": true,
+        "nameOk": true,
+        "numberOk": false,
+        "totalOk": true
+      }
+    }
+  ]
+}

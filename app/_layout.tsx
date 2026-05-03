@@ -40,6 +40,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="request-details" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(main)" />
         </Stack>

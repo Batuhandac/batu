@@ -1,14 +1,13 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
-const GAMES = ['Pokémon', 'Yu-Gi-Oh!', 'One Piece', 'MTG', 'Lorcana'];
+const GAMES = ['Pokemon', 'Yu-Gi-Oh!', 'One Piece', 'Naruto', 'MTG', 'Lorcana'];
 
 export default function WelcomeScreen() {
   const enterGuestMode = useAuthStore((s) => s.enterGuestMode);
@@ -17,142 +16,187 @@ export default function WelcomeScreen() {
     enterGuestMode();
     router.replace('/(main)');
   };
+
   return (
-    <LinearGradient colors={['#0D1117', '#0f1f3d', '#0D1117']} style={styles.gradient}>
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.emoji}>🃏</Text>
-            <Text style={styles.appName}>batu</Text>
-            <Text style={styles.tagline}>TCG koleksiyonunu yönet,{'\n'}kart değerini anında öğren</Text>
-
-            <View style={styles.gamesRow}>
-              {GAMES.map((g) => (
-                <View key={g} style={styles.gameChip}>
-                  <Text style={styles.gameChipText}>{g}</Text>
-                </View>
-              ))}
-            </View>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.brandBlock}>
+          <View style={styles.logoMark}>
+            <Text style={styles.logoIcon}>TCG</Text>
           </View>
-
-          <View style={styles.features}>
-            <Feature icon="📷" text="Kartını tara, anında değerini öğren" />
-            <Feature icon="📊" text="Portföyünü takip et, piyasa fiyatlarını izle" />
-            <Feature icon="🔄" text="Takas fırsatlarını keşfet" />
-            <Feature icon="🛒" text="Shopify, ikas ve daha fazlasına tek tıkla sat" />
-          </View>
-
-          <View style={styles.actions}>
-            <Button
-              label="Ücretsiz Başla"
-              variant="primary"
-              size="lg"
-              style={styles.btn}
-              onPress={() => router.push('/(auth)/register')}
-            />
-            <Button
-              label="Giriş Yap"
-              variant="secondary"
-              size="lg"
-              style={styles.btn}
-              onPress={() => router.push('/(auth)/login')}
-            />
-            <Pressable onPress={handleGuest} style={styles.guestBtn}>
-              <Text style={styles.guestText}>
-                {isSupabaseConfigured ? 'Hesapsız dene →' : 'Misafir olarak dene →'}
-              </Text>
-            </Pressable>
+          <View style={styles.copyBlock}>
+            <Text style={styles.appName}>Cardory</Text>
+            <Text style={styles.tagline}>
+              Kart tara, birebir baskiyi dogrula, fiyatla, koleksiyonuna ekle,
+              takas et ve satis kanallarina aktar.
+            </Text>
           </View>
         </View>
-      </SafeAreaView>
-    </LinearGradient>
+
+        <View style={styles.ecosystemBlock}>
+          <Text style={styles.eyebrow}>Supported ecosystems</Text>
+          <View style={styles.gamesGrid}>
+            {GAMES.map((game, index) => (
+              <View
+                key={game}
+                style={[styles.gameChip, index === 0 && styles.gameChipActive]}
+              >
+                <Text style={[styles.gameText, index === 0 && styles.gameTextActive]}>
+                  {game}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.trustPanel}>
+          <TrustLine label="Exact print scan" value="AI + resmi katalog" />
+          <TrustLine label="Turkiye price engine" value="Kur, komisyon, marj" />
+          <TrustLine label="Commerce ready" value="Shopify, ikas, eBay" />
+        </View>
+
+        <View style={styles.actions}>
+          <Button
+            label="Create Account"
+            variant="primary"
+            size="lg"
+            style={styles.actionBtn}
+            onPress={() => router.push('/(auth)/register')}
+          />
+          <Button
+            label="Login"
+            variant="secondary"
+            size="lg"
+            style={styles.actionBtn}
+            onPress={() => router.push('/(auth)/login')}
+          />
+          <Pressable onPress={handleGuest} style={styles.guestBtn}>
+            <Text style={styles.guestText}>
+              {isSupabaseConfigured ? 'Try without account ->' : 'Try as Guest ->'}
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-function Feature({ icon, text }: { icon: string; text: string }) {
+function TrustLine({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.feature}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
+    <View style={styles.trustLine}>
+      <Text style={styles.trustLabel}>{label}</Text>
+      <Text style={styles.trustValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  safe: { flex: 1 },
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxxl,
+  safe: { flex: 1, backgroundColor: colors.bg },
+  content: {
+    flexGrow: 1,
     justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.xxl,
   },
-  top: {
+  brandBlock: {
     alignItems: 'center',
-    paddingTop: spacing.xxxl + spacing.xl,
     gap: spacing.lg,
+    paddingTop: spacing.xxxl,
   },
-  emoji: { fontSize: 64 },
+  logoMark: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  logoIcon: {
+    color: colors.primary,
+    fontSize: fontSize.sm,
+    fontWeight: '900',
+    letterSpacing: 1.6,
+  },
+  copyBlock: { alignItems: 'center', gap: spacing.xs },
   appName: {
     color: colors.text,
-    fontSize: 42,
-    fontWeight: '800',
-    letterSpacing: -1,
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: -0.4,
   },
   tagline: {
     color: colors.textMuted,
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
+    lineHeight: 22,
     textAlign: 'center',
-    lineHeight: 26,
+    maxWidth: 320,
   },
-  gamesRow: {
+  ecosystemBlock: { alignItems: 'center', gap: spacing.md },
+  eyebrow: {
+    color: colors.textFaint,
+    fontSize: fontSize.xs,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  gamesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.sm,
+    maxWidth: 330,
   },
   gameChip: {
-    backgroundColor: 'rgba(47,129,247,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(47,129,247,0.3)',
+    borderColor: colors.borderLight,
   },
-  gameChipText: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
+  gameChipActive: {
+    backgroundColor: colors.primaryMuted,
+    borderColor: colors.primary,
   },
-  features: {
-    gap: spacing.md,
-  },
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  featureIcon: { fontSize: 22 },
-  featureText: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    flex: 1,
-    lineHeight: 22,
-  },
-  actions: {
-    gap: spacing.md,
-  },
-  btn: {
-    width: '100%',
-  },
-  guestBtn: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  guestText: {
+  gameText: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontWeight: '700',
   },
+  gameTextActive: { color: colors.primary },
+  trustPanel: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    overflow: 'hidden',
+  },
+  trustLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  trustLabel: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
+  trustValue: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'right', flex: 1 },
+  actions: { gap: spacing.md },
+  actionBtn: { width: '100%' },
+  guestBtn: { alignItems: 'center', paddingVertical: spacing.md },
+  guestText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' },
 });

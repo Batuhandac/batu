@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Batu",
+    "name": "Cardory",
     "slug": "batu-tcg",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,6 +13,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.batu.tcg",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Kartlarınızı taramak için kamera erişimi gereklidir.",
         "NSPhotoLibraryUsageDescription": "Kartlarınızın fotoğraflarını yüklemek için galeri erişimi gereklidir."
       }
@@ -23,7 +24,11 @@
         "backgroundColor": "#0D1117"
       },
       "package": "com.batu.tcg",
-      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -40,9 +45,16 @@
         }
       ]
     ],
-    "scheme": "batu",
+    "scheme": "cardory",
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9a172296-dbc4-40fa-9b3a-f56f107f0f45"
+      }
+    },
+    "owner": "batuhandac"
   }
 }

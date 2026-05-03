@@ -1,0 +1,24 @@
+{
+  "id": "pokemon-base1-4-charizard-smoke",
+  "image": "https://images.pokemontcg.io/base1/4_hires.png",
+  "expected": {
+    "game": "pokemon",
+    "name": "Charizard",
+    "setCode": "base1",
+    "setName": "Base Set",
+    "number": "4",
+    "rarity": "Rare Holo",
+    "finish": "holofoil"
+  },
+  "actual": {
+    "game": "pokemon",
+    "name": "Charizard",
+    "setCode": "base1",
+    "setName": "Base Set",
+    "number": "4",
+    "rarity": "Rare Holo",
+    "confidence": 0.99
+  },
+  "status": "verified",
+  "notes": "Smoke fixture from Gibl candidate plus Pokemon TCG exact validator using number + printedTotal."
+}

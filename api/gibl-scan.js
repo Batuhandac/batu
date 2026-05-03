@@ -14,7 +14,8 @@ export default async function handler(req, res) {
   if (!image) return res.status(400).json({ error: 'No image provided' });
 
   try {
-    const buffer = Buffer.from(image, 'base64');
+    const cleanImage = String(image).includes(',') ? String(image).split(',').pop() : String(image);
+    const buffer = Buffer.from(cleanImage, 'base64');
     const blob = new Blob([buffer], { type: 'image/jpeg' });
     const formData = new FormData();
     formData.append('file', blob, 'card.jpg');
@@ -29,35 +30,85 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'gibl_predict_failed', status: predictRes.status, detail });
     }
 
-    const predict = await predictRes.json();
+    const prediction = parsePredictCardResponse(await predictRes.json());
+    if (!prediction) return res.status(200).json({ found: false });
 
-    if (predict.is_card !== 'card' || !predict.identity?.length) {
-      return res.status(200).json({ found: false });
-    }
-
-    const topId = predict.identity[0];
-    const cardIdentityId = topId.card_identity;
-    const confidence = topId.card_identity_confidence / 100;
-    // Normalize card_type: "one_piece" → "onepiece", "yu_gi_oh" → "yugioh", etc.
-    const cardType = (predict.card_type ?? 'pokemon').replace(/_/g, '');
-
-    const cardInfo = await lookupCard(cardType, cardIdentityId);
+    const cardInfo = await lookupCard(prediction.cardType, prediction.cardIdentityId);
+    const match = prediction.match ?? {};
 
     return res.status(200).json({
-      found: !!cardInfo,
-      confidence,
-      cardType,
-      cardState: predict.card_state ?? null,
-      authenticatorType: predict.authenticator_type ?? null,
-      ...(cardInfo ?? {}),
+      found: !!cardInfo || !!match.name,
+      confidence: prediction.confidence,
+      cardType: prediction.cardType,
+      cardState: prediction.cardState,
+      authenticatorType: prediction.authenticatorType,
+      name: cardInfo?.name ?? match.name ?? '',
+      number: cardInfo?.number ?? match.number ?? '',
+      printedTotal: match.printedTotal ?? '',
+      imageUrl: cardInfo?.imageUrl ?? '',
+      setCode: cardInfo?.setCode ?? '',
+      giblCardId: cardInfo?.giblCardId ?? '',
     });
   } catch (err) {
     return res.status(500).json({ error: 'internal', detail: String(err) });
   }
 }
 
+function parsePredictCardResponse(raw) {
+  const item = Array.isArray(raw.items) ? raw.items[0] : null;
+  const best = item?.card?.identity?.best;
+
+  if (best?.match?.name) {
+    return {
+      cardIdentityId: best.label,
+      confidence: normalizeConfidence(best.confidence),
+      cardType: normalizeCardType(item.card?.type?.label ?? 'pokemon'),
+      match: best.match,
+      cardState: item.grading?.state?.label ?? item.card?.state?.label ?? null,
+      authenticatorType: item.grading?.authenticator?.label ?? null,
+    };
+  }
+
+  if (raw.is_card !== 'card' || !raw.identity?.length) return null;
+
+  const topId = raw.identity[0];
+  return {
+    cardIdentityId: topId.card_identity,
+    confidence: normalizeConfidence(topId.card_identity_confidence),
+    cardType: normalizeCardType(raw.card_type ?? 'pokemon'),
+    match: null,
+    cardState: raw.card_state ?? null,
+    authenticatorType: raw.authenticator_type ?? null,
+  };
+}
+
+function normalizeConfidence(raw) {
+  const value = Number(raw ?? 0);
+  if (!Number.isFinite(value)) return 0;
+  return value > 1 ? value / 100 : value;
+}
+
+function normalizeCardType(raw) {
+  const compact = String(raw || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const aliases = {
+    onepiece: 'onepiece',
+    onepiecetcg: 'onepiece',
+    yugioh: 'yugioh',
+    yugiohtcg: 'yugioh',
+    pokemon: 'pokemon',
+    pokemontcg: 'pokemon',
+    mtg: 'mtg',
+    magic: 'mtg',
+    magicthegathering: 'mtg',
+    lorcana: 'lorcana',
+    naruto: 'naruto',
+  };
+  return aliases[compact] ?? compact;
+}
+
 async function lookupCard(cardType, identityId) {
-  // Try direct card endpoint
+  if (!identityId) return null;
+
   try {
     const r = await fetch(`${GIBL_BASE}/${cardType}/card/${identityId}?key=${GIBL_KEY}`);
     if (r.ok) {
@@ -66,16 +117,14 @@ async function lookupCard(cardType, identityId) {
     }
   } catch {}
 
-  // Fall back: card-list search — find the card whose cardId starts with "{identityId}-"
   try {
     const r = await fetch(
-      `${GIBL_BASE}/${cardType}/card-list?key=${GIBL_KEY}&q=${encodeURIComponent(identityId)}&page=1`
+      `${GIBL_BASE}/${cardType}/card-list?key=${GIBL_KEY}&q=${encodeURIComponent(identityId)}&page=1`,
     );
     if (r.ok) {
       const d = await r.json();
       const cards = d.data ?? [];
-      const match =
-        cards.find((c) => c.cardId?.startsWith(`${identityId}-`)) ?? cards[0] ?? null;
+      const match = cards.find((c) => c.cardId?.startsWith(`${identityId}-`)) ?? cards[0] ?? null;
       if (match) return parseCard(match);
     }
   } catch {}
@@ -83,24 +132,24 @@ async function lookupCard(cardType, identityId) {
   return null;
 }
 
-// cardId format from GiblTCG: "{giblId}-{setCode}-{number}"
-// e.g. "42-hgss4-1" → setCode="hgss4", number="1"
-// Sets with hyphens like "sv8pt5" are preserved by joining middle segments
 function parseCard(card) {
   const rawId = card.cardId ?? '';
   const parts = rawId.split('-');
-  let setCode = '';
-  let number = '';
-  if (parts.length >= 3) {
+  let setCode = card.setCode ?? '';
+  let number = card.number ?? '';
+
+  if (!setCode && parts.length >= 3) {
     setCode = parts.slice(1, -1).join('-');
     number = parts[parts.length - 1];
-  } else if (parts.length === 2) {
-    setCode = parts[1];
+  } else if (!setCode && parts.length === 2) {
+    setCode = parts[0];
+    number = parts[1];
   }
+
   return {
     giblCardId: rawId,
     name: card.name ?? '',
-    imageUrl: card.image ?? '',
+    imageUrl: card.image ?? card.imageUrl ?? '',
     setCode,
     number,
   };

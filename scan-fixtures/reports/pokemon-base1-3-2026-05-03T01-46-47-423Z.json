@@ -1,0 +1,98 @@
+{
+  "createdAt": "2026-05-03T01:46:47.421Z",
+  "provider": "gibltcg",
+  "setId": "base1",
+  "limit": 3,
+  "minStrongConfidence": 0.88,
+  "totals": {
+    "needs_review": 3
+  },
+  "exactRate": 1,
+  "verifiedRate": 0,
+  "results": [
+    {
+      "id": "base1-1",
+      "status": "needs_review",
+      "exact": true,
+      "strongConfidence": false,
+      "expected": {
+        "game": "pokemon",
+        "name": "Alakazam",
+        "setCode": "base1",
+        "setName": "Base",
+        "number": "1",
+        "printedTotal": "102",
+        "rarity": "Rare Holo",
+        "imageUrl": "https://images.pokemontcg.io/base1/1_hires.png"
+      },
+      "actual": {
+        "game": "pokemon",
+        "name": "Alakazam",
+        "number": "1",
+        "printedTotal": "102",
+        "confidence": 0.4471
+      },
+      "checks": {
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-2",
+      "status": "needs_review",
+      "exact": true,
+      "strongConfidence": false,
+      "expected": {
+        "game": "pokemon",
+        "name": "Blastoise",
+        "setCode": "base1",
+        "setName": "Base",
+        "number": "2",
+        "printedTotal": "102",
+        "rarity": "Rare Holo",
+        "imageUrl": "https://images.pokemontcg.io/base1/2_hires.png"
+      },
+      "actual": {
+        "game": "pokemon",
+        "name": "Blastoise",
+        "number": "2",
+        "printedTotal": "102",
+        "confidence": 0.4793
+      },
+      "checks": {
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    },
+    {
+      "id": "base1-3",
+      "status": "needs_review",
+      "exact": true,
+      "strongConfidence": false,
+      "expected": {
+        "game": "pokemon",
+        "name": "Chansey",
+        "setCode": "base1",
+        "setName": "Base",
+        "number": "3",
+        "printedTotal": "102",
+        "rarity": "Rare Holo",
+        "imageUrl": "https://images.pokemontcg.io/base1/3_hires.png"
+      },
+      "actual": {
+        "game": "pokemon",
+        "name": "Chansey",
+        "number": "3",
+        "printedTotal": "102",
+        "confidence": 0.3075
+      },
+      "checks": {
+        "nameOk": true,
+        "numberOk": true,
+        "totalOk": true
+      }
+    }
+  ]
+}

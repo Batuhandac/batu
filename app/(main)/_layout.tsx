@@ -65,6 +65,8 @@ export default function MainLayout() {
       <Tabs.Screen name="collection/[id]" options={{ href: null }} />
       <Tabs.Screen name="browse/[setCode]" options={{ href: null }} />
       <Tabs.Screen name="trade/index" options={{ href: null }} />
+      <Tabs.Screen name="ops/index" options={{ href: null }} />
+      <Tabs.Screen name="deck/index" options={{ href: null }} />
       <Tabs.Screen name="pokedex/index" options={{ href: null }} />
       <Tabs.Screen name="badges/index" options={{ href: null }} />
       <Tabs.Screen name="stats/index" options={{ href: null }} />

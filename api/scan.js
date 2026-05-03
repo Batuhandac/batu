@@ -29,6 +29,29 @@ Reply with ONLY valid JSON. No prose, no markdown, no code fences:
 
 If it is not a TCG card at all: {"name":"","game":"other"}`;
 
+const EXACT_PRINT_PROMPT = `${IDENTIFY_PROMPT}
+
+EXACT PRINTING RULES:
+- The goal is exact physical printing, not just the character name.
+- For Pokemon, read the bottom set/card number exactly and capture visible rarity/foil cues such as Holo, Reverse Holo, Secret Rare, 1st Edition, Promo, Full Art, Alt Art.
+- For Yu-Gi-Oh!, prefer the printed set code such as LOB-001, RA01-EN000, SDY-006. Use the 7-8 digit passcode only when no printed set code is visible.
+- When a printed code is visible, put it in "number"; for Yu-Gi-Oh! also put it in "set".
+- If glare, crop, or blur prevents exact print identification, still return the best fields you can read but do not invent set, number, or rarity.`;
+
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-20250514';
+
+function parseImageInput(input) {
+  const raw = String(input ?? '');
+  const dataUri = raw.match(/^data:([^;]+);base64,(.*)$/);
+  if (dataUri) return { data: dataUri[2], mediaType: dataUri[1] };
+
+  const data = raw.includes(',') ? raw.split(',').pop() : raw;
+  if (data.startsWith('/9j/')) return { data, mediaType: 'image/jpeg' };
+  if (data.startsWith('iVBORw0KGgo')) return { data, mediaType: 'image/png' };
+  if (data.startsWith('UklGR')) return { data, mediaType: 'image/webp' };
+  return { data, mediaType: 'image/jpeg' };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -42,6 +65,7 @@ export default async function handler(req, res) {
 
   const { image } = req.body;
   if (!image) return res.status(400).json({ error: 'No image provided' });
+  const parsedImage = parseImageInput(image);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -52,14 +76,14 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: CLAUDE_MODEL,
         max_tokens: 300,
         messages: [
           {
             role: 'user',
             content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
-              { type: 'text', text: IDENTIFY_PROMPT },
+              { type: 'image', source: { type: 'base64', media_type: parsedImage.mediaType, data: parsedImage.data } },
+              { type: 'text', text: EXACT_PRINT_PROMPT },
             ],
           },
         ],

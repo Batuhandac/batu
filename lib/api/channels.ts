@@ -1,89 +1,66 @@
 import { ChannelConfig, ChannelType, ListingPush } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { postServerApi } from '@/lib/api/serverApi';
 
 export interface PushResult {
   success: boolean;
   externalId?: string;
   error?: string;
+  dryRun?: boolean;
+  required?: string[];
 }
 
-export async function pushToShopify(
-  config: ChannelConfig,
-  listing: ListingPush & { card: { name: string; imageUrl: string; setName: string; number: string } },
-): Promise<PushResult> {
-  try {
-    const product = {
-      product: {
-        title: listing.title ?? `${listing.card.name} - ${listing.card.setName} #${listing.card.number}`,
-        body_html: listing.description ?? '',
-        images: [{ src: listing.card.imageUrl }],
-        variants: [
-          {
-            price: listing.price.toString(),
-            inventory_quantity: 1,
-          },
-        ],
-      },
-    };
+type LegacyListing = ListingPush & {
+  card: { id?: string; apiId?: string; name: string; imageUrl: string; setName: string; number: string; game?: string; rarity?: string };
+};
 
-    const response = await fetch(`${config.storeUrl}/admin/api/2024-01/products.json`, {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': config.accessToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(product),
-    });
+const CHANNEL_ENDPOINTS: Record<ChannelType, string> = {
+  shopify: '/api/integrations/shopify-listing',
+  ikas: '/api/integrations/ikas-listing',
+  ebay: '/api/integrations/ebay-publish',
+  trendyol: '/api/integrations/trendyol-listing',
+  hepsiburada: '/api/integrations/hepsiburada-listing',
+};
 
-    if (!response.ok) return { success: false, error: `HTTP ${response.status}` };
-
-    const data = await response.json();
-    return { success: true, externalId: data.product.id.toString() };
-  } catch (err) {
-    return { success: false, error: String(err) };
-  }
+export async function pushToShopify(config: ChannelConfig, listing: LegacyListing): Promise<PushResult> {
+  return pushToChannel('shopify', config, listing);
 }
 
-export async function pushToIkas(
+export async function pushToIkas(config: ChannelConfig, listing: LegacyListing): Promise<PushResult> {
+  return pushToChannel('ikas', config, listing);
+}
+
+export async function pushToEbay(config: ChannelConfig, listing: LegacyListing): Promise<PushResult> {
+  return pushToChannel('ebay', config, listing);
+}
+
+export async function pushToTrendyol(config: ChannelConfig, listing: LegacyListing): Promise<PushResult> {
+  return pushToChannel('trendyol', config, listing);
+}
+
+export async function pushToHepsiburada(config: ChannelConfig, listing: LegacyListing): Promise<PushResult> {
+  return pushToChannel('hepsiburada', config, listing);
+}
+
+export async function pushToChannel(
+  channel: ChannelType,
   config: ChannelConfig,
-  listing: ListingPush & { card: { name: string; imageUrl: string; setName: string; number: string } },
+  listing: LegacyListing,
 ): Promise<PushResult> {
-  try {
-    const mutation = `
-      mutation CreateProduct($input: ProductInput!) {
-        createProduct(input: $input) {
-          product { id name }
-        }
-      }
-    `;
+  const response = await postServerApi<PushResult>(
+    CHANNEL_ENDPOINTS[channel],
+    {
+      channelId: config.id,
+      config: publicConfig(config),
+      listing: normalizeListing(listing),
+    },
+  );
 
-    const response = await fetch(`${config.storeUrl}/graphql`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: mutation,
-        variables: {
-          input: {
-            name: listing.title ?? `${listing.card.name} - ${listing.card.setName}`,
-            price: { sellPrice: listing.price, currency: listing.currency },
-          },
-        },
-      }),
-    });
-
-    if (!response.ok) return { success: false, error: `HTTP ${response.status}` };
-
-    const data = await response.json();
-    return {
-      success: true,
-      externalId: data?.data?.createProduct?.product?.id,
-    };
-  } catch (err) {
-    return { success: false, error: String(err) };
+  if (!response.ok) {
+    return { success: false, error: response.reason, dryRun: response.reason === 'not_configured' };
   }
+
+  return response.data;
 }
 
 export async function getUserChannels(userId: string): Promise<ChannelConfig[]> {
@@ -105,4 +82,51 @@ export async function getUserChannels(userId: string): Promise<ChannelConfig[]> 
     isActive: row.is_active,
     lastSyncAt: row.last_sync_at,
   }));
+}
+
+function publicConfig(config: ChannelConfig): Partial<ChannelConfig> {
+  return {
+    id: config.id,
+    userId: config.userId,
+    type: config.type,
+    name: config.name,
+    storeUrl: config.storeUrl,
+    isActive: config.isActive,
+    lastSyncAt: config.lastSyncAt,
+  };
+}
+
+function normalizeListing(listing: LegacyListing) {
+  const title = listing.title ?? `${listing.card.name} - ${listing.card.setName} #${listing.card.number}`;
+  const description = listing.description ?? [
+    listing.card.name,
+    listing.card.setName ? `Set: ${listing.card.setName}` : '',
+    listing.card.number ? `Card Number: ${listing.card.number}` : '',
+    listing.card.rarity ? `Rarity: ${listing.card.rarity}` : '',
+  ].filter(Boolean).join('\n');
+
+  return {
+    userCardId: listing.userCardId,
+    sku: [listing.card.game, listing.card.apiId ?? listing.card.id, listing.card.number]
+      .filter(Boolean)
+      .join('-')
+      .toUpperCase(),
+    title,
+    description,
+    price: listing.price,
+    currency: listing.currency,
+    quantity: 1,
+    condition: 'NM',
+    imageUrls: listing.card.imageUrl ? [listing.card.imageUrl] : [],
+    tags: [listing.card.game, listing.card.setName, listing.card.rarity].filter(Boolean),
+    productType: `TCG Single - ${listing.card.game ?? 'card'}`,
+    metadata: {
+      game: listing.card.game ?? '',
+      setName: listing.card.setName,
+      number: listing.card.number,
+      rarity: listing.card.rarity ?? '',
+      source: 'cardory',
+    },
+    card: listing.card,
+  };
 }

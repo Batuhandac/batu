@@ -4,15 +4,27 @@
   "framework": null,
   "functions": {
     "api/scan.js": { "memory": 256, "maxDuration": 15 },
+    "api/visual-verify.js": { "memory": 256, "maxDuration": 20 },
     "api/gibl-scan.js": { "memory": 256, "maxDuration": 20 },
     "api/price.js": { "memory": 256, "maxDuration": 15 },
-    "api/ebay-lookup.js": { "memory": 256, "maxDuration": 15 }
+    "api/ebay-lookup.js": { "memory": 256, "maxDuration": 15 },
+    "api/integrations/shopify-listing.js": { "memory": 256, "maxDuration": 20 },
+    "api/integrations/ikas-listing.js": { "memory": 256, "maxDuration": 20 },
+    "api/integrations/ebay-publish.js": { "memory": 256, "maxDuration": 30 },
+    "api/integrations/trendyol-listing.js": { "memory": 256, "maxDuration": 20 },
+    "api/integrations/hepsiburada-listing.js": { "memory": 256, "maxDuration": 20 }
   },
   "rewrites": [
     { "source": "/api/scan", "destination": "/api/scan" },
+    { "source": "/api/visual-verify", "destination": "/api/visual-verify" },
     { "source": "/api/gibl-scan", "destination": "/api/gibl-scan" },
     { "source": "/api/price", "destination": "/api/price" },
     { "source": "/api/ebay-lookup", "destination": "/api/ebay-lookup" },
+    { "source": "/api/integrations/shopify-listing", "destination": "/api/integrations/shopify-listing" },
+    { "source": "/api/integrations/ikas-listing", "destination": "/api/integrations/ikas-listing" },
+    { "source": "/api/integrations/ebay-publish", "destination": "/api/integrations/ebay-publish" },
+    { "source": "/api/integrations/trendyol-listing", "destination": "/api/integrations/trendyol-listing" },
+    { "source": "/api/integrations/hepsiburada-listing", "destination": "/api/integrations/hepsiburada-listing" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

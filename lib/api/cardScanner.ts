@@ -1,17 +1,18 @@
-import { Platform } from 'react-native';
 import { ScanResult, Card } from '@/types';
 import { fetchCardsByQuery, extractBestPrice, tcgCardToCard } from './pokemontcg';
 import { fetchOPCardById, fetchOPCardBySetAndNumber, searchOPCards } from './onepiece';
 import { fetchYGOCard, ygoToCard, extractYGOPrice } from './yugioh';
 import { fetchMTGCard, scryfallToCard, extractMTGPrice } from './mtg';
+import { postServerApi } from './serverApi';
 import type { TCGCard } from '@/types';
 
-const ANTHROPIC_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
+const MIN_STRONG_PROVIDER_CONFIDENCE = 0.88;
 
 interface CardIdentification {
   name: string;
   hp?: string;
   number?: string;
+  printedTotal?: string;
   set?: string;
   era?: 'wizards' | 'modern' | 'kayou' | string;
   features?: string;
@@ -49,6 +50,15 @@ Reply with ONLY valid JSON. No prose, no markdown, no code fences:
 
 If it is not a TCG card at all: {"name":"","game":"other"}`;
 
+const EXACT_PRINT_PROMPT = `${IDENTIFY_PROMPT}
+
+EXACT PRINTING RULES:
+- The goal is exact physical printing, not just the character name.
+- For Pokemon, read the bottom set/card number exactly and capture visible rarity/foil cues such as Holo, Reverse Holo, Secret Rare, 1st Edition, Promo, Full Art, Alt Art.
+- For Yu-Gi-Oh!, prefer the printed set code such as LOB-001, RA01-EN000, SDY-006. Use the 7-8 digit passcode only when no printed set code is visible.
+- When a printed code is visible, put it in "number"; for Yu-Gi-Oh! also put it in "set".
+- If glare, crop, or blur prevents exact print identification, still return the best fields you can read but do not invent set, number, or rarity.`;
+
 function cleanBase64(raw: string): string {
   const idx = raw.indexOf(',');
   return idx !== -1 ? raw.slice(idx + 1) : raw;
@@ -57,7 +67,7 @@ function cleanBase64(raw: string): string {
 export async function scanCardWithVision(base64: string): Promise<ScanResult[]> {
   const clean = cleanBase64(base64);
 
-  if (Platform.OS === 'web') {
+  {
     // Run GiblTCG and Claude Vision in parallel — no added latency
     const [gibl, identification] = await Promise.all([
       identifyWithGibl(clean),
@@ -74,83 +84,216 @@ export async function scanCardWithVision(base64: string): Promise<ScanResult[]> 
       (cvGame === 'pokemon' || cvGame === 'other' || !cvGame);
 
     if (useGibl) {
-      const results = await findCardByGiblIdentity(gibl!);
-      if (results.length > 0) return results;
+      const results = await findCardByGiblIdentity(gibl!, identification, clean);
+      if (results.length > 0) return prioritizeScanResults(results);
     }
 
     if (identification && identification.name && identification.game !== 'other') {
-      return routeByGame(identification);
+      return prioritizeScanResults(await routeByGame(identification, clean));
     }
 
     return [];
   }
-
-  // Mobile: Claude Vision only
-  const identification = await identifyWithClaude(clean);
-  if (!identification || !identification.name || identification.game === 'other') return [];
-  return routeByGame(identification);
 }
 
-async function routeByGame(id: CardIdentification): Promise<ScanResult[]> {
+async function routeByGame(id: CardIdentification, sourceImageBase64?: string): Promise<ScanResult[]> {
   switch (id.game) {
-    case 'pokemon': return findCardInApi(id);
+    case 'pokemon': return findCardInApi(id, sourceImageBase64);
     case 'onepiece': return findOPCard(id);
     case 'yugioh': return findYGOCard(id);
     case 'mtg': return findMTGCard(id);
     case 'naruto': return findNarutoCard(id);
     case 'lorcana': return findLorcanaCard(id);
-    default: return findCardInApi(id);
+    default: return findCardInApi(id, sourceImageBase64);
   }
 }
 
 // ── POKEMON ────────────────────────────────────────────────────────────────
 
-async function findCardInApi(id: CardIdentification): Promise<ScanResult[]> {
+async function findCardInApi(id: CardIdentification, sourceImageBase64?: string): Promise<ScanResult[]> {
   if (!id.name) return [];
 
   const nameFilter = buildNameFilter(id.name);
   const num = id.number?.split('/')[0]?.trim();
+  const printedTotal = id.printedTotal?.trim() ?? id.number?.split('/')[1]?.trim();
   const hp = id.hp?.trim();
-  const setFilter = id.set?.trim() ? `set.name:"${id.set.trim()}"` : '';
+  const set = id.set?.trim();
+  const setFilter = set ? buildPokemonSetFilter(set) : '';
 
   const queries: string[] = [];
-  if (num && hp && setFilter) queries.push(`${nameFilter} number:${num} hp:${hp} ${setFilter}`);
-  if (num && hp) queries.push(`${nameFilter} number:${num} hp:${hp}`);
-  if (num && setFilter) queries.push(`${nameFilter} number:${num} ${setFilter}`);
-  if (num) queries.push(`${nameFilter} number:${num}`);
+  const exactQueries: string[] = [];
+  const numberFilters = num ? numberQueryVariants(num) : [];
+  for (const numberFilter of numberFilters) {
+    if (setFilter && printedTotal) exactQueries.push(`${nameFilter} number:${numberFilter} ${setFilter} set.printedTotal:${printedTotal}`);
+    if (setFilter) exactQueries.push(`${nameFilter} number:${numberFilter} ${setFilter}`);
+    if (printedTotal) exactQueries.push(`${nameFilter} number:${numberFilter} set.printedTotal:${printedTotal}`);
+  }
+  queries.push(...exactQueries);
+  for (const numberFilter of numberFilters) {
+    if (hp && setFilter) queries.push(`${nameFilter} number:${numberFilter} hp:${hp} ${setFilter}`);
+    if (hp) queries.push(`${nameFilter} number:${numberFilter} hp:${hp}`);
+    if (setFilter) queries.push(`${nameFilter} number:${numberFilter} ${setFilter}`);
+    queries.push(`${nameFilter} number:${numberFilter}`);
+  }
   if (hp && setFilter) queries.push(`${nameFilter} hp:${hp} ${setFilter}`);
   if (hp) queries.push(`${nameFilter} hp:${hp}`);
   if (setFilter) queries.push(`${nameFilter} ${setFilter}`);
   queries.push(nameFilter);
 
-  for (const q of queries) {
-    const results = await fetchCardsByQuery(q, 10);
-    if (!results.length) continue;
-    const best = pickBestMatch(results, id);
-    const result = buildScanResult(best, results.length === 1 ? 0.97 : 0.9);
-    const fresh = await fetchFreshPrice(best.id, best.tcgplayerUrl, best.rarity);
+  for (const q of exactQueries) {
+    const exact = await fetchCardsByQuery(q, 5);
+    if (exact.length !== 1) continue;
+
+    const result = buildScanResult(exact[0], 0.99);
+    result.verification = verifyPokemonResult(exact[0], id, 1);
+    const fresh = await fetchFreshPrice(exact[0].id, exact[0].tcgplayerUrl, exact[0].rarity);
     if (fresh) result.price = fresh;
-    return [result];
+    return prioritizeScanResults([await verifyAgainstReferenceImage(result, sourceImageBase64)]);
   }
 
-  return [];
+  const candidates = new Map<string, TCGCard>();
+
+  for (const q of queries) {
+    const results = await fetchCardsByQuery(q, 10);
+    for (const card of results) candidates.set(card.id, card);
+  }
+
+  if (!candidates.size) return [];
+
+  const ranked = rankPokemonMatches([...candidates.values()], id);
+  const confident = ranked.filter((m) => m.confidence >= 0.72);
+  const selected = confident.length ? confident : ranked.slice(0, 3);
+
+  const scanResults = await Promise.all(
+    selected.slice(0, 4).map(async ({ card, confidence }) => {
+      const result = buildScanResult(card, confidence);
+      result.verification = verifyPokemonResult(card, id, selected.length);
+      const fresh = await fetchFreshPrice(card.id, card.tcgplayerUrl, card.rarity);
+      if (fresh) result.price = fresh;
+      return verifyAgainstReferenceImage(result, sourceImageBase64);
+    }),
+  );
+
+  return prioritizeScanResults(scanResults);
 }
 
-function pickBestMatch(cards: TCGCard[], id: CardIdentification): TCGCard {
-  if (cards.length === 1) return cards[0];
+function buildPokemonSetFilter(set: string): string {
+  const trimmed = set.trim();
+  if (/^[a-z]{2,}\d+[a-z0-9-]*$/i.test(trimmed)) return `set.id:${trimmed}`;
+  return `set.name:"${trimmed}"`;
+}
+
+function rankPokemonMatches(cards: TCGCard[], id: CardIdentification): Array<{ card: TCGCard; confidence: number; score: number }> {
+  const num = id.number?.split('/')[0]?.trim();
+  const set = id.set?.trim();
+  const printedTotal = id.printedTotal?.trim() ?? id.number?.split('/')[1]?.trim();
+  const hp = id.hp?.trim();
+  const featureText = normalizeText(id.features ?? '');
+
   const scored = cards.map((c) => {
     let score = 0;
-    const num = id.number?.split('/')[0];
-    if (num && c.number === num) score += 10;
-    if (id.hp && c.hp?.toString() === id.hp) score += 5;
-    if (id.set && c.setName.toLowerCase() === id.set.toLowerCase()) score += 8;
-    if (id.set && c.setName.toLowerCase().includes(id.set.toLowerCase())) score += 3;
+    const exactPrintSignals = { number: false, set: false, printedTotal: false, hp: false };
+
+    if (normalizeText(c.name) === normalizeText(id.name)) score += 12;
+    else if (normalizeText(c.name).includes(normalizeText(id.name))) score += 6;
+
+    if (num && sameCardNumber(c.number, num)) {
+      score += 24;
+      exactPrintSignals.number = true;
+    }
+
+    if (hp && c.hp?.toString() === hp) {
+      score += 8;
+      exactPrintSignals.hp = true;
+    }
+
+    if (set) {
+      const normalizedSet = normalizeText(set);
+      if (normalizeText(c.setId) === normalizedSet) {
+        score += 24;
+        exactPrintSignals.set = true;
+      } else if (normalizeText(c.setName) === normalizedSet) {
+        score += 20;
+        exactPrintSignals.set = true;
+      } else if (normalizeText(c.setName).includes(normalizedSet)) {
+        score += 8;
+      }
+    }
+
+    if (printedTotal && String(c.printedTotal ?? '') === printedTotal) {
+      score += 18;
+      exactPrintSignals.printedTotal = true;
+    }
+
     if (id.era === 'wizards' && /base|jungle|fossil|rocket|gym|neo|wizards/i.test(c.setName)) score += 4;
     if (id.era === 'modern' && !/base|jungle|fossil|rocket|gym|neo|wizards/i.test(c.setName)) score += 2;
-    return { card: c, score };
+
+    const rarityText = normalizeText(c.rarity);
+    if (featureText.includes('reverse') && rarityText.includes('reverse')) score += 7;
+    if (featureText.includes('holo') && rarityText.includes('holo')) score += 5;
+    if (featureText.includes('secret') && rarityText.includes('secret')) score += 7;
+    if (featureText.includes('promo') && rarityText.includes('promo')) score += 7;
+
+    let confidence = 0.62;
+    if (exactPrintSignals.number && exactPrintSignals.set) confidence = 0.99;
+    else if (exactPrintSignals.number && exactPrintSignals.printedTotal) confidence = 0.98;
+    else if (exactPrintSignals.number && exactPrintSignals.hp) confidence = 0.92;
+    else if (exactPrintSignals.number) confidence = 0.84;
+    else if (exactPrintSignals.set && exactPrintSignals.hp) confidence = 0.78;
+
+    if (featureText && (featureText.includes('holo') || featureText.includes('reverse') || featureText.includes('secret'))) {
+      confidence = Math.min(0.99, confidence + 0.02);
+    }
+
+    return { card: c, confidence, score };
   });
-  scored.sort((a, b) => b.score - a.score);
-  return scored[0].card;
+
+  scored.sort((a, b) => b.score - a.score || b.confidence - a.confidence);
+  const best = scored[0];
+  return scored.map((item, index) => {
+    const closeToBest = best && best.score - item.score <= 6;
+    const confidence = index === 0 || closeToBest ? item.confidence : Math.min(item.confidence, 0.74);
+    return { ...item, confidence };
+  });
+}
+
+function verifyPokemonResult(card: TCGCard, id: CardIdentification, candidateCount: number): ScanResult['verification'] {
+  const reasons: string[] = [];
+  const num = id.number?.split('/')[0]?.trim();
+  const printedTotal = id.printedTotal?.trim() ?? id.number?.split('/')[1]?.trim();
+  const set = id.set?.trim();
+
+  if (normalizeText(card.name) === normalizeText(id.name)) reasons.push('name');
+  if (num && sameCardNumber(card.number, num)) reasons.push('number');
+  if (set && (normalizeText(card.setId) === normalizeText(set) || normalizeText(card.setName) === normalizeText(set))) reasons.push('set');
+  if (printedTotal && String(card.printedTotal ?? '') === printedTotal) reasons.push('printedTotal');
+  if (id.hp && card.hp?.toString() === id.hp) reasons.push('hp');
+
+  const hasExactPrint = reasons.includes('number') && (reasons.includes('set') || reasons.includes('printedTotal'));
+  const status = hasExactPrint && candidateCount === 1 ? 'verified' : 'needs_review';
+
+  return { status, provider: 'pokemontcg', reasons };
+}
+
+function normalizeText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function normalizeCardNumber(value: string | undefined): string {
+  const raw = String(value ?? '').trim();
+  const [number] = raw.split('/');
+  const compact = number.trim();
+  return compact.replace(/^0+(\d)/, '$1');
+}
+
+function sameCardNumber(left: string | undefined, right: string | undefined): boolean {
+  return !!left && !!right && normalizeCardNumber(left) === normalizeCardNumber(right);
+}
+
+function numberQueryVariants(value: string): string[] {
+  const raw = value.trim();
+  const normalized = normalizeCardNumber(raw);
+  return [...new Set([raw, normalized].filter(Boolean))];
 }
 
 function buildScanResult(tcgCard: TCGCard, confidence: number): ScanResult {
@@ -179,15 +322,22 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
   const num = id.number?.trim();
   let card: Card | null = null;
   let conf = 0.75;
+  let authoritative = false;
 
   if (num && /^[A-Z0-9]+-\d+$/i.test(num)) {
     card = await fetchOPCardById(num);
-    if (card) conf = 0.97;
+    if (card) {
+      conf = 0.97;
+      authoritative = true;
+    }
   }
   if (!card && num && id.set) {
     const setCode = id.set.replace(/\s+/g, '').toUpperCase();
     card = await fetchOPCardBySetAndNumber(setCode, num);
-    if (card) conf = 0.92;
+    if (card) {
+      conf = 0.92;
+      authoritative = true;
+    }
   }
   // Only name-search when we have NO specific card number.
   // With a number (e.g. P-001), a name search returns a different printing of
@@ -216,8 +366,27 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
   if (!card) return [];
 
   const ebay = await enrichWithEbay(card);
-  if (ebay.imageUrl && !card.imageUrl) card = { ...card, imageUrl: ebay.imageUrl };
-  return [{ card, confidence: conf, price: ebay.price }];
+  return [{
+    card,
+    confidence: conf,
+    price: ebay.price,
+    verification: verifyOnePieceResult(card, id, authoritative),
+  }];
+}
+
+function verifyOnePieceResult(card: Card, id: CardIdentification, authoritative: boolean): ScanResult['verification'] {
+  const reasons: string[] = [];
+  const expectedCode = id.number?.trim().toUpperCase();
+
+  if (normalizeText(card.name).includes(normalizeText(id.name))) reasons.push('name');
+  if (expectedCode && card.number.toUpperCase() === expectedCode) reasons.push('printedCode');
+  if (id.set && normalizeText(card.setName).includes(normalizeText(id.set))) reasons.push('set');
+
+  return {
+    status: authoritative && reasons.includes('printedCode') ? 'verified' : 'needs_review',
+    provider: 'optcgapi',
+    reasons,
+  };
 }
 
 // ── YU-GI-OH ────────────────────────────────────────────────────────────────
@@ -225,15 +394,25 @@ async function findOPCard(id: CardIdentification): Promise<ScanResult[]> {
 async function findYGOCard(id: CardIdentification): Promise<ScanResult[]> {
   if (!id.name) return [];
 
+  const printedCode = pickYGOPrintedCode(id);
   const isPasscode = id.number ? /^\d{7,8}$/.test(id.number.trim()) : false;
-  const passcode = isPasscode ? id.number : undefined;
-  const setCode = !isPasscode && id.number ? id.number : undefined;
+  const passcode = !printedCode && isPasscode ? id.number : undefined;
+  const setCode = printedCode;
 
   const result = await fetchYGOCard(id.name, passcode, setCode);
   if (!result) return [];
 
-  const conf = isPasscode ? 0.99 : 0.9;
-  const primary: ScanResult = { card: result.card, confidence: conf, price: result.price ?? undefined };
+  const conf = setCode ? 0.98 : isPasscode ? 0.9 : 0.78;
+  const primary: ScanResult = {
+    card: result.card,
+    confidence: conf,
+    price: result.price ?? undefined,
+    verification: {
+      status: setCode ? 'verified' : 'needs_review',
+      provider: 'ygoprodeck',
+      reasons: setCode ? ['printedSetCode'] : isPasscode ? ['passcode'] : ['name'],
+    },
+  };
 
   // If not matched by passcode, fetch alternative printings (different sets/rarities)
   // so user can pick the exact version they have
@@ -243,6 +422,11 @@ async function findYGOCard(id: CardIdentification): Promise<ScanResult[]> {
   }
 
   return [primary];
+}
+
+function pickYGOPrintedCode(id: CardIdentification): string | undefined {
+  const values = [id.number, id.set].filter(Boolean) as string[];
+  return values.find((value) => /^[A-Z0-9]{2,8}-[A-Z0-9]{2,8}$/i.test(value.trim()))?.trim();
 }
 
 async function fetchYGOAlternatives(name: string, excludeApiId: string): Promise<ScanResult[]> {
@@ -259,6 +443,11 @@ async function fetchYGOAlternatives(name: string, excludeApiId: string): Promise
         card: ygoToCard(raw),
         confidence: 0.75,
         price: extractYGOPrice(raw) ?? undefined,
+        verification: {
+          status: 'needs_review' as const,
+          provider: 'ygoprodeck',
+          reasons: ['alternativePrinting'],
+        },
       }));
   } catch {
     return [];
@@ -273,8 +462,18 @@ async function findMTGCard(id: CardIdentification): Promise<ScanResult[]> {
   const result = await fetchMTGCard(id.name, id.set, id.number);
   if (!result) return [];
 
-  const conf = id.number ? 0.95 : 0.88;
-  const primary: ScanResult = { card: result.card, confidence: conf, price: result.price ?? undefined };
+  const exactPrint = !!(id.set && id.number);
+  const conf = exactPrint ? 0.96 : id.number ? 0.88 : 0.76;
+  const primary: ScanResult = {
+    card: result.card,
+    confidence: conf,
+    price: result.price ?? undefined,
+    verification: {
+      status: exactPrint ? 'verified' : 'needs_review',
+      provider: 'scryfall',
+      reasons: exactPrint ? ['set', 'collectorNumber'] : id.number ? ['collectorNumber'] : ['name'],
+    },
+  };
 
   // Fetch other printings as alternatives (Scryfall has all reprints)
   const alts = await fetchMTGAlternatives(id.name, result.card.apiId);
@@ -298,6 +497,11 @@ async function fetchMTGAlternatives(name: string, excludeApiId: string): Promise
         card: scryfallToCard(raw),
         confidence: 0.75,
         price: extractMTGPrice(raw) ?? undefined,
+        verification: {
+          status: 'needs_review' as const,
+          provider: 'scryfall',
+          reasons: ['alternativePrinting'],
+        },
       }));
   } catch {
     return [];
@@ -310,7 +514,6 @@ async function findNarutoCard(id: CardIdentification): Promise<ScanResult[]> {
   const results = buildNarutoResult(id);
   if (!results.length) return [];
   const ebay = await enrichWithEbay(results[0].card);
-  if (ebay.imageUrl) results[0].card = { ...results[0].card, imageUrl: ebay.imageUrl };
   if (ebay.price) results[0].price = ebay.price;
   return results;
 }
@@ -340,7 +543,15 @@ function buildNarutoResult(id: CardIdentification): ScanResult[] {
     imageUrl: '',
     supertype: 'Ninja',
   };
-  return [{ card, confidence: 0.85 }];
+  return [{
+    card,
+    confidence: 0.85,
+    verification: {
+      status: 'needs_review',
+      provider: 'vision',
+      reasons: num ? ['printedCode'] : ['name'],
+    },
+  }];
 }
 
 // ── LORCANA ─────────────────────────────────────────────────────────────────
@@ -368,8 +579,16 @@ async function findLorcanaCard(id: CardIdentification): Promise<ScanResult[]> {
   };
 
   const ebay = await enrichWithEbay(card);
-  if (ebay.imageUrl) card.imageUrl = ebay.imageUrl;
-  return [{ card, confidence: 0.82, price: ebay.price }];
+  return [{
+    card,
+    confidence: 0.82,
+    price: ebay.price,
+    verification: {
+      status: 'needs_review',
+      provider: 'vision+ebay',
+      reasons: id.number ? ['collectorNumber'] : ['name'],
+    },
+  }];
 }
 
 // ── EBAY ENRICHMENT ─────────────────────────────────────────────────────────
@@ -410,8 +629,7 @@ function buildEbayQuery(name: string, number: string, game: string): string {
   return parts.join(' ');
 }
 
-async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: import('@/types').CardPrice }> {
-  if (Platform.OS !== 'web') return {};
+async function enrichWithEbay(card: Card): Promise<{ price?: import('@/types').CardPrice }> {
   try {
     const validate = { name: card.name, number: card.number };
 
@@ -422,10 +640,9 @@ async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: 
       fallback = await callEbayLookup(buildEbayQuery(card.name, '', card.game), validate);
     }
 
-    const result: { imageUrl?: string; price?: import('@/types').CardPrice } = {};
+    const result: { price?: import('@/types').CardPrice } = {};
     const best = (primary?.price?.sampleSize ?? 0) >= (fallback?.price?.sampleSize ?? 0) ? primary : fallback;
 
-    if (best?.image) result.imageUrl = best.image;
     const p = best?.price;
     if (p?.market) {
       result.price = {
@@ -446,17 +663,8 @@ async function enrichWithEbay(card: Card): Promise<{ imageUrl?: string; price?: 
 }
 
 async function callEbayLookup(query: string, validate?: { name: string; number: string }) {
-  try {
-    const res = await fetch('/api/ebay-lookup', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query, validate }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+  const res = await postServerApi<any>('/api/ebay-lookup', { query, validate });
+  return res.ok ? res.data : null;
 }
 
 // ── GIBL TCG ────────────────────────────────────────────────────────────────
@@ -465,115 +673,198 @@ interface GiblIdentity {
   name: string;
   setCode: string;
   number: string;
+  printedTotal?: string;
   confidence: number;
   cardType?: string;
   imageUrl?: string;
 }
 
 async function identifyWithGibl(base64: string): Promise<GiblIdentity | null> {
-  try {
-    const res = await fetch('/api/gibl-scan', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ image: base64 }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.found || !data.name) return null;
-    return {
-      name: data.name as string,
-      setCode: (data.setCode as string) ?? '',
-      number: (data.number as string) ?? '',
-      confidence: (data.confidence as number) ?? 0.9,
-      cardType: (data.cardType as string) ?? 'pokemon',
-      imageUrl: (data.imageUrl as string) ?? undefined,
-    };
-  } catch {
-    return null;
-  }
+  const res = await postServerApi<any>('/api/gibl-scan', { image: base64 });
+  if (!res.ok) return null;
+
+  const data = res.data;
+  if (!data.found || !data.name) return null;
+
+  return {
+    name: data.name as string,
+    setCode: (data.setCode as string) ?? '',
+    number: (data.number as string) ?? '',
+    printedTotal: (data.printedTotal as string) ?? undefined,
+    confidence: (data.confidence as number) ?? 0.9,
+    cardType: (data.cardType as string) ?? 'pokemon',
+    imageUrl: (data.imageUrl as string) ?? undefined,
+  };
 }
 
 async function findCardByGiblIdentity({
   name,
   setCode,
   number,
+  printedTotal,
   confidence,
   cardType,
-}: GiblIdentity): Promise<ScanResult[]> {
+}: GiblIdentity, supportingId?: CardIdentification | null, sourceImageBase64?: string): Promise<ScanResult[]> {
   // GiblTCG predict-card is only reliable for Pokémon — all other games
   // are handled by Claude Vision via routeByGame.
   if (cardType !== 'pokemon') return [];
 
   let tcgCard: TCGCard | null = null;
   let conf = confidence;
+  const giblId: CardIdentification = {
+    game: 'pokemon',
+    name,
+    number: printedTotal ? `${number}/${printedTotal}` : number,
+    printedTotal,
+    set: setCode,
+  };
+  const hasSecondProviderAgreement = pokemonIdentityAgreement(giblId, supportingId);
+  const trustedProvider = confidence >= MIN_STRONG_PROVIDER_CONFIDENCE || hasSecondProviderAgreement;
 
   if (setCode && number) {
     const r = await fetchCardsByQuery(`set.id:${setCode} number:${number}`, 3);
-    if (r.length > 0) { tcgCard = r[0]; conf = Math.min(confidence, 0.99); }
+    if (r.length === 1) { tcgCard = r[0]; conf = Math.min(confidence, 0.99); }
   }
-  if (!tcgCard && name && number) {
-    const r = await fetchCardsByQuery(`${buildNameFilter(name)} number:${number}`, 5);
-    if (r.length > 0) { tcgCard = r[0]; conf = 0.95; }
+  if (!tcgCard) {
+    const results = await findCardInApi(giblId, sourceImageBase64);
+
+    const gated = results.map((result) => applyProviderTrustGate(
+      {
+        ...result,
+        confidence: Math.min(result.confidence, confidence || result.confidence),
+      },
+      trustedProvider,
+      confidence,
+      hasSecondProviderAgreement,
+    ));
+    return Promise.all(gated.map((result) => verifyAgainstReferenceImage(result, sourceImageBase64)));
   }
-  if (!tcgCard && name) {
-    const r = await fetchCardsByQuery(buildNameFilter(name), 5);
-    if (r.length > 0) { tcgCard = r[0]; conf = 0.7; }
-  }
-  if (!tcgCard) return [];
 
   const result = buildScanResult(tcgCard, conf);
+  result.verification = verifyPokemonResult(tcgCard, giblId, 1);
   const fresh = await fetchFreshPrice(tcgCard.id, tcgCard.tcgplayerUrl, tcgCard.rarity);
   if (fresh) result.price = fresh;
 
-  return [result];
+  return [await verifyAgainstReferenceImage(
+    applyProviderTrustGate(result, trustedProvider, confidence, hasSecondProviderAgreement),
+    sourceImageBase64,
+  )];
+}
+
+function applyProviderTrustGate(
+  result: ScanResult,
+  trustedProvider: boolean,
+  providerConfidence: number,
+  hasSecondProviderAgreement: boolean,
+): ScanResult {
+  const verification = result.verification;
+  if (!verification) return result;
+
+  const reasons = new Set(verification.reasons);
+  if (hasSecondProviderAgreement) reasons.add('secondProvider');
+
+  if (!trustedProvider && verification.status === 'verified') {
+    reasons.add(`vision${Math.round(providerConfidence * 100)}`);
+    reasons.add('manualReviewRequired');
+    return {
+      ...result,
+      verification: {
+        ...verification,
+        status: 'needs_review',
+        reasons: Array.from(reasons),
+      },
+    };
+  }
+
+  return {
+    ...result,
+    verification: { ...verification, reasons: Array.from(reasons) },
+  };
+}
+
+function pokemonIdentityAgreement(primary: CardIdentification, secondary?: CardIdentification | null): boolean {
+  if (!secondary || secondary.game !== 'pokemon' || !secondary.name) return false;
+
+  const primaryNumber = primary.number?.split('/')[0]?.trim();
+  const secondaryNumber = secondary.number?.split('/')[0]?.trim();
+  const primaryTotal = primary.printedTotal?.trim() ?? primary.number?.split('/')[1]?.trim();
+  const secondaryTotal = secondary.printedTotal?.trim() ?? secondary.number?.split('/')[1]?.trim();
+  const primarySet = primary.set?.trim();
+  const secondarySet = secondary.set?.trim();
+
+  const nameMatches = normalizeText(primary.name) === normalizeText(secondary.name);
+  const numberMatches = !!primaryNumber && !!secondaryNumber && primaryNumber === secondaryNumber;
+  const totalMatches = !!primaryTotal && !!secondaryTotal && primaryTotal === secondaryTotal;
+  const setMatches = !!primarySet && !!secondarySet && normalizeText(primarySet) === normalizeText(secondarySet);
+
+  return nameMatches && (numberMatches || totalMatches || setMatches);
+}
+
+function prioritizeScanResults(results: ScanResult[]): ScanResult[] {
+  return [...results].sort((a, b) => {
+    const aVerified = a.verification?.status === 'verified' ? 1 : 0;
+    const bVerified = b.verification?.status === 'verified' ? 1 : 0;
+    return bVerified - aVerified || b.confidence - a.confidence;
+  });
 }
 
 // ── CLAUDE VISION ───────────────────────────────────────────────────────────
 
+async function verifyAgainstReferenceImage(
+  result: ScanResult,
+  sourceImageBase64?: string,
+): Promise<ScanResult> {
+  if (!sourceImageBase64 || !result.card.imageUrl) return result;
+  if (result.verification?.status === 'verified') return result;
+
+  try {
+    const res = await postServerApi<{
+      exact: boolean;
+      confidence: number;
+      reasons?: string[];
+      mismatches?: string[];
+    }>('/api/visual-verify', {
+      image: sourceImageBase64,
+      referenceImageUrl: result.card.imageUrl,
+      expected: {
+        game: result.card.game,
+        name: result.card.name,
+        setName: result.card.setName,
+        setCode: result.card.setCode,
+        number: result.card.number,
+        rarity: result.card.rarity,
+      },
+    });
+
+    if (!res.ok || !res.data.exact || res.data.confidence < 0.9) return result;
+
+    const currentReasons = result.verification?.reasons ?? [];
+    return {
+      ...result,
+      confidence: Math.max(result.confidence, Math.min(0.99, res.data.confidence)),
+      verification: {
+        status: 'verified',
+        provider: result.verification?.provider
+          ? `${result.verification.provider}+visual`
+          : 'visual',
+        reasons: [...new Set([...currentReasons, ...(res.data.reasons ?? []), 'referenceImage'])],
+      },
+    };
+  } catch {
+    return result;
+  }
+}
+
 async function identifyWithClaude(base64: string): Promise<CardIdentification | null> {
   try {
-    if (Platform.OS === 'web') {
-      const res = await fetch('/api/scan', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
+    const serverResult = await postServerApi<any>('/api/scan', { image: base64 });
+    if (serverResult.ok) {
+      const data = serverResult.data;
       if (data.error) return null;
       return data as CardIdentification;
     }
 
-    if (!ANTHROPIC_KEY) return null;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-              { type: 'text', text: IDENTIFY_PROMPT },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-    return JSON.parse(jsonMatch[0]) as CardIdentification;
+    return null;
   } catch {
     return null;
   }
@@ -591,15 +882,10 @@ export async function fetchFreshPrice(
   tcgplayerUrl: string | undefined,
   rarity: string,
 ): Promise<import('@/types').CardPrice | null> {
-  if (Platform.OS !== 'web') return null;
   try {
-    const res = await fetch('/api/price', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ cardId, tcgplayerUrl, rarity }),
-    });
+    const res = await postServerApi<any>('/api/price', { cardId, tcgplayerUrl, rarity });
     if (!res.ok) return null;
-    const d = await res.json();
+    const d = res.data;
     if (!d.market && !d.mid) return null;
     return {
       cardId,

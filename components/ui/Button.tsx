@@ -46,7 +46,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#fff' : colors.primary}
+          color={variant === 'primary' ? colors.onPrimary : colors.primary}
           size="small"
         />
       ) : (
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   label_primary: {
-    color: '#fff',
+    color: colors.onPrimary,
   },
   label_secondary: {
     color: colors.text,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   label_danger: {
-    color: '#fff',
+    color: '#690005',
   },
   label_sm: {
     fontSize: fontSize.sm,
