@@ -1,89 +1,72 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fontSize, radius, spacing } from '@/constants/theme';
-import { Dropdown, DropdownOption } from '@/components/ui/Dropdown';
-import { TipsCard } from '@/components/trade/TipsCard';
-import { InfoBanner } from '@/components/trade/InfoBanner';
 import { Button } from '@/components/ui/Button';
+import { Dropdown, DropdownOption } from '@/components/ui/Dropdown';
+import { colors, fontSize, radius, spacing } from '@/constants/theme';
 import { GAME_CONFIG } from '@/constants/games';
 import { useCollectionStore } from '@/stores/collectionStore';
-import { useAuthStore } from '@/stores/authStore';
 
-const MOCK_FRIENDS: DropdownOption[] = [
-  { label: 'Tüm Arkadaşlar', value: 'all' },
+const PEOPLE_OPTIONS: DropdownOption[] = [
+  { label: 'All followed + friends', value: 'all' },
+  { label: 'Friends only', value: 'friends' },
   { label: 'Ahmet K.', value: 'friend-1' },
   { label: 'Mehmet Y.', value: 'friend-2' },
 ];
 
 const EXPANSION_OPTIONS: DropdownOption[] = [
-  { label: 'Set Seçilmedi', value: '' },
-  ...Object.values(GAME_CONFIG).flatMap((g) =>
-    g.sets.map((s) => ({ label: `${s}`, value: s })),
+  { label: 'No set selected', value: '' },
+  ...Object.values(GAME_CONFIG).flatMap((game) =>
+    game.sets.map((set) => ({ label: set, value: set })),
   ),
 ];
 
 export default function TradeScreen() {
-  const [showTips, setShowTips] = useState(true);
+  const { cards, folders } = useCollectionStore();
   const [goalExpansion, setGoalExpansion] = useState('');
   const [goalFolder, setGoalFolder] = useState('');
-  const [friend, setFriend] = useState('all');
+  const [people, setPeople] = useState('all');
   const [scope, setScope] = useState('');
+  const [searched, setSearched] = useState(false);
 
-  const { folders } = useCollectionStore();
-  const { user } = useAuthStore();
+  const folderOptions: DropdownOption[] = useMemo(
+    () => [
+      { label: 'Wishlist / folder not selected', value: '' },
+      ...folders.map((folder) => ({ label: folder.name, value: folder.id })),
+    ],
+    [folders],
+  );
 
-  const hasFriends = MOCK_FRIENDS.length > 1;
-
-  const folderOptions: DropdownOption[] = [
-    { label: 'Belirli Klasör Yok', value: '' },
-    ...folders.map((f) => ({ label: f.name, value: f.id })),
-  ];
-
-  const myFolderOptions: DropdownOption[] = [
-    { label: 'Set Seçilmedi', value: '' },
-    ...folders.map((f) => ({ label: f.name, value: f.id })),
-  ];
-
-  const selectedFriendLabel = MOCK_FRIENDS.find((f) => f.value === friend)?.label ?? 'Tüm Arkadaşlar';
+  const duplicateUnits = cards.reduce((sum, item) => sum + Math.max(0, item.quantity - 1), 0);
+  const suggestedMatches = Math.min(12, duplicateUnits + (goalExpansion ? 3 : 0) + (goalFolder ? 2 : 0));
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.titleBar}>
-        <Text style={styles.title}>Takas</Text>
-        <Dropdown
-          options={folderOptions}
-          value={scope}
-          placeholder="Belirli Klasör Yok"
-          icon={<Text style={styles.dropIcon}>📁</Text>}
-          onChange={setScope}
-        />
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Buy / Trade</Text>
+          <Text style={styles.subtitle}>
+            Find sellers and traders by wishlist, missing set cards, duplicates and friend graph.
+          </Text>
+        </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
-        <Text style={styles.subtitle}>
-          Tamamlamak istediğini seç, ardından bir arkadaş seç ya da tümünde ara.
-        </Text>
-
-        {!hasFriends && (
-          <InfoBanner
-            title="Başlamak için arkadaş ekle"
-            message="Takas fırsatlarını bulmak için en az bir arkadaşa ihtiyacın var."
-            onAction={() => {}}
+        <View style={styles.discoveryGrid}>
+          <DiscoveryCard
+            label="Find sellers"
+            value="Local + global"
+            detail="Cards listed by sellers will appear here once channel/provider data is connected."
           />
-        )}
+          <DiscoveryCard
+            label="Find traders"
+            value="Collector graph"
+            detail="Match your missing cards against duplicates in friends and public trade folders."
+          />
+        </View>
 
-        <TradeSection
-          icon="✨"
-          title="Hedef"
-          subtitle="Arkadaşlarının kartlarıyla tamamlamak istediğin seti veya klasörü seç."
-        >
+        <TradeSection title="Goal" subtitle="Pick a set, collection folder or wishlist target.">
           <View style={styles.twoCol}>
             <View style={styles.colWrap}>
-              <Text style={styles.colLabel}>📚 Set</Text>
+              <Text style={styles.colLabel}>Set</Text>
               <Dropdown
                 options={EXPANSION_OPTIONS}
                 value={goalExpansion}
@@ -92,85 +75,79 @@ export default function TradeScreen() {
               />
             </View>
             <View style={styles.colWrap}>
-              <Text style={styles.colLabel}>📁 Klasör</Text>
+              <Text style={styles.colLabel}>Wishlist / Folder</Text>
               <Dropdown
-                options={myFolderOptions}
+                options={folderOptions}
                 value={goalFolder}
-                placeholder="Klasör"
+                placeholder="Wishlist"
                 onChange={setGoalFolder}
               />
             </View>
           </View>
         </TradeSection>
 
-        <TradeSection
-          icon="👥"
-          title="Arkadaş"
-          subtitle="Belirli bir arkadaşınla takas yap ya da arkadaş listende ara."
-        >
+        <TradeSection title="People" subtitle="Search all followed users, only friends, or one collector.">
           <Dropdown
-            options={MOCK_FRIENDS}
-            value={friend}
-            placeholder="Tüm Arkadaşlar"
-            icon={<Text>👥</Text>}
-            onChange={setFriend}
+            options={PEOPLE_OPTIONS}
+            value={people}
+            placeholder="All followed + friends"
+            onChange={setPeople}
           />
         </TradeSection>
 
-        <TradeSection
-          icon="📁"
-          title="Kapsam"
-          subtitle="İsteğe bağlı olarak sonuçları arkadaşının belirli bir klasörüne, örneğin takas klasörüne daralt."
-        >
+        <TradeSection title="Scope" subtitle="Narrow matches to trade folders, public collections or sale-enabled cards.">
           <Dropdown
             options={folderOptions}
             value={scope}
-            placeholder="Belirli Klasör Yok"
-            icon={<Text>📁</Text>}
+            placeholder="Public trade folders"
             onChange={setScope}
           />
         </TradeSection>
 
-        {showTips && (
-          <View>
-            <TipsCard />
+        {searched && (
+          <View style={styles.resultsBox}>
+            <Text style={styles.resultsTitle}>{suggestedMatches || 2} potential matches</Text>
+            <Text style={styles.resultsText}>
+              Matches will become live when Supabase public collections, wishlist rows and seller listings are connected.
+            </Text>
+            <View style={styles.matchRow}>
+              <Text style={styles.matchName}>Trader duplicate match</Text>
+              <Text style={styles.matchMeta}>{duplicateUnits} duplicate units available from your side</Text>
+            </View>
+            <View style={styles.matchRow}>
+              <Text style={styles.matchName}>Seller discovery</Text>
+              <Text style={styles.matchMeta}>Provider listings and user sale cards will populate here.</Text>
+            </View>
           </View>
         )}
-
-        <View style={styles.bottomPad} />
       </ScrollView>
 
       <View style={styles.footer}>
         <Button
-          label="Devam Et"
+          label="Find Matches"
           variant="primary"
           size="lg"
           style={styles.continueBtn}
-          onPress={() => {
-            setShowTips(false);
-          }}
+          onPress={() => setSearched(true)}
         />
       </View>
     </SafeAreaView>
   );
 }
 
-function TradeSection({
-  icon,
-  title,
-  subtitle,
-  children,
-}: {
-  icon: string;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
+function DiscoveryCard({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <View style={styles.discoveryCard}>
+      <Text style={styles.discoveryLabel}>{label}</Text>
+      <Text style={styles.discoveryValue}>{value}</Text>
+      <Text style={styles.discoveryDetail}>{detail}</Text>
+    </View>
+  );
+}
+
+function TradeSection({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
-      <View style={styles.sectionIconWrap}>
-        <Text style={styles.sectionIcon}>{icon}</Text>
-      </View>
       <Text style={styles.sectionTitle}>{title}</Text>
       <Text style={styles.sectionSubtitle}>{subtitle}</Text>
       <View style={styles.sectionContent}>{children}</View>
@@ -180,74 +157,62 @@ function TradeSection({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  titleBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xxl,
-    fontWeight: '800',
-    flexShrink: 0,
-  },
-  dropIcon: { fontSize: 14 },
   content: {
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
     gap: spacing.lg,
-    paddingBottom: 100,
+    paddingBottom: 128,
   },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    lineHeight: 22,
+  header: { gap: spacing.xs },
+  title: { color: colors.text, fontSize: fontSize.xxxl, fontWeight: '900', letterSpacing: -0.4 },
+  subtitle: { color: colors.textMuted, fontSize: fontSize.md, lineHeight: 22 },
+  discoveryGrid: { flexDirection: 'row', gap: spacing.md },
+  discoveryCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.lg,
+    gap: spacing.xs,
   },
+  discoveryLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '900', textTransform: 'uppercase' },
+  discoveryValue: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  discoveryDetail: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 17 },
   section: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     padding: spacing.xl,
     gap: spacing.sm,
   },
-  sectionIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.full,
-    backgroundColor: colors.primaryMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
+  sectionTitle: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
+  sectionSubtitle: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
+  sectionContent: { marginTop: spacing.sm },
+  twoCol: { flexDirection: 'row', gap: spacing.sm },
+  colWrap: { flex: 1, gap: spacing.xs },
+  colLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '900', textTransform: 'uppercase' },
+  resultsBox: {
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  sectionIcon: { fontSize: 22 },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+  resultsTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '900' },
+  resultsText: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
+  matchRow: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.md,
+    gap: 2,
   },
-  sectionSubtitle: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
-  },
-  sectionContent: {
-    marginTop: spacing.sm,
-  },
-  twoCol: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  colWrap: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  colLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
+  matchName: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
+  matchMeta: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -261,5 +226,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   continueBtn: { width: '100%' },
-  bottomPad: { height: spacing.xxxl },
 });

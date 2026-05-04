@@ -28,16 +28,29 @@ export default function ScanScreen() {
   const [addedToast, setAddedToast] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
   const { phase, results, activeIndex, error, scan, setActiveIndex, reset, clearError } = useScanStore();
   const { addCard } = useCollectionStore();
 
   const result = results[activeIndex] ?? null;
   const isScanning = phase === 'scanning' || phase === 'processing';
   const showResult = phase === 'result' && results.length > 0;
+  const scanLimit = profile?.tier === 'free' ? 10 : null;
+  const scanCount = profile?.scanCountMonth ?? 0;
+  const scanLimitReached = scanLimit !== null && scanCount >= scanLimit;
+
+  const guardScanLimit = useCallback(() => {
+    if (!scanLimitReached) return false;
+    Alert.alert(
+      'Free scan limit reached',
+      'Free plan includes up to 10 scans per month. Upgrade to Premium for unlimited scan and sell integrations.',
+    );
+    return true;
+  }, [scanLimitReached]);
 
   const handleCapture = useCallback(async () => {
     if (!cameraRef.current || isScanning || !user) return;
+    if (guardScanLimit()) return;
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -53,10 +66,11 @@ export default function ScanScreen() {
     } catch {
       // Camera failures are surfaced through the next retry path.
     }
-  }, [isScanning, user, scan]);
+  }, [guardScanLimit, isScanning, user, scan]);
 
   const handlePickFromGallery = useCallback(async () => {
     if (isScanning || !user) return;
+    if (guardScanLimit()) return;
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
@@ -71,7 +85,7 @@ export default function ScanScreen() {
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await scan(picked.assets[0].base64, user.id);
-  }, [isScanning, user, scan]);
+  }, [guardScanLimit, isScanning, user, scan]);
 
   const handleAddToCollection = useCallback(
     async (condition: Condition, quantity: number, foil: boolean) => {
@@ -171,6 +185,9 @@ export default function ScanScreen() {
           <View style={styles.leftHudStack}>
             <StatusChip label="Exact Print Mode" tone="primary" />
             <StatusChip label="Lighting: Good" tone="warning" />
+            {scanLimit !== null && (
+              <StatusChip label={`Free scans ${Math.min(scanCount, scanLimit)}/${scanLimit}`} tone={scanLimitReached ? 'warning' : 'primary'} />
+            )}
           </View>
           <View style={styles.providerChip}>
             <Text style={styles.providerText}>TCGPlayer / Cardmarket</Text>
@@ -232,7 +249,7 @@ export default function ScanScreen() {
               <Text style={styles.roundControlText}>PHOTO</Text>
             </Pressable>
             <Pressable
-              style={[styles.captureButton, isScanning && styles.disabled]}
+              style={[styles.captureButton, (isScanning || scanLimitReached) && styles.disabled]}
               onPress={handleCapture}
               disabled={isScanning}
             >

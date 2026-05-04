@@ -66,17 +66,24 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.statsRow}>
-          <Stat label="Cards" value={String(totalCards)} onPress={() => router.push('/(main)/collection')} />
-          <Stat label="Badges" value={String(unlockedCount)} onPress={() => router.push('/(main)/badges')} />
+          <Stat label="Followed" value="0" onPress={() => router.push('/(main)/feed' as any)} />
+          <Stat label="Following" value="0" onPress={() => router.push('/(main)/feed' as any)} />
           <Stat label="Friends" value="0" onPress={() => router.push('/(main)/friends')} />
         </View>
 
+        <View style={styles.statsRow}>
+          <Stat label="Cards" value={String(totalCards)} onPress={() => router.push('/(main)/collection')} />
+          <Stat label="Badges" value={String(unlockedCount)} onPress={() => router.push('/(main)/badges')} />
+          <Stat label="Wishlist" value="0" onPress={() => router.push('/(main)/collection')} />
+        </View>
+
         <Section title="Sales Channels">
+          <Pressable onPress={() => router.push('/(main)/sell' as any)}>
+            <Channel name="Sell integrations" status="Premium only" tone="primary" />
+          </Pressable>
           <Channel name="Shopify" status="Credential needed" tone="warning" />
           <Channel name="ikas" status="Credential needed" tone="warning" />
-          <Channel name="eBay" status="OAuth needed" tone="error" />
-          <Channel name="Trendyol" status="Connect" tone="primary" />
-          <Channel name="Hepsiburada" status="Merchant needed" tone="warning" />
+          <Channel name="eBay" status="Coming soon" tone="error" />
         </Section>
 
         <Section title="API and Scanning">

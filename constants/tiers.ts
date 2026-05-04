@@ -9,7 +9,7 @@ export const TIER_CONFIG: Record<Tier, {
   free: {
     label: 'Ücretsiz',
     price: '₺0/ay',
-    description: 'Ayda 25 tarama, temel koleksiyon yönetimi.',
+    description: 'Ayda 10 tarama, temel koleksiyon, set ve wishlist takibi.',
     badgeVariant: 'neutral',
   },
   premium: {

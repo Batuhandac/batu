@@ -1,7 +1,7 @@
 import React from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function MainLayout() {
@@ -10,6 +10,7 @@ export default function MainLayout() {
 
   return (
     <Tabs
+      initialRouteName="collection/index"
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
@@ -19,18 +20,18 @@ export default function MainLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="collection/index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🏠" label="Ana Sayfa" color={color} focused={focused} />
+            <TabIcon code="COLL" color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="browse/index"
+        name="feed/index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🔍" label="Keşfet" color={color} focused={focused} />
+            <TabIcon code="FEED" color={color} focused={focused} />
           ),
         }}
       />
@@ -39,16 +40,16 @@ export default function MainLayout() {
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={[styles.scanBtn, focused && styles.scanBtnActive]}>
-              <Text style={styles.scanIcon}>📷</Text>
+              <Text style={[styles.scanIcon, focused && styles.scanIconActive]}>SCAN</Text>
             </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="collection/index"
+        name="trade/index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🗂" label="Koleksiyon" color={color} focused={focused} />
+            <TabIcon code="DEAL" color={color} focused={focused} />
           ),
         }}
       />
@@ -56,17 +57,19 @@ export default function MainLayout() {
         name="settings"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="👤" label="Profil" color={color} focused={focused} />
+            <TabIcon code="PROF" color={color} focused={focused} />
           ),
         }}
       />
 
-      {/* Hidden routes — not shown in tab bar */}
-      <Tabs.Screen name="collection/[id]" options={{ href: null }} />
+      {/* Hidden routes */}
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="browse/index" options={{ href: null }} />
       <Tabs.Screen name="browse/[setCode]" options={{ href: null }} />
-      <Tabs.Screen name="trade/index" options={{ href: null }} />
+      <Tabs.Screen name="collection/[id]" options={{ href: null }} />
       <Tabs.Screen name="ops/index" options={{ href: null }} />
       <Tabs.Screen name="deck/index" options={{ href: null }} />
+      <Tabs.Screen name="sell/index" options={{ href: null }} />
       <Tabs.Screen name="pokedex/index" options={{ href: null }} />
       <Tabs.Screen name="badges/index" options={{ href: null }} />
       <Tabs.Screen name="stats/index" options={{ href: null }} />
@@ -75,20 +78,10 @@ export default function MainLayout() {
   );
 }
 
-function TabIcon({
-  emoji,
-  label,
-  color,
-  focused,
-}: {
-  emoji: string;
-  label: string;
-  color: string;
-  focused: boolean;
-}) {
+function TabIcon({ code, color, focused }: { code: string; color: string; focused: boolean }) {
   return (
     <View style={styles.tabItem}>
-      <Text style={[styles.tabEmoji, focused && styles.tabEmojiActive]}>{emoji}</Text>
+      <Text style={[styles.tabCode, { color }, focused && styles.tabCodeActive]}>{code}</Text>
       {focused && <View style={styles.dot} />}
     </View>
   );
@@ -105,13 +98,16 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
   },
-  tabEmoji: {
-    fontSize: 22,
-    opacity: 0.5,
+  tabCode: {
+    fontSize: 9,
+    fontWeight: '900',
+    opacity: 0.74,
+    letterSpacing: 0.4,
   },
-  tabEmojiActive: {
+  tabCodeActive: {
     opacity: 1,
   },
   dot: {
@@ -121,8 +117,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   scanBtn: {
-    width: 52,
-    height: 52,
+    width: 54,
+    height: 54,
     borderRadius: radius.full,
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
@@ -135,6 +131,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   scanIcon: {
-    fontSize: 24,
+    color: colors.textMuted,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  scanIconActive: {
+    color: colors.onPrimary,
   },
 });

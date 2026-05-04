@@ -48,6 +48,7 @@ export default function CollectionScreen() {
   const [condition, setCondition] = useState<ConditionFilter>('all');
   const [foil, setFoil] = useState<CollectionFilters['foil']>('all');
   const [smartFolderId, setSmartFolderId] = useState<string | null>(null);
+  const [collectionView, setCollectionView] = useState<'collectibles' | 'sets' | 'wishlist' | 'characters'>('collectibles');
 
   useEffect(() => {
     if (user) fetchCollection(user.id);
@@ -99,6 +100,32 @@ export default function CollectionScreen() {
         contentContainerStyle={styles.grid}
         ListHeaderComponent={
           <View style={styles.headerContent}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.viewTabs}>
+              <ViewTab label="Collectibles" active={collectionView === 'collectibles'} onPress={() => setCollectionView('collectibles')} />
+              <ViewTab label="Sets" active={collectionView === 'sets'} onPress={() => setCollectionView('sets')} />
+              <ViewTab label="Wishlist" active={collectionView === 'wishlist'} onPress={() => setCollectionView('wishlist')} />
+              <ViewTab label="Characters later" active={collectionView === 'characters'} onPress={() => setCollectionView('characters')} muted />
+            </ScrollView>
+
+            {collectionView !== 'collectibles' && (
+              <View style={styles.modeBanner}>
+                <Text style={styles.modeTitle}>
+                  {collectionView === 'sets'
+                    ? 'Set completion engine'
+                    : collectionView === 'wishlist'
+                      ? 'Wishlist'
+                      : 'Characters are planned for later'}
+                </Text>
+                <Text style={styles.modeText}>
+                  {collectionView === 'sets'
+                    ? 'Owned, missing and trade-available cards will live here as the collection graph grows.'
+                    : collectionView === 'wishlist'
+                      ? 'Save wanted cards and let Buy/Trade surface matching sellers and traders.'
+                      : 'Character pages can be added after core collection, feed, scan and trade flows are stable.'}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.statsRow}>
               <Summary label="Total Cards" value={String(totalQuantity)} />
               <Summary label="Unique" value={String(uniqueCount)} />
@@ -237,6 +264,26 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
+function ViewTab({
+  label,
+  active,
+  muted,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  muted?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={[styles.viewTab, active && styles.viewTabActive, muted && styles.viewTabMuted]} onPress={onPress}>
+      <Text style={[styles.viewTabText, active && styles.viewTabTextActive, muted && styles.viewTabTextMuted]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const CARD_GAP = spacing.sm;
 
 const styles = StyleSheet.create({
@@ -268,6 +315,33 @@ const styles = StyleSheet.create({
     paddingBottom: 112,
   },
   headerContent: { paddingTop: spacing.lg },
+  viewTabs: { gap: spacing.sm, paddingHorizontal: CARD_GAP / 2, paddingBottom: spacing.md },
+  viewTab: {
+    height: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  viewTabActive: { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+  viewTabMuted: { opacity: 0.6 },
+  viewTabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '900' },
+  viewTabTextActive: { color: colors.primary },
+  viewTabTextMuted: { color: colors.textFaint },
+  modeBanner: {
+    marginHorizontal: CARD_GAP / 2,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surfaceLow,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.lg,
+    gap: spacing.xs,
+  },
+  modeTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  modeText: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
   statsRow: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: CARD_GAP / 2 },
   summary: {
     flex: 1,
