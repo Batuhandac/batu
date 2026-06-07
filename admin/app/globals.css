@@ -1,0 +1,8 @@
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+a { color: #68D391; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #243B55; padding: 8px 12px; text-align: left; }
+th { background: #152336; color: #A0AEC0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+td { background: #1A2E45; font-size: 14px; }
+tr:hover td { background: #1f3550; }

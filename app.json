@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Pati SOS",
+    "slug": "pati-sos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1B2A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.patisos.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1B2A"
+      },
+      "package": "com.patisos.app",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#E53E3E",
+          "sounds": []
+        }
+      ]
+    ],
+    "scheme": "patisos",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    },
+    "owner": "batuhandac"
+  }
+}
