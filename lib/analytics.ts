@@ -17,11 +17,12 @@ type EventName =
 interface EventProps {
   clinic_id?: string;
   pet_id?: string;
-  [key: string]: unknown;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 export async function track(event: EventName, props: EventProps = {}) {
-  posthog.capture(event, props);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  posthog.capture(event, props as any);
   try {
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from('user_events').insert({
