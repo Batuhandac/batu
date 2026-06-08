@@ -3,29 +3,19 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": { "NPM_CONFIG_LEGACY_PEER_DEPS": "true" }
     },
     "preview": {
       "distribution": "internal",
       "ios": { "simulator": false },
-      "android": { "buildType": "apk" }
+      "android": { "buildType": "apk" },
+      "env": { "NPM_CONFIG_LEGACY_PEER_DEPS": "true" }
     },
     "production": {
       "ios": { "resourceClass": "m-medium" },
-      "android": { "buildType": "app-bundle" }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "YOUR_APPLE_ID",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./google-play-key.json",
-        "track": "internal"
-      }
+      "android": { "buildType": "app-bundle" },
+      "env": { "NPM_CONFIG_LEGACY_PEER_DEPS": "true" }
     }
   }
 }
