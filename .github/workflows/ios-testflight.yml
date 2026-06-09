@@ -1,6 +1,6 @@
 name: iOS → TestFlight
 
-# Manuel tetiklenir: GitHub → Actions sekmesi → bu workflow → "Run workflow"
+# Manuel tetiklenir (Actions → Run workflow) VEYA bu branch'e push olunca otomatik.
 on:
   workflow_dispatch:
     inputs:
@@ -8,6 +8,9 @@ on:
         description: "EAS build profili"
         required: true
         default: "production"
+  push:
+    branches:
+      - claude/pati-sos-build-tLYBi
 
 jobs:
   build-and-submit:
@@ -28,7 +31,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Bağımlılıkları yükle
-        run: npm install --no-audit --no-fund
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: App Store Connect API anahtarını + EAS yapılandırmasını hazırla
         env:
@@ -41,18 +44,10 @@ jobs:
           EXPO_PUBLIC_POSTHOG_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_KEY }}
         run: node scripts/ci-prepare-credentials.js
 
-      - name: EAS projesini bağla
-        run: eas init --non-interactive || true
-
       - name: iOS build + TestFlight gönderimi
-        env:
-          EXPO_ASC_API_KEY_PATH: ${{ github.workspace }}/asc_api_key.p8
-          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           eas build \
             --platform ios \
-            --profile "${{ github.event.inputs.profile }}" \
+            --profile "${{ github.event.inputs.profile || 'production' }}" \
             --non-interactive \
             --auto-submit
