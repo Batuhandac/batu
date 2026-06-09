@@ -13,7 +13,10 @@
       "env": { "NPM_CONFIG_LEGACY_PEER_DEPS": "true" }
     },
     "production": {
-      "ios": { "resourceClass": "m-medium" },
+      "ios": {
+        "resourceClass": "m-medium",
+        "image": "latest"
+      },
       "android": { "buildType": "app-bundle" },
       "env": { "NPM_CONFIG_LEGACY_PEER_DEPS": "true" }
     }
