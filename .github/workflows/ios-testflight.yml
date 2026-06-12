@@ -45,6 +45,8 @@ jobs:
         run: node scripts/ci-prepare-credentials.js
 
       - name: iOS build + TestFlight gönderimi
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           eas build \
             --platform ios \
