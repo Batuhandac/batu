@@ -47,9 +47,13 @@ export default function SettingsScreen() {
         </View>
 
         <View className="bg-card border border-border rounded-2xl px-5 mb-6">
-          <Row label="Kullanım Koşulları" onPress={() => {}} />
-          <Row label="Gizlilik Politikası" onPress={() => {}} />
-          <Row label="Sorumluluk Reddi" onPress={() => {}} />
+          <Row label="Kullanım Koşulları" onPress={() => Linking.openURL('https://patisos.app/kullanim-kosullari')} />
+          <Row label="Gizlilik Politikası" onPress={() => Linking.openURL('https://patisos.app/gizlilik-politikasi')} />
+          <Row label="Sorumluluk Reddi" onPress={() => Alert.alert(
+            'Sorumluluk Reddi',
+            'Pati SOS, klinik bilgilerinin doğruluğunu garanti etmez. Acil durumlarda gitmeden önce kliniği arayınız. Klinik bilgileri değişebilir; güncel bilgi için kliniğe danışınız.',
+            [{ text: 'Anladım' }]
+          )} />
         </View>
 
         <View className="bg-card border border-border rounded-2xl px-5 mb-6">
