@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
+import { router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 import { supabase } from '@/lib/supabase';
@@ -40,7 +41,7 @@ export default function SettingsScreen() {
         <Text className="text-white text-2xl font-bold mb-6">Ayarlar</Text>
 
         <View className="bg-card border border-border rounded-2xl px-5 mb-6">
-          <Row label="Petlerimi Yönet" onPress={() => {}} />
+          <Row label="Petlerimi Yönet" onPress={() => router.push('/(tabs)/pets')} />
           <Row label="Konum İzinleri" onPress={() => Linking.openSettings()} />
           <Row label="Bildirim İzinleri" onPress={() => Linking.openSettings()} />
         </View>

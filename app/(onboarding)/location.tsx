@@ -7,11 +7,11 @@ import { useOnboardingStore } from '@/stores/onboarding';
 import { ANKARA_DISTRICTS } from '@/lib/utils/districts';
 
 export default function LocationScreen() {
-  const { request, loading } = useLocation();
+  const { request, loading, setManual } = useLocation();
   const { setCompleted } = useOnboardingStore();
 
   const handleGrant = async () => {
-    const granted = await request();
+    await request();
     setCompleted(true);
     router.replace('/(tabs)');
   };
@@ -53,7 +53,7 @@ export default function LocationScreen() {
             {ANKARA_DISTRICTS.map(d => (
               <TouchableOpacity
                 key={d.name}
-                onPress={handleSkip}
+                onPress={() => { setManual(d.lat, d.lng); handleSkip(); }}
                 className="bg-surface border border-border rounded-full px-4 py-2"
               >
                 <Text className="text-gray-label text-sm">{d.name}</Text>

@@ -17,14 +17,14 @@ export default function NearbyScreen() {
   const [filters, setFilters] = useState<NearbyFilters>(DEFAULT_FILTERS);
   const [showDistricts, setShowDistricts] = useState(false);
 
-  const loadClinics = useCallback(async (lt: number, ln: number, f = filters) => {
+  const loadClinics = useCallback(async (lt: number, ln: number, f: NearbyFilters) => {
     await fetch(lt, ln, f);
     await track('clinic_list_view');
-  }, [fetch, filters]);
+  }, [fetch]);
 
   useEffect(() => {
     if (lat && lng) {
-      loadClinics(lat, lng);
+      loadClinics(lat, lng, filters);
     } else if (granted === false || granted === null) {
       setShowDistricts(true);
     }
@@ -69,7 +69,7 @@ export default function NearbyScreen() {
           {ANKARA_DISTRICTS.map(d => (
             <TouchableOpacity
               key={d.name}
-              onPress={() => { setManual(d.lat, d.lng); setShowDistricts(false); loadClinics(d.lat, d.lng); }}
+              onPress={() => { setManual(d.lat, d.lng); setShowDistricts(false); loadClinics(d.lat, d.lng, filters); }}
               className="bg-card border border-border rounded-2xl px-5 py-4 mb-3 flex-row items-center justify-between"
             >
               <Text className="text-white font-medium">{d.name}</Text>
@@ -113,7 +113,7 @@ export default function NearbyScreen() {
       {!loading && error && (
         <View className="flex-1 items-center justify-center px-6 gap-4">
           <Text className="text-gray-text text-center">{error}</Text>
-          <TouchableOpacity onPress={() => lat && lng && loadClinics(lat, lng)} className="bg-card border border-border rounded-2xl py-3 px-6">
+          <TouchableOpacity onPress={() => lat && lng && loadClinics(lat, lng, filters)} className="bg-card border border-border rounded-2xl py-3 px-6">
             <Text className="text-white font-semibold">Tekrar dene</Text>
           </TouchableOpacity>
         </View>

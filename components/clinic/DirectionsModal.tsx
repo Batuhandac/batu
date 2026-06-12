@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, Linking, Platform } from 'react-native';
 import { track } from '@/lib/analytics';
 
 interface Props {
@@ -14,10 +14,12 @@ interface Props {
 export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clinicId }: Props) {
   const openMaps = async () => {
     await track('directions_confirmed', { clinic_id: clinicId });
-    const url = `geo:${lat},${lng}?q=${lat},${lng}`;
-    const canOpen = await Linking.canOpenURL(url);
+    const iosUrl = `maps://0,0?q=${lat},${lng}`;
+    const androidUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
+    const nativeUrl = Platform.OS === 'ios' ? iosUrl : androidUrl;
+    const canOpen = await Linking.canOpenURL(nativeUrl);
     if (canOpen) {
-      Linking.openURL(url);
+      Linking.openURL(nativeUrl);
     } else {
       Linking.openURL(`https://maps.google.com/?q=${lat},${lng}`);
     }
