@@ -61,12 +61,12 @@
         "projectId": "387d0171-d147-4bd2-9b91-11898653b6b0"
       },
       "firebase": {
-        "apiKey": "",
-        "authDomain": "",
-        "projectId": "",
-        "storageBucket": "",
-        "messagingSenderId": "",
-        "appId": ""
+        "apiKey": "AIzaSyCREIbftWRcOL_Ag_hk3sPO2deHldhOwLs",
+        "authDomain": "pati-sos.firebaseapp.com",
+        "projectId": "pati-sos",
+        "storageBucket": "pati-sos.firebasestorage.app",
+        "messagingSenderId": "784978540632",
+        "appId": "1:784978540632:web:dd88f7450290bcef2df22d"
       }
     },
     "owner": "batuhandac"
