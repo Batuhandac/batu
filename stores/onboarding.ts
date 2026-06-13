@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 interface OnboardingStore {
   completed: boolean;
+  hydrated: boolean; // AsyncStorage okundu mu? (yönlendirme yarışını önler)
   disclaimerAccepted: boolean;
   setCompleted: (v: boolean) => void;
   setDisclaimerAccepted: (v: boolean) => void;
@@ -11,6 +12,7 @@ interface OnboardingStore {
 
 export const useOnboardingStore = create<OnboardingStore>((set) => ({
   completed: false,
+  hydrated: false,
   disclaimerAccepted: false,
   setCompleted: async (v) => {
     set({ completed: v });
@@ -18,7 +20,11 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   },
   setDisclaimerAccepted: (v) => set({ disclaimerAccepted: v }),
   load: async () => {
-    const val = await AsyncStorage.getItem('patisos:onboarding_done');
-    set({ completed: val === '1' });
+    try {
+      const val = await AsyncStorage.getItem('patisos:onboarding_done');
+      set({ completed: val === '1', hydrated: true });
+    } catch {
+      set({ hydrated: true });
+    }
   },
 }));

@@ -41,11 +41,15 @@ export default function PetsScreen() {
 
   return (
     <Screen>
-      <View className="flex-row items-center justify-between px-4 pt-6 pb-4">
-        <Text className="text-white text-2xl font-bold">Petlerim</Text>
+      <View className="flex-row items-center justify-between px-5 pt-6 pb-4">
+        <View>
+          <Text className="text-white text-2xl font-bold">Petlerim</Text>
+          <Text className="text-gray-muted text-sm mt-0.5">Acil sağlık kartların</Text>
+        </View>
         <TouchableOpacity
           onPress={() => router.push('/pets/create')}
-          className="bg-red-sos rounded-xl px-4 py-2"
+          className="bg-red-sos rounded-full px-4 py-2.5 flex-row items-center gap-1"
+          activeOpacity={0.85}
         >
           <Text className="text-white font-bold text-sm">+ Ekle</Text>
         </TouchableOpacity>
