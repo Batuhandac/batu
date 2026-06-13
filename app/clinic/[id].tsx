@@ -78,6 +78,25 @@ export default function ClinicDetailScreen() {
     Linking.openURL(`tel:${clinic.phone}`);
   };
 
+  const handleWhatsApp = async () => {
+    if (!clinic?.phone) return;
+    // Telefonu uluslararası formata çevir (sadece rakam; TR için 0 → 90)
+    let digits = clinic.phone.replace(/\D/g, '');
+    if (digits.startsWith('0')) digits = '90' + digits.slice(1);
+    if (!digits.startsWith('90') && digits.length === 10) digits = '90' + digits;
+    const msg = encodeURIComponent(
+      `Merhaba, Pati SOS üzerinden ulaşıyorum. Acil bir durum için ${clinic.name} hakkında bilgi alabilir miyim?`
+    );
+    await track('call_tap', { clinic_id: id, via: 'whatsapp' });
+    const url = `whatsapp://send?phone=${digits}&text=${msg}`;
+    try {
+      const ok = await Linking.canOpenURL(url);
+      await Linking.openURL(ok ? url : `https://wa.me/${digits}?text=${msg}`);
+    } catch {
+      await Linking.openURL(`https://wa.me/${digits}?text=${msg}`);
+    }
+  };
+
   const handleDirections = async () => {
     await track('directions_tap', { clinic_id: id });
     await track('directions_interstitial_shown', { clinic_id: id });
@@ -135,17 +154,25 @@ export default function ClinicDetailScreen() {
         {/* Actions */}
         <View className="px-4 mt-5 gap-3">
           {clinic.phone ? (
-            <TouchableOpacity onPress={handleCall} className="bg-green-open rounded-2xl py-4 items-center">
-              <Text className="text-white font-bold text-lg">📞  Ara</Text>
-            </TouchableOpacity>
-          ) : (
-            <View className="bg-surface border border-border rounded-2xl py-4 items-center opacity-50">
-              <Text className="text-gray-text font-semibold">Telefon bilgisi yok</Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity onPress={handleCall} className="flex-1 bg-green-open rounded-2xl py-4 items-center" activeOpacity={0.85}>
+                <Text className="text-2xl mb-0.5">📞</Text>
+                <Text className="text-white font-bold text-sm">Ara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleWhatsApp} className="flex-1 rounded-2xl py-4 items-center" style={{ backgroundColor: '#25D366' }} activeOpacity={0.85}>
+                <Text className="text-2xl mb-0.5">💬</Text>
+                <Text className="text-white font-bold text-sm">WhatsApp</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDirections} className="flex-1 bg-card border border-border rounded-2xl py-4 items-center" activeOpacity={0.85}>
+                <Text className="text-2xl mb-0.5">🗺️</Text>
+                <Text className="text-white font-bold text-sm">Yol Tarifi</Text>
+              </TouchableOpacity>
             </View>
+          ) : (
+            <TouchableOpacity onPress={handleDirections} className="bg-card border border-border rounded-2xl py-4 items-center" activeOpacity={0.85}>
+              <Text className="text-white font-bold text-base">🗺️  Yol Tarifi</Text>
+            </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={handleDirections} className="bg-card border border-border rounded-2xl py-4 items-center">
-            <Text className="text-white font-bold text-base">🗺️  Yol Tarifi</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Info */}

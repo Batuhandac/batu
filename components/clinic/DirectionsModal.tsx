@@ -14,14 +14,22 @@ interface Props {
 export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clinicId }: Props) {
   const openMaps = async () => {
     await track('directions_confirmed', { clinic_id: clinicId });
-    const iosUrl = `maps://0,0?q=${lat},${lng}`;
-    const androidUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
+    // Gerçek YOL TARİFİ aç (varış noktası = klinik koordinatı).
+    // Önceki sürüm koordinatı "arama metni" olarak gönderiyordu (q=),
+    // bu yüzden yanlış yere atıyordu. daddr/destination doğru olanı.
+    const iosUrl = `maps://?daddr=${lat},${lng}&dirflg=d`;
+    const androidUrl = `google.navigation:q=${lat},${lng}`;
+    const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     const nativeUrl = Platform.OS === 'ios' ? iosUrl : androidUrl;
-    const canOpen = await Linking.canOpenURL(nativeUrl);
-    if (canOpen) {
-      Linking.openURL(nativeUrl);
-    } else {
-      Linking.openURL(`https://maps.google.com/?q=${lat},${lng}`);
+    try {
+      const canOpen = await Linking.canOpenURL(nativeUrl);
+      if (canOpen) {
+        await Linking.openURL(nativeUrl);
+      } else {
+        await Linking.openURL(webUrl);
+      }
+    } catch {
+      await Linking.openURL(webUrl);
     }
     onClose();
   };

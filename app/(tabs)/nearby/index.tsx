@@ -85,7 +85,12 @@ export default function NearbyScreen() {
     <Screen>
       {offline && <OfflineBanner timestamp={cacheTimestamp} />}
       <View className="px-4 pt-6 pb-3">
-        <Text className="text-white text-2xl font-bold mb-4">Yakın Klinikler</Text>
+        <Text className="text-white text-2xl font-bold">Yakın Klinikler</Text>
+        <Text className="text-gray-muted text-sm mb-4 mt-0.5">
+          {!loading && clinics.length > 0
+            ? `${clinics.length} klinik · en yakın ve açık önce`
+            : 'Sana en yakın açık veterinerler'}
+        </Text>
         <View className="flex-row gap-2 flex-wrap">
           {[
             { key: 'only_24_7' as const, label: '7/24' },

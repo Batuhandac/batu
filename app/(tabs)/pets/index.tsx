@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { usePets } from '@/lib/hooks/usePets';
 import type { Pet } from '@/types';
@@ -36,7 +36,8 @@ function PetRow({ pet, onPress }: { pet: Pet; onPress: () => void }) {
 export default function PetsScreen() {
   const { pets, loading, load } = usePets();
 
-  useEffect(() => { load(); }, []);
+  // Ekrana her dönüldüğünde (örn. pet ekledikten sonra) listeyi yenile
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
     <Screen>
