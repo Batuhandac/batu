@@ -129,6 +129,45 @@ export function queryNearbyClinics(
   return result;
 }
 
+/**
+ * Topluluk kliniklerini (Firestore'dan gelen) mesafe + skor ile zenginleştirir
+ * ve yarıçap/filtreye göre eler. useClinics bunları yerel sonuçlarla birleştirir.
+ */
+export function rankCommunityClinics(
+  clinics: Clinic[],
+  lat: number,
+  lng: number,
+  filters: NearbyFilters,
+  radiusKm = 15
+): Clinic[] {
+  const out: Clinic[] = [];
+  for (const c of clinics) {
+    if (filters.only_24_7 && !c.is_24_7) continue;
+    if (filters.only_emergency && !c.accepts_emergency) continue;
+    if (filters.only_verified && !c.is_verified) continue;
+    const distanceKm = haversine(lat, lng, c.lat, c.lng);
+    if (distanceKm > radiusKm) continue;
+    const open = c.is_open_now;
+    // Yerel skorlamayla aynı ağırlıklar (ping/feedback nötr 0.5)
+    const fOpen = open ? 1.0 : 0.0;
+    const fDistance = Math.max(0, Math.min(1, 1 - distanceKm / 15));
+    const fRating = (c.rating ?? 3.5) / 5;
+    let s =
+      0.2 * fOpen +
+      0.16 * (c.accepts_emergency ? 1 : 0) +
+      0.13 * (c.is_24_7 ? 1 : 0) +
+      0.11 * 0 + // doğrulanmamış
+      0.11 * fDistance +
+      0.1 * 0 +
+      0.08 * 0.5 +
+      0.06 * 0.5 +
+      0.05 * fRating;
+    if (!open && !c.is_24_7) s *= 0.2;
+    out.push({ ...c, distance_km: distanceKm, emergency_score: s });
+  }
+  return out;
+}
+
 /** Tek klinik (detay ekranı için). */
 export function getClinicById(id: string): SeedClinic | null {
   return CLINICS.find((c) => c.id === id) ?? null;

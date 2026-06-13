@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { cacheClinics } from '@/lib/cache';
-import { queryNearbyClinics } from '@/lib/data/query';
+import { queryNearbyClinics, rankCommunityClinics } from '@/lib/data/query';
+import { fetchCommunityClinics } from '@/lib/data/community';
+import { registerClinics } from '@/lib/data/registry';
 import type { Clinic, NearbyFilters } from '@/types';
 
 interface UseClinicsResult {
@@ -28,10 +30,26 @@ export function useClinics(): UseClinicsResult {
       setLoading(true);
       setError(null);
       try {
-        const result = queryNearbyClinics(lat, lng, filters, 15);
-        setClinics(result);
-        // En son sonucu önbelleğe yaz (gelecekte hibrit kaynak için)
-        cacheClinics(result).catch(() => {});
+        // 1) Gömülü klinikler — anında, offline
+        const local = queryNearbyClinics(lat, lng, filters, 15);
+        setClinics(local);
+        registerClinics(local);
+        cacheClinics(local).catch(() => {});
+
+        // 2) Topluluk klinikleri (Firebase varsa) — gelince birleştir
+        try {
+          const community = await fetchCommunityClinics();
+          if (community.length > 0) {
+            const ranked = rankCommunityClinics(community, lat, lng, filters, 15);
+            const merged = [...local, ...ranked].sort(
+              (a, b) => b.emergency_score - a.emergency_score
+            );
+            registerClinics(merged);
+            setClinics(merged);
+          }
+        } catch {
+          // topluluk verisi opsiyonel — yereli koru
+        }
       } catch {
         setError('Klinikler yüklenemedi. Tekrar dene.');
       } finally {

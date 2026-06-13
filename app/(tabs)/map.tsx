@@ -239,6 +239,30 @@ export default function MapScreen() {
           </Text>
         </View>
       )}
+
+      {/* Klinik ekle FAB */}
+      <TouchableOpacity
+        onPress={() => router.push('/clinic/add')}
+        activeOpacity={0.85}
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 16,
+          backgroundColor: '#E53E3E',
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#E53E3E',
+          shadowOpacity: 0.5,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
+        }}
+      >
+        <Text style={{ color: '#fff', fontSize: 28, marginTop: -2 }}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }

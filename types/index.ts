@@ -20,6 +20,40 @@ export interface Clinic {
   is_open_now: boolean;
   status: ClinicStatus;
   emergency_score: number;
+  source?: 'builtin' | 'community';
+  rating_count?: number;
+}
+
+// Bir günün çalışma penceresi (0=Pazar … 6=Cumartesi)
+export interface DayHours {
+  weekday: number;
+  closed: boolean;
+  open: string;  // "HH:MM"
+  close: string; // "HH:MM"
+}
+
+// Kullanıcının eklediği klinik (Firestore'a yazılır)
+export interface CommunityClinicInput {
+  name: string;
+  address: string | null;
+  district: string | null;
+  lat: number;
+  lng: number;
+  phone: string | null;
+  is_24_7: boolean;
+  accepts_emergency: boolean;
+  hours: DayHours[];
+}
+
+// Klinik yorumu / puanı
+export interface Review {
+  id: string;
+  clinic_id: string;
+  author_id: string;
+  author_name: string;
+  rating: number;       // 1–5
+  comment: string;
+  created_at: string;    // ISO
 }
 
 export interface ClinicHours {

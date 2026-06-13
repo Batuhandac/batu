@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Screen } from '@/components/ui/Screen';
 import { usePets } from '@/lib/hooks/usePets';
 import { useFavorites } from '@/lib/hooks/useFavorites';
@@ -16,6 +17,7 @@ export default function HomeScreen() {
   const primaryVetFav = favorites.find(f => f.is_primary_vet);
 
   const handleEmergency = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
     await track('emergency_cta_tap');
     router.push('/(tabs)/nearby');
   };

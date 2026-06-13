@@ -9,6 +9,8 @@ import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { FeedbackModal } from '@/components/clinic/FeedbackModal';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { getClinicById, getClinicHours } from '@/lib/data/query';
+import { getRegisteredClinic } from '@/lib/data/registry';
+import { ReviewsSection } from '@/components/clinic/ReviewsSection';
 import { track } from '@/lib/analytics';
 import { scheduleCallFeedback } from '@/lib/notifications';
 import type { Clinic, ClinicHours } from '@/types';
@@ -58,6 +60,13 @@ export default function ClinicDetailScreen() {
         emergency_score: 0,
       } as Clinic);
       setHours(getClinicHours(id));
+    } else {
+      // Topluluk kliniği (gömülü değil) — bellek kaydından oku
+      const reg = getRegisteredClinic(id);
+      if (reg) {
+        setClinic(reg);
+        setHours([]);
+      }
     }
     setLoading(false);
   };
@@ -193,6 +202,9 @@ export default function ClinicDetailScreen() {
             <Text className="text-gray-muted text-sm underline">Bu klinik benim</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Yorumlar & puanlar */}
+        <ReviewsSection clinicId={id} clinicName={clinic.name} />
 
         <View className="px-4 pb-8">
           <Disclaimer />

@@ -41,6 +41,7 @@ export default function SettingsScreen() {
         <Text className="text-white text-2xl font-bold mb-6">Ayarlar</Text>
 
         <View className="bg-card border border-border rounded-2xl px-5 mb-6">
+          <Row label="🏥 Veteriner Kliniği Ekle" onPress={() => router.push('/clinic/add')} />
           <Row label="Petlerimi Yönet" onPress={() => router.push('/(tabs)/pets')} />
           <Row label="Konum İzinleri" onPress={() => Linking.openSettings()} />
           <Row label="Bildirim İzinleri" onPress={() => Linking.openSettings()} />
