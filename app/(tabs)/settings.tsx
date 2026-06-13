@@ -65,7 +65,10 @@ export default function SettingsScreen() {
         <Disclaimer />
 
         <Text className="text-gray-muted text-xs text-center mt-6">
-          Pati SOS v{Constants.expoConfig?.version ?? '1.0.0'} · Ankara
+          Pati SOS v{Constants.expoConfig?.version ?? '1.0.0'} · build 7 · Ankara
+        </Text>
+        <Text className="text-gray-muted/60 text-[10px] text-center mt-1">
+          Yeni tasarım · WhatsApp · yol tarifi düzeltmesi
         </Text>
       </View>
     </Screen>
