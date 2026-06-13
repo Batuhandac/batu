@@ -1,46 +1,41 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import {
+  loadPets,
+  upsertPet,
+  removePet,
+  setPrimaryPet,
+} from '@/lib/data/localStore';
 import type { Pet } from '@/types';
 
+// Petler artık cihazda (AsyncStorage) saklanır — giriş/backend gerektirmez.
 export function usePets() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('pets')
-      .select('*')
-      .order('is_primary', { ascending: false })
-      .order('created_at', { ascending: true });
-    setPets((data ?? []) as Pet[]);
+    setPets(await loadPets());
     setLoading(false);
   }, []);
 
-  const upsert = useCallback(async (pet: Partial<Pet> & { name: string }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data, error } = await supabase
-      .from('pets')
-      .upsert({ ...pet, user_id: user.id })
-      .select()
-      .single();
-    if (!error) await load();
-    return error ? null : data as Pet;
-  }, [load]);
+  const upsert = useCallback(
+    async (pet: Partial<Pet> & { name: string }) => {
+      const saved = await upsertPet(pet);
+      setPets(await loadPets());
+      return saved;
+    },
+    []
+  );
 
   const remove = useCallback(async (id: string) => {
-    await supabase.from('pets').delete().eq('id', id);
-    await load();
-  }, [load]);
+    await removePet(id);
+    setPets(await loadPets());
+  }, []);
 
   const setPrimary = useCallback(async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from('pets').update({ is_primary: false }).eq('user_id', user.id);
-    await supabase.from('pets').update({ is_primary: true }).eq('id', id);
-    await load();
-  }, [load]);
+    await setPrimaryPet(id);
+    setPets(await loadPets());
+  }, []);
 
   return { pets, loading, load, upsert, remove, setPrimary };
 }

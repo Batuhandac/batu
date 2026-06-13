@@ -12,12 +12,17 @@ export function PingButton({ clinicId }: Props) {
 
   const ping = async (isOpen: boolean) => {
     if (sent) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('clinic_pings').insert({
-      clinic_id: clinicId,
-      user_id: user?.id ?? null,
-      is_open_now: isOpen,
-    });
+    // Backend opsiyonel — bağlanamasa bile kullanıcıya teşekkür göster
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('clinic_pings').insert({
+        clinic_id: clinicId,
+        user_id: user?.id ?? null,
+        is_open_now: isOpen,
+      });
+    } catch {
+      // sessizce geç
+    }
     await track('open_ping_submitted', { clinic_id: clinicId, is_open: isOpen });
     setSent(true);
   };

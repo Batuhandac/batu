@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Share } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '@/lib/supabase';
+import { getPet, removePet } from '@/lib/data/localStore';
 import { sharePetCard, shareViaWhatsApp, buildPetCardText } from '@/lib/utils/share';
 import { track } from '@/lib/analytics';
 import type { Pet } from '@/types';
@@ -24,8 +24,8 @@ export default function PetDetailScreen() {
   useEffect(() => { loadPet(); }, [id]);
 
   const loadPet = async () => {
-    const { data } = await supabase.from('pets').select('*').eq('id', id).single();
-    if (data) setPet(data as Pet);
+    const data = await getPet(id);
+    if (data) setPet(data);
   };
 
   const handleDelete = () => {
@@ -33,7 +33,7 @@ export default function PetDetailScreen() {
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Sil', style: 'destructive', onPress: async () => {
-          await supabase.from('pets').delete().eq('id', id);
+          await removePet(id);
           router.back();
         }
       },

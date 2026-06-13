@@ -8,7 +8,7 @@ import { PingButton } from '@/components/clinic/PingButton';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { FeedbackModal } from '@/components/clinic/FeedbackModal';
 import { useFavorites } from '@/lib/hooks/useFavorites';
-import { supabase } from '@/lib/supabase';
+import { getClinicById, getClinicHours } from '@/lib/data/query';
 import { track } from '@/lib/analytics';
 import { scheduleCallFeedback } from '@/lib/notifications';
 import type { Clinic, ClinicHours } from '@/types';
@@ -32,14 +32,33 @@ export default function ClinicDetailScreen() {
 
   const loadClinic = async () => {
     setLoading(true);
-    const { data: cData } = await supabase.from('clinics').select('*').eq('id', id).single();
-    const { data: hData } = await supabase.from('clinic_hours').select('*').eq('clinic_id', id).order('weekday');
-    if (cData) {
-      const c = cData as any;
-      const distKm = 0;
-      setClinic({ ...c, distance_km: distKm, is_open_now: false, status: 'unknown', emergency_score: 0 } as Clinic);
+    const c = getClinicById(id);
+    if (c) {
+      setClinic({
+        id: c.id,
+        name: c.name,
+        address: c.address,
+        district: c.district,
+        lat: c.lat,
+        lng: c.lng,
+        phone: c.phone,
+        is_24_7: c.is_24_7,
+        accepts_emergency: c.accepts_emergency,
+        is_verified: c.is_verified,
+        verification_status: c.verification_status as Clinic['verification_status'],
+        last_verified_at:
+          c.verified_days_ago == null
+            ? null
+            : new Date(Date.now() - c.verified_days_ago * 86400000).toISOString(),
+        rating: c.rating,
+        phone_active: true,
+        distance_km: 0,
+        is_open_now: false,
+        status: 'unknown',
+        emergency_score: 0,
+      } as Clinic);
+      setHours(getClinicHours(id));
     }
-    setHours((hData ?? []) as ClinicHours[]);
     setLoading(false);
   };
 
