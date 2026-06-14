@@ -2,12 +2,13 @@
 // Yapılandırma app.json > extra.firebase veya EXPO_PUBLIC_FIREBASE_* env'den okunur.
 // Yapılandırma yoksa uygulama yerel veriyle sorunsuz çalışmaya devam eder
 // (topluluk özellikleri sessizce devre dışı kalır).
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import {
   initializeFirestore,
   getFirestore,
   type Firestore,
 } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import Constants from 'expo-constants';
 
 type FirebaseConfig = {
@@ -34,12 +35,22 @@ const config: FirebaseConfig = {
 export const isFirebaseConfigured = Boolean(config.apiKey && config.projectId && config.appId);
 
 let _db: Firestore | null = null;
+let _storage: FirebaseStorage | null = null;
+
+function getApp_(): FirebaseApp | null {
+  if (!isFirebaseConfigured) return null;
+  try {
+    return getApps().length ? getApp() : initializeApp(config as Required<FirebaseConfig>);
+  } catch {
+    return null;
+  }
+}
 
 export function getDb(): Firestore | null {
-  if (!isFirebaseConfigured) return null;
   if (_db) return _db;
+  const app = getApp_();
+  if (!app) return null;
   try {
-    const app = getApps().length ? getApp() : initializeApp(config as Required<FirebaseConfig>);
     // React Native'de güvenilir bağlantı için long-polling
     try {
       _db = initializeFirestore(app, { experimentalForceLongPolling: true });
@@ -47,6 +58,18 @@ export function getDb(): Firestore | null {
       _db = getFirestore(app);
     }
     return _db;
+  } catch {
+    return null;
+  }
+}
+
+export function getStorageInstance(): FirebaseStorage | null {
+  if (_storage) return _storage;
+  const app = getApp_();
+  if (!app) return null;
+  try {
+    _storage = getStorage(app);
+    return _storage;
   } catch {
     return null;
   }

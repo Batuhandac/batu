@@ -18,7 +18,8 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var.",
+        "NSPhotoLibraryUsageDescription": "Kliniğe fotoğraf eklemek için galeri erişimine ihtiyacımız var."
       }
     },
     "android": {
@@ -40,6 +41,12 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Yakınındaki veteriner kliniklerini gösterebilmek için konumuna ihtiyacımız var."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kliniğe fotoğraf eklemek için galeri erişimine ihtiyacımız var."
         }
       ],
       [

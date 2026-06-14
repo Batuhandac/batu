@@ -11,7 +11,8 @@ import {
   limit as fbLimit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getDb, isFirebaseConfigured } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getDb, getStorageInstance, isFirebaseConfigured } from '@/lib/firebase';
 import { getDeviceId, getAuthorName } from '@/lib/deviceId';
 import type {
   Clinic,
@@ -146,6 +147,51 @@ export async function fetchReviews(clinicId: string): Promise<Review[]> {
     });
   } catch {
     return [];
+  }
+}
+
+// ─── Fotoğraflar ─────────────────────────────────────────────────────────────
+// Tek koleksiyon: clinic_photos (clinic_id ile hem gömülü hem topluluk klinikleri).
+export async function fetchClinicPhotos(clinicId: string): Promise<string[]> {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const snap = await getDocs(
+      query(
+        collection(db, 'clinic_photos'),
+        where('clinic_id', '==', clinicId),
+        orderBy('created_at', 'desc'),
+        fbLimit(12)
+      )
+    );
+    return snap.docs.map((d) => (d.data() as any).url).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export async function addClinicPhoto(clinicId: string, localUri: string): Promise<string | null> {
+  const db = getDb();
+  const storage = getStorageInstance();
+  if (!db || !storage) return null;
+  try {
+    const deviceId = await getDeviceId();
+    // Yerel dosyayı blob'a çevir
+    const res = await window.fetch(localUri);
+    const blob = await res.blob();
+    const path = `clinic_photos/${clinicId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, blob);
+    const url = await getDownloadURL(storageRef);
+    await addDoc(collection(db, 'clinic_photos'), {
+      clinic_id: clinicId,
+      url,
+      uploaded_by: deviceId,
+      created_at: serverTimestamp(),
+    });
+    return url;
+  } catch {
+    return null;
   }
 }
 

@@ -13,7 +13,7 @@ type EventName =
   | 'directions_confirmed' | 'open_ping_submitted' | 'pet_card_created'
   | 'pet_card_field_filled' | 'pet_card_shared' | 'feedback_submitted'
   | 'report_submitted' | 'claim_submitted' | 'favorite_added'
-  | 'community_clinic_added' | 'review_added';
+  | 'community_clinic_added' | 'review_added' | 'clinic_photo_added';
 
 interface EventProps {
   clinic_id?: string;
