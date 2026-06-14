@@ -49,7 +49,7 @@ export default function NearbyScreen() {
         <View className="flex-1 items-center justify-center px-6 gap-6">
           <Text className="text-5xl">📍</Text>
           <Text className="text-white text-xl font-bold text-center">Konumuna ihtiyacımız var</Text>
-          <TouchableOpacity onPress={handleRequestLocation} className="bg-red-sos rounded-2xl py-4 px-8">
+          <TouchableOpacity onPress={handleRequestLocation} className="rounded-2xl py-4 px-8" style={{ backgroundColor: '#ff7f1c' }}>
             <Text className="text-white font-bold text-base">Konum İzni Ver</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowDistricts(true)}>
@@ -85,32 +85,27 @@ export default function NearbyScreen() {
     <Screen>
       {offline && <OfflineBanner timestamp={cacheTimestamp} />}
       <View className="px-4 pt-6 pb-3">
-        <Text className="text-white text-2xl font-bold">Yakın Klinikler</Text>
-        <Text className="text-gray-muted text-sm mb-4 mt-0.5">
+        <Text className="text-white text-2xl font-bold" style={{ letterSpacing: -0.4 }}>Yakın Klinikler</Text>
+        <Text className="text-gray-text text-sm mb-4 mt-0.5">
           {!loading && clinics.length > 0
             ? `${clinics.length} klinik · en yakın ve açık önce`
             : 'Sana en yakın açık veterinerler'}
         </Text>
         <View className="flex-row gap-2 flex-wrap">
+          <FilterChip label="Hepsi" active={!filters.only_24_7 && !filters.only_emergency && !filters.only_verified} onPress={() => setFilters(DEFAULT_FILTERS)} />
           {[
             { key: 'only_24_7' as const, label: '7/24' },
-            { key: 'only_emergency' as const, label: 'Acil kabul' },
+            { key: 'only_emergency' as const, label: 'Acil' },
             { key: 'only_verified' as const, label: 'Doğrulanmış' },
           ].map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              onPress={() => toggleFilter(key)}
-              className={`rounded-full px-4 py-1.5 border ${filters[key] ? 'bg-red-sos border-red-sos' : 'bg-surface border-border'}`}
-            >
-              <Text className={`text-sm font-semibold ${filters[key] ? 'text-white' : 'text-gray-text'}`}>{label}</Text>
-            </TouchableOpacity>
+            <FilterChip key={key} label={label} active={filters[key]} onPress={() => toggleFilter(key)} />
           ))}
         </View>
       </View>
 
       {loading && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#E53E3E" size="large" />
+          <ActivityIndicator color="#ff7f1c" size="large" />
           <Text className="text-gray-text mt-3">Klinikler yükleniyor…</Text>
         </View>
       )}
@@ -135,7 +130,8 @@ export default function NearbyScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => setFilters(DEFAULT_FILTERS)}
-            className="bg-red-sos rounded-2xl py-3 px-6 mt-4"
+            className="rounded-2xl py-3 px-6 mt-4"
+            style={{ backgroundColor: '#ff7f1c' }}
           >
             <Text className="text-white font-semibold">Filtreleri Temizle</Text>
           </TouchableOpacity>
@@ -152,5 +148,21 @@ export default function NearbyScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className="rounded-full px-4 py-1.5"
+      style={{
+        backgroundColor: active ? '#ff7f1c' : 'rgba(42,42,43,0.9)',
+        borderWidth: 1,
+        borderColor: active ? '#ff7f1c' : 'rgba(255,255,255,0.07)',
+      }}
+    >
+      <Text style={{ color: active ? '#fff' : '#c4c6cc', fontSize: 13, fontWeight: '600' }}>{label}</Text>
+    </TouchableOpacity>
   );
 }
