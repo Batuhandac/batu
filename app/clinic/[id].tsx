@@ -14,6 +14,7 @@ import { useFavorites } from '@/lib/hooks/useFavorites';
 import { getClinicById, getClinicHours } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { ReviewsSection } from '@/components/clinic/ReviewsSection';
+import { fetchPlaceDetails } from '@/lib/data/places';
 import { track } from '@/lib/analytics';
 import { scheduleCallFeedback } from '@/lib/notifications';
 import type { Clinic, ClinicHours } from '@/types';
@@ -23,7 +24,7 @@ const DOW = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 function Stat({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <View className="flex-1 items-center">
-      <Text style={{ color: valueColor ?? '#F7FAFC', fontWeight: '700', fontSize: 16 }}>{value}</Text>
+      <Text style={{ color: valueColor ?? '#e4e2e3', fontWeight: '700', fontSize: 16 }}>{value}</Text>
       <Text className="text-gray-muted text-xs mt-0.5">{label}</Text>
     </View>
   );
@@ -33,6 +34,7 @@ export default function ClinicDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [hours, setHours] = useState<ClinicHours[]>([]);
+  const [placesHoursText, setPlacesHoursText] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDirections, setShowDirections] = useState(false);
   const { isFav, isPrimaryVet, toggle, setPrimaryVet, load: loadFavs } = useFavorites();
@@ -72,11 +74,26 @@ export default function ClinicDetailScreen() {
       } as Clinic);
       setHours(getClinicHours(id));
     } else {
-      // Topluluk kliniği (gömülü değil) — bellek kaydından oku
+      // Topluluk veya Places kliniği — bellek kaydından oku
       const reg = getRegisteredClinic(id);
       if (reg) {
         setClinic(reg);
         setHours([]);
+
+        // Google Places kliniği ise telefon + saatleri lazy fetch et
+        if (id.startsWith('gp-')) {
+          fetchPlaceDetails(id)
+            .then(details => {
+              if (!details) return;
+              if (details.phone) {
+                setClinic(prev => prev ? { ...prev, phone: details.phone, is_24_7: details.is_24_7 } : prev);
+              }
+              if (details.weekday_text.length > 0) {
+                setPlacesHoursText(details.weekday_text);
+              }
+            })
+            .catch(() => {});
+        }
       }
     }
     setLoading(false);
@@ -252,6 +269,20 @@ export default function ClinicDetailScreen() {
                   </Text>
                 </View>
               ))}
+            </View>
+          )}
+          {hours.length === 0 && placesHoursText.length > 0 && (
+            <View>
+              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Çalışma Saatleri</Text>
+              {placesHoursText.map((line, i) => {
+                const [day, ...rest] = line.split(':');
+                return (
+                  <View key={i} className="flex-row justify-between py-0.5">
+                    <Text className="text-gray-text text-sm" style={{ minWidth: 40 }}>{day?.trim()}</Text>
+                    <Text className="text-white text-sm text-right">{rest.join(':').trim()}</Text>
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>
