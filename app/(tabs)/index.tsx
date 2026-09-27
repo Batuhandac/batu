@@ -15,11 +15,15 @@ import { useMyQuestions, useUnreadMessages } from '@/lib/hooks/useCommunity';
 import { loadCachedRemoteBanners, fetchRemoteBanners, selectBanners } from '@/lib/content/banners';
 import { upcomingCare, completeCare, type CareItem } from '@/lib/data/care';
 import { clinicStatus, formatDistance, pickBestClinic } from '@/lib/utils/status';
-import { dueLabel, formatDate } from '@/lib/utils/dates';
+import { dueLabel, formatDate, todayISO } from '@/lib/utils/dates';
 import { callClinic } from '@/lib/utils/call';
 import { speciesLabel, upcomingBirthday } from '@/lib/utils/pets';
 import { track } from '@/lib/analytics';
 import { useSession } from '@/stores/session';
+import { useGame } from '@/lib/hooks/useGame';
+import { FirstStepsCard, KarneCard, NewBadgeSheet } from '@/components/game';
+import { closeFirstSteps, markBadgesSeen } from '@/lib/data/gameStore';
+import { BADGES, POINTS } from '@/lib/game';
 import type { Clinic, Pet } from '@/types';
 
 function greeting(): string {
@@ -43,6 +47,7 @@ export default function HomeScreen() {
   const unread = useUnreadMessages();
   const { role, name } = useSession();
   const [care, setCare] = useState<CareItem[]>([]);
+  const game = useGame();
   const [remoteBanners, setRemoteBanners] = useState<Awaited<ReturnType<typeof loadCachedRemoteBanners>>>([]);
   const lastFetch = useRef<{ at: number; lat: number; lng: number } | null>(null);
 
@@ -69,10 +74,11 @@ export default function HomeScreen() {
     useCallback(() => {
       loadPets();
       loadCare();
+      game.reload();
       myQuestions.reload();
       refreshNearest();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loadPets, loadCare, myQuestions.reload, refreshNearest])
+    }, [loadPets, loadCare, game.reload, myQuestions.reload, refreshNearest])
   );
 
   const petsById = useMemo(() => Object.fromEntries(pets.map((p) => [p.id, p])), [pets]);
@@ -87,12 +93,25 @@ export default function HomeScreen() {
   const firstName = role !== 'guest' && name ? name.split(' ')[0] : null;
 
   const done = async (c: CareItem) => {
+    const gained = todayISO() <= c.due ? POINTS.doneOnTime : POINTS.doneLate;
     const next = await completeCare(c.id);
     track('care_done', { kind: c.kind, from: 'home' });
-    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
+    toast(`Aferin, yapıldı! +${gained} pati${next ? ` · Sonraki: ${formatDate(next.due, false)}` : ''}`, 'paw');
     loadCare();
     loadPets();
+    game.reload();
   };
+
+  const primary = pets.find((p) => p.is_primary) ?? pets[0];
+  const onStep = (id: string) => {
+    if (id === 'pet') router.push('/pets/create');
+    else if (id === 'care') router.push(pets.length ? '/care/edit' : '/pets/create');
+    else if (id === 'card') router.push(primary ? `/pets/${primary.id}` : '/pets/create');
+    else if (id === 'location') request().then(() => game.reload());
+    else if (id === 'firstaid') router.push('/first-aid');
+  };
+  const sum = game.summary;
+  const showSteps = !!sum && !game.stepsClosed;
 
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -130,6 +149,20 @@ export default function HomeScreen() {
           ) : null}
         </Pressable>
       </View>
+
+      {/* İlk adımlar (yeni kullanıcı) */}
+      {showSteps && sum ? (
+        <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <FirstStepsCard
+            steps={sum.steps}
+            onStep={onStep}
+            onClose={async () => {
+              await closeFirstSteps();
+              game.reload();
+            }}
+          />
+        </View>
+      ) : null}
 
       {/* Duyurular */}
       {banners.length > 0 ? (
@@ -205,6 +238,23 @@ export default function HomeScreen() {
         </Section>
       ) : null}
 
+      {/* Pati karnesi */}
+      {sum && (pets.length > 0 || sum.points > 0) ? (
+        <Section title="Pati karnen" action="Rozetler" onAction={() => router.push('/karne')}>
+          <KarneCard
+            levelName={sum.level.name}
+            points={sum.points}
+            progress={sum.level.progress}
+            toNext={sum.level.toNext}
+            nextName={sum.level.next?.name ?? null}
+            earned={sum.earned.length}
+            total={BADGES.length}
+            streak={sum.streak}
+            onPress={() => router.push('/karne')}
+          />
+        </Section>
+      ) : null}
+
       {/* Soruma yeni yanıt */}
       {update ? (
         <View style={{ paddingHorizontal: 20, marginTop: 16 }}>
@@ -267,6 +317,14 @@ export default function HomeScreen() {
           <ListRow icon="bandage-outline" tint="peach" title="İlk yardım rehberi" subtitle="Veterinere ulaşana kadar" onPress={() => router.push('/first-aid')} last />
         </Group>
       </Section>
+
+      <NewBadgeSheet
+        badges={game.fresh}
+        onClose={async () => {
+          await markBadgesSeen(game.fresh.map((b) => b.id));
+          game.reload();
+        }}
+      />
     </Screen>
   );
 }

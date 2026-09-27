@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, Button, Text } from '@/components/ds';
 import { FirstAidList } from '@/components/clinic/FirstAidList';
+import { markFirstAidSeen } from '@/lib/data/gameStore';
 
 export default function FirstAidScreen() {
+  // "Hazırlıklı" rozeti ve ilk adımlar için
+  useEffect(() => {
+    markFirstAidSeen();
+  }, []);
   return (
     <Screen scroll>
       <Header

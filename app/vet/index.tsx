@@ -5,6 +5,7 @@ import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, I
 import { useTheme } from '@/lib/theme';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
+import { SUPPORT_EMAIL } from '@/lib/links';
 import { fetchInbox, setInboxOpen, registerVetDevice, unregisterVetDevice, type ClinicInbox } from '@/lib/data/messages';
 import { useUnreadMessages } from '@/lib/hooks/useCommunity';
 
@@ -158,7 +159,7 @@ function Panel() {
       {inbox === null ? (
         <Card>
           <Text variant="callout">
-            Kliniğinizin gelen kutusu henüz açılmadı. support@patisos.app adresine yazın, aynı gün etkinleştirelim.
+            Kliniğinizin gelen kutusu henüz açılmadı. {SUPPORT_EMAIL} adresine yazın, aynı gün etkinleştirelim.
           </Text>
         </Card>
       ) : (

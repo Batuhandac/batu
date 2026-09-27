@@ -10,6 +10,7 @@ import { RulesSheet } from '@/components/community/Safety';
 import { unblockAll } from '@/lib/data/safety';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
+import { LINKS, SUPPORT_EMAIL } from '@/lib/links';
 
 function GroupTitle({ children }: { children: string }) {
   return (
@@ -49,6 +50,7 @@ export default function SettingsScreen() {
 
       <GroupTitle>Uygulama</GroupTitle>
       <Group>
+        <ListRow icon="trophy-outline" tint="butter" title="Pati karnem" subtitle="Seviye, pati puanı ve rozetler" onPress={() => router.push('/karne')} />
         <ListRow icon="paw-outline" title="Acil kartlarım" subtitle="Dostlarının sağlık bilgileri" onPress={() => router.push('/(tabs)/pets')} />
         <ListRow icon="bandage-outline" title="İlk yardım rehberi" subtitle="Veterinere ulaşana kadar" onPress={() => router.push('/first-aid')} />
         <ListRow icon="add-circle-outline" title="Bildiğin bir kliniği ekle" subtitle="Kontrol edildikten sonra yayınlanır" onPress={() => router.push('/clinic/add')} last />
@@ -89,8 +91,8 @@ export default function SettingsScreen() {
 
       <GroupTitle>Hakkında</GroupTitle>
       <Group>
-        <ListRow icon="document-text-outline" title="Kullanım koşulları" onPress={() => Linking.openURL('https://patisos.app/kullanim-kosullari')} />
-        <ListRow icon="lock-closed-outline" title="Gizlilik politikası" onPress={() => Linking.openURL('https://patisos.app/gizlilik-politikasi')} />
+        <ListRow icon="document-text-outline" title="Kullanım koşulları" onPress={() => Linking.openURL(LINKS.terms)} />
+        <ListRow icon="lock-closed-outline" title="Gizlilik politikası" onPress={() => Linking.openURL(LINKS.privacy)} />
         <ListRow
           icon="layers-outline"
           title="Veri kaynakları"
@@ -107,7 +109,7 @@ export default function SettingsScreen() {
           onPress={() =>
             Alert.alert(
               'Verilerin',
-              'Acil kartların, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. Topluluktaki soru ve yorumlarını kendin silebilirsin. Mesajların, fotoğrafların ya da diğer gönderilerinin silinmesi için support@patisos.app adresine yaz; KVKK kapsamında 30 gün içinde yanıtlanır.'
+              `Dostlarının kartları, bakım takvimin, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. Topluluktaki soru ve yorumlarını kendin silebilirsin. Mesajların, fotoğrafların ya da diğer gönderilerinin silinmesi için ${SUPPORT_EMAIL} adresine yaz; KVKK kapsamında 30 gün içinde yanıtlanır.`
             )
           }
           last
@@ -123,7 +125,7 @@ export default function SettingsScreen() {
           <Wordmark size={15} />
         </View>
         <Text variant="caption" tone="subtle">
-          Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · support@patisos.app
+          Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · {SUPPORT_EMAIL}
         </Text>
       </View>
       <RulesSheet visible={rules} onClose={() => setRules(false)} onAccept={() => setRules(false)} />

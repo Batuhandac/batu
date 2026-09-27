@@ -71,14 +71,14 @@ export default function CareEditScreen() {
     await saveCareItem({ id: params.id, pet_id: petId, kind, title, due, repeat_days: repeat, note });
     setSaving(false);
     track('care_saved', { kind, repeat: repeat ?? 0 });
-    toast(`${pet?.name ?? 'Dostun'} için ${formatDate(due, false)} tarihine kaydedildi`, 'calendar');
+    toast(`${pet?.name ?? 'Dostun'} için ${formatDate(due, false)} tarihine kaydedildi${editing ? '' : ' · +10 pati'}`, 'calendar');
     router.back();
   };
 
   const markDone = async () => {
     if (!params.id) return;
     const next = await completeCare(params.id);
-    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
+    toast(`Aferin, yapıldı!${next ? ` Sonraki: ${formatDate(next.due, false)}` : ''}`, 'paw');
     router.back();
   };
 

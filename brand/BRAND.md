@@ -53,10 +53,10 @@ Konum iğnesinin içinde pati: *yakınındaki veteriner*. Tek renk.
 | Marka (yeşil) | `#23845E` | `#5CC79C` | Bağlantılar, ana düğme, seçili sekme, "açık" durumu |
 | Acil (kırmızı) | `#D92D20` | `#E5483B` | Yalnızca acil eylem, alerji/ilaç uyarısı ve silme |
 | Uyarı (kehribar) | `#A15C07` | `#F5A524` | "Bugün", "yarın", "saat bilinmiyor" |
-| Zemin | `#F5F3EF` | `#000000` | Ekran arka planı (sıcak açık gri) |
-| Yüzey | `#FFFFFF` | `#1C1C1E` | Kartlar ve liste grupları |
-| Metin | `#111214` | `#F5F5F7` | Ana metin |
-| İkincil metin | `#5E5E63` | `#AEAEB2` | Açıklamalar |
+| Zemin | `#F5F3EF` | `#1F1C19` | Ekran arka planı (sıcak açık gri / sıcak kakao) |
+| Yüzey | `#FFFFFF` | `#2A2622` | Kartlar ve liste grupları |
+| Metin | `#111214` | `#F7F2EB` | Ana metin |
+| İkincil metin | `#5E5E63` | `#C9C0B4` | Açıklamalar |
 
 **Pastel zeminler** (yalnızca dost kartları, duyurular, maskot arka planları):
 şeftali `#FFE4D6`, tereyağı `#FFF0C7`, nane `#D9F2E3`, gökyüzü `#D9EAFB`, lila `#E9E1FA`,
@@ -110,4 +110,6 @@ Emoji kullanılmaz; ne arayüzde ne bildirimlerde ne paylaşılan metinlerde.
 ## Tema
 
 Açık ve koyu tema cihaz ayarını izler (`app.json` → `userInterfaceStyle: automatic`).
-Koyu temada zemin tam siyahtır; gece acillerinde ekran göz kamaştırmaz.
+Koyu temada zemin sıcak bir kakao-gridir (`#1F1C19`), kartlar bir ton açık (`#2A2622`).
+Tam siyah soğuk ve kasvetli duruyordu; bu tonlar gece gözü yormaz ama pastel maskotlarla
+sıcak kalır.

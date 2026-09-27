@@ -7,6 +7,7 @@ import * as FirebaseAuth from 'firebase/auth';
 import { getAuth, initializeAuth, type Auth, type Persistence } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { getFirebaseApp, getDb } from '@/lib/firebase';
+import { SUPPORT_EMAIL } from '@/lib/links';
 
 let _auth: Auth | null = null;
 
@@ -104,7 +105,7 @@ export function authErrorMessage(e: unknown): string {
     case 'auth/network-request-failed':
       return 'İnternet bağlantını kontrol edip tekrar dene.';
     case 'auth/user-disabled':
-      return 'Bu hesap devre dışı bırakılmış. support@patisos.app adresine yaz.';
+      return `Bu hesap devre dışı bırakılmış. ${SUPPORT_EMAIL} adresine yaz.`;
     case 'auth/requires-recent-login':
       return 'Güvenlik için çıkış yapıp yeniden giriş yaptıktan sonra tekrar dene.';
     case 'auth/operation-not-allowed':

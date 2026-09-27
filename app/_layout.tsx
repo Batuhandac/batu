@@ -109,6 +109,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/vet" options={{ presentation: 'card' }} />
         <Stack.Screen name="account/index" options={{ presentation: 'card' }} />
         <Stack.Screen name="care/edit" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="karne" options={{ presentation: 'card' }} />
       </Stack>
       <ToastHost />
     </GestureHandlerRootView>

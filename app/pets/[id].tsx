@@ -7,12 +7,14 @@ import { CareRow } from '@/components/care/CareRow';
 import { WeightCard } from '@/components/care/WeightCard';
 import { useTheme, hairline, radius } from '@/lib/theme';
 import { PASTELS, pastelOf } from '@/lib/art/faces';
+import { cardFields, POINTS } from '@/lib/game';
+import { ProgressBar } from '@/components/game';
 import { getPet, removePet, setPrimaryPet } from '@/lib/data/localStore';
 import { upcomingCare, doneCare, completeCare, loadWeights, removePetCare, kindMeta, type CareItem, type WeightEntry } from '@/lib/data/care';
 import { deletePetPhoto } from '@/lib/data/petPhoto';
 import { sharePetCard, shareViaWhatsApp } from '@/lib/utils/share';
 import { speciesLabel, petAge, sexLabel, upcomingBirthday, genitive } from '@/lib/utils/pets';
-import { formatDate } from '@/lib/utils/dates';
+import { formatDate, todayISO } from '@/lib/utils/dates';
 import { track } from '@/lib/analytics';
 import type { Pet } from '@/types';
 
@@ -61,13 +63,17 @@ export default function PetDetailScreen() {
   };
 
   const done = async (item: CareItem) => {
+    const gained = todayISO() <= item.due ? POINTS.doneOnTime : POINTS.doneLate;
     const next = await completeCare(item.id);
     track('care_done', { kind: item.kind });
-    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
+    toast(`Aferin, yapıldı! +${gained} pati${next ? ` · Sonraki: ${formatDate(next.due, false)}` : ''}`, 'paw');
     load();
   };
 
   const age = petAge(pet);
+  const fields = cardFields(pet, [...care, ...history]);
+  const missing = fields.filter((f) => !f.done);
+  const filled = (fields.length - missing.length) / fields.length;
   const heroBg = PASTELS[t.dark ? 'dark' : 'light'][pastelOf(pet.id)];
   const emergencyRows = (
     [
@@ -118,6 +124,32 @@ export default function PetDetailScreen() {
             {stats}
           </Text>
         ) : null}
+        {/* Kart doluluğu: eksikleri tek dokunuşla tamamlat */}
+        <View style={{ alignSelf: 'stretch', marginTop: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+            <Text variant="caption" style={{ fontWeight: '800' }}>
+              {filled === 1 ? 'Kart tamam' : `Kart %${Math.round(filled * 100)} dolu`}
+            </Text>
+            {filled < 1 ? (
+              <Text variant="caption" tone="muted">
+                Doldurdukça pati kazanırsın
+              </Text>
+            ) : null}
+          </View>
+          <ProgressBar value={filled} track={t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.75)'} />
+          {missing.length > 0 ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+              {missing.slice(0, 3).map((f) => (
+                <Chip
+                  key={f.key}
+                  label={f.label}
+                  icon="add"
+                  onPress={() => router.push(f.key === 'care' || f.key === 'vaccine' ? `/care/edit?petId=${pet.id}&kind=vaccine` : `/pets/create?id=${pet.id}`)}
+                />
+              ))}
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {bday && bday.days <= 14 ? (

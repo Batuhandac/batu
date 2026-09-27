@@ -1,10 +1,14 @@
 import { PostHog } from 'posthog-react-native';
 import { supabase, isSupabaseConfigured } from './supabase';
 
-export const posthog = new PostHog(
-  process.env.EXPO_PUBLIC_POSTHOG_KEY ?? 'phc_placeholder',
-  { host: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://app.posthog.com' }
-);
+// Anahtar yoksa SDK kapalı kalır: telefondan hiçbir olay çıkmaz. App Store gizlilik
+// beyanı (store/APP_STORE.md) bu davranışa göre yazıldı.
+const posthogKey = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+
+export const posthog = new PostHog(posthogKey ?? 'phc_disabled', {
+  host: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://app.posthog.com',
+  disabled: !posthogKey,
+});
 
 type EventName =
   | 'app_open' | 'location_granted' | 'location_denied'

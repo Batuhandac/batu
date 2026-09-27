@@ -189,6 +189,10 @@ export async function removePetCare(petId: string): Promise<void> {
 }
 
 // ─── Kilo ────────────────────────────────────────────────────────────────────
+export async function loadAllWeights(): Promise<WeightEntry[]> {
+  return readJSON<WeightEntry>(WEIGHT_KEY);
+}
+
 export async function loadWeights(petId: string): Promise<WeightEntry[]> {
   return (await readJSON<WeightEntry>(WEIGHT_KEY)).filter((w) => w.pet_id === petId).sort((a, b) => a.date.localeCompare(b.date));
 }

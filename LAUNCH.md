@@ -1,5 +1,7 @@
 # Pati SOS — Lansman Kiti 🐾🆘
 
+> Mağaza metinlerinin güncel hali ve gönderim adımları: [store/APP_STORE.md](store/APP_STORE.md). Aşağıdaki mağaza bölümü eskidir.
+
 Ankara'da evcil hayvanın için **en yakın açık veteriner kliniğini saniyeler içinde** bulan acil yardım uygulaması.
 
 ---

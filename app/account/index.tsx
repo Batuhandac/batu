@@ -6,6 +6,7 @@ import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
 import { unregisterVetDevice } from '@/lib/data/messages';
 import { track } from '@/lib/analytics';
+import { SUPPORT_EMAIL } from '@/lib/links';
 
 const ROLE_LABEL = { owner: 'Evcil hayvan sahibi', vet: 'Veteriner hekim', vet_pending: 'Hekim · doğrulama bekliyor', guest: 'Misafir' } as const;
 
@@ -49,7 +50,7 @@ export default function AccountScreen() {
             const res = await s.deleteAccount();
             if (res.ok) {
               track('account_deleted');
-              Alert.alert('Hesabın silindi', 'Topluluktaki gönderilerinin de silinmesini istersen support@patisos.app adresine yaz.');
+              Alert.alert('Hesabın silindi', `Topluluktaki gönderilerinin de silinmesini istersen ${SUPPORT_EMAIL} adresine yaz.`);
               router.replace('/(tabs)');
             } else Alert.alert('Silinemedi', res.message);
           },

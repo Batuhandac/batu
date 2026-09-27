@@ -1,0 +1,38 @@
+name: Site → GitHub Pages
+
+# Gizlilik, kullanım koşulları ve destek sayfalarını (site/) yayınlar. App Store bu
+# adresleri ister. Yalnızca herkese açık Batuhandac/batu deposunda çalışır; bir kez
+# Settings → Pages → Source: "GitHub Actions" seçilmesi gerekir (store/APP_STORE.md).
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/site-pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.repository == 'Batuhandac/batu'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

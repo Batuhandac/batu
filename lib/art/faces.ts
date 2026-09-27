@@ -36,7 +36,7 @@ export const PASTEL_KEYS = ['peach', 'butter', 'mint', 'sky', 'lilac', 'rose'] a
 export type PastelKey = (typeof PASTEL_KEYS)[number];
 export const PASTELS: Record<'light' | 'dark', Record<PastelKey, string>> = {
   light: { peach: '#FFE4D6', butter: '#FFF0C7', mint: '#D9F2E3', sky: '#D9EAFB', lilac: '#E9E1FA', rose: '#FBE0E8' },
-  dark: { peach: '#3A2A22', butter: '#37311D', mint: '#1D3226', sky: '#1C2A3A', lilac: '#2B2540', rose: '#3A2430' },
+  dark: { peach: '#5A3A2C', butter: '#54462A', mint: '#2C4A3B', sky: '#2B4057', lilac: '#40365E', rose: '#573443' },
 };
 
 /** Pastel zemin üstündeki ikonların rengi (aynı tonun koyusu). */

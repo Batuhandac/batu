@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Pressable, Alert, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, Field, Button, Segmented, Chip } from '@/components/ds';
 import { useSession } from '@/stores/session';
+import { LINKS } from '@/lib/links';
 
 export type AuthMode = 'signup' | 'signin';
 
@@ -131,11 +132,11 @@ export function AuthForm({
       ) : (
         <Text variant="caption" tone="subtle" center style={{ marginTop: 14 }}>
           Devam ederek{' '}
-          <Text variant="caption" tone="primary" onPress={() => Linking.openURL('https://patisos.app/kullanim-kosullari')}>
+          <Text variant="caption" tone="primary" onPress={() => Linking.openURL(LINKS.terms)}>
             Kullanım Koşulları
           </Text>{' '}
           ve{' '}
-          <Text variant="caption" tone="primary" onPress={() => Linking.openURL('https://patisos.app/gizlilik-politikasi')}>
+          <Text variant="caption" tone="primary" onPress={() => Linking.openURL(LINKS.privacy)}>
             Gizlilik Politikası
           </Text>
           'nı kabul edersin.

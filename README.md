@@ -22,6 +22,10 @@ içinde yakındaki açık kliniği bul, tek dokunuşla ara.
 - **Bakım takvimi** (`lib/data/care.ts`) — aşı, parazit, kontrol, ilaç. Bir gün önce
   20:00'de ve gününde 10:00'da yerel bildirim; "yapıldı" deyince tekrarlıysa sonraki kurulur.
 - **Kilo takibi ve acil sağlık kartı** — klinik ararken ekranda, WhatsApp ile paylaşılabilir.
+- **Pati karnesi** (`lib/game.ts`, `app/karne.tsx`) — dostun sağlığına yarayan işler pati
+  puanı kazandırır: dost eklemek, kartı doldurmak, aşıyı zamanında yapmak, kilo kaydetmek.
+  Beş seviye, on rozet, zamanında bakım serisi ve yeni kullanıcı için "İlk adımlar" listesi.
+  Puan ayrıca saklanmaz; her seferinde telefondaki kayıtlardan hesaplanır.
 
 ## Topluluk, mesajlaşma ve içerik
 
@@ -61,6 +65,12 @@ zaman çalışma saatlerinden cihazda hesaplanır; saat bilinmiyorsa "bilinmiyor
 
 Sıralama satın alınamaz: yalnızca şu an açık olma, acil kabul, 7/24, doğrulanmış
 bilgi, telefonun olması, mesafe ve puan (`rankClinics`, `lib/data/query.ts`).
+
+## App Store
+
+Mağaza metinleri, gizlilik yanıtları, inceleme notları ve gönderim adımları:
+[`store/APP_STORE.md`](store/APP_STORE.md). Gizlilik, koşullar ve destek sayfaları `site/`
+klasöründe; GitHub Pages ile yayınlanır.
 
 ## Kurulum
 
