@@ -1,17 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Alert, ScrollView, Switch, ActivityIndicator } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen, Header, Text, Field, Button, Card, Segmented, SwitchRow, Checkbox, Chip, Divider } from '@/components/ds';
 import { submitClinicClaim, isFirebaseConfigured } from '@/lib/data/community';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { getClinicById } from '@/lib/data/query';
 import { track } from '@/lib/analytics';
 
-const ROLES = [
-  { key: 'vet', label: 'Veteriner hekim' },
-  { key: 'owner', label: 'Klinik sahibi' },
-  { key: 'staff', label: 'Çalışan' },
-] as const;
+type Role = 'vet' | 'owner' | 'staff';
 
 export const CLINIC_SERVICES = [
   'Kedi',
@@ -25,36 +21,6 @@ export const CLINIC_SERVICES = [
   'Evde muayene',
 ];
 
-function Field(props: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  hint?: string;
-  phone?: boolean;
-  multiline?: boolean;
-  email?: boolean;
-}) {
-  return (
-    <View className="mb-4">
-      <Text className="text-gray-label text-xs font-semibold uppercase tracking-wide mb-1.5">{props.label}</Text>
-      <TextInput
-        value={props.value}
-        onChangeText={props.onChange}
-        placeholder={props.placeholder}
-        placeholderTextColor="#8e9196"
-        keyboardType={props.phone ? 'phone-pad' : props.email ? 'email-address' : 'default'}
-        autoCapitalize={props.email ? 'none' : 'sentences'}
-        multiline={props.multiline}
-        maxLength={props.multiline ? 500 : 120}
-        className="bg-surface border border-border rounded-xl px-4 py-3 text-white text-base"
-        style={props.multiline ? { textAlignVertical: 'top', minHeight: 72 } : undefined}
-      />
-      {props.hint ? <Text className="text-gray-muted text-xs mt-1">{props.hint}</Text> : null}
-    </View>
-  );
-}
-
 export default function ClaimScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === 'new';
@@ -62,7 +28,7 @@ export default function ClaimScreen() {
 
   const [clinicName, setClinicName] = useState(known?.name ?? '');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'vet' | 'owner' | 'staff' | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [clinicPhone, setClinicPhone] = useState(known?.phone ?? '');
@@ -76,15 +42,14 @@ export default function ClaimScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const phoneOk = phone.replace(/\D/g, '').length >= 10;
-  const ready = clinicName.trim().length > 1 && name.trim().length > 1 && role && phoneOk && consent;
+  const ready = clinicName.trim().length > 1 && name.trim().length > 1 && !!role && phoneOk && consent;
 
-  const toggleService = (s: string) =>
-    setServices((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+  const toggleService = (s: string) => setServices((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
 
   const submit = async () => {
     if (!ready || !role) return;
     if (!isFirebaseConfigured) {
-      Alert.alert('Şu an gönderilemiyor', 'Başvuru sistemi henüz aktif değil.');
+      Alert.alert('Şu an gönderilemiyor', 'Başvuru sistemi henüz etkin değil.');
       return;
     }
     setSubmitting(true);
@@ -112,115 +77,95 @@ export default function ClaimScreen() {
     track('claim_submitted', { clinic_id: isNew ? undefined : id, new_clinic: isNew });
     Alert.alert(
       'Başvurunuz alındı',
-      'Verdiğiniz numarayı arayarak kliniği doğrulayacağız. Onaylandığında bilgileriniz uygulamada "Klinik onaylı" olarak görünecek. Teşekkürler!',
+      'Verdiğiniz numarayı arayarak kliniği doğrulayacağız. Onaylandığında bilgileriniz uygulamada "Klinik onaylı" olarak görünecek. Teşekkür ederiz.',
       [{ text: 'Tamam', onPress: () => router.back() }]
     );
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity onPress={() => router.back()} className="mb-5">
-          <Text className="text-gray-text text-base">✕ Kapat</Text>
-        </TouchableOpacity>
-
-        <Text className="text-white text-2xl font-bold">Klinik bilgilerinizi doğrulayın</Text>
-        <Text className="text-gray-text text-sm mt-2 leading-relaxed">
-          Ücretsizdir. Reklam değildir: sıralama satın alınamaz; açık olma, mesafe ve bilgilerin eksiksizliği belirler.
-          Doğrulanan klinikler "Klinik onaylı" görünür ve hasta sahipleri size doğru numaradan ulaşır.
-        </Text>
-
-        <View className="h-px bg-border my-6" />
-
+    <Screen scroll edges={['top', 'bottom']}>
+      <Header
+        title="Klinik bilgilerinizi doğrulayın"
+        subtitle="Ücretsizdir ve reklam değildir: sıralama satın alınamaz. Doğrulanan klinikler 'Klinik onaylı' görünür; hasta sahipleri size doğru numaradan ulaşır."
+        onBack={() => router.back()}
+      />
+      <View style={{ paddingHorizontal: 20 }}>
         {isNew || !known ? (
-          <Field label="Klinik adı *" value={clinicName} onChange={setClinicName} placeholder="Örn. Pati Veteriner Kliniği" />
+          <Field label="Klinik adı" value={clinicName} onChangeText={setClinicName} placeholder="Örn. Pati Veteriner Kliniği" />
         ) : (
-          <View className="bg-card border border-border rounded-xl px-4 py-3 mb-4">
-            <Text className="text-gray-muted text-xs">Klinik</Text>
-            <Text className="text-white font-semibold text-base mt-0.5">{clinicName}</Text>
-          </View>
+          <Card tone="alt" style={{ marginBottom: 16 }}>
+            <Text variant="caption" tone="muted">
+              Klinik
+            </Text>
+            <Text variant="bodyStrong" style={{ marginTop: 2 }}>
+              {clinicName}
+            </Text>
+          </Card>
         )}
 
-        <Field label="Adınız soyadınız *" value={name} onChange={setName} placeholder="Vet. Hek. Ad Soyad" />
+        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+          Başvuran
+        </Text>
+        <Field label="Adınız soyadınız" value={name} onChangeText={setName} placeholder="Vet. Hek. Ad Soyad" />
+        <Text variant="caption" tone="muted" style={{ marginBottom: 6 }}>
+          Rolünüz
+        </Text>
+        <Segmented<Role>
+          value={role}
+          onChange={setRole}
+          options={[
+            { key: 'vet', label: 'Veteriner hekim' },
+            { key: 'owner', label: 'Klinik sahibi' },
+            { key: 'staff', label: 'Çalışan' },
+          ]}
+        />
+        <Field
+          label="Doğrulama telefonunuz"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          placeholder="05xx xxx xx xx"
+          hint="Bu numarayı arayarak doğrulayacağız; uygulamada gösterilmez."
+          error={phone.length > 0 && !phoneOk ? 'Telefon numarası en az 10 haneli olmalı.' : undefined}
+        />
+        <Field label="E-posta (isteğe bağlı)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="ornek@klinik.com" />
 
-        <Text className="text-gray-label text-xs font-semibold uppercase tracking-wide mb-1.5">Rolünüz *</Text>
-        <View className="flex-row gap-2 mb-4">
-          {ROLES.map((r) => (
-            <TouchableOpacity
-              key={r.key}
-              onPress={() => setRole(r.key)}
-              className={`flex-1 border rounded-xl py-3 items-center ${role === r.key ? 'border-orange-accent bg-orange-accent/10' : 'border-border bg-surface'}`}
-            >
-              <Text className="text-white text-xs font-semibold">{r.label}</Text>
-            </TouchableOpacity>
+        <Divider style={{ marginVertical: 12 }} />
+        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+          Hasta sahiplerinin göreceği bilgiler
+        </Text>
+        <Field label="Klinik telefonu" value={clinicPhone} onChangeText={setClinicPhone} keyboardType="phone-pad" placeholder="0312 xxx xx xx" />
+        <Field
+          label="Mesai dışı acil hattı"
+          value={emergencyPhone}
+          onChangeText={setEmergencyPhone}
+          keyboardType="phone-pad"
+          placeholder="Varsa nöbet ya da cep hattı"
+          hint="Gece arayan hasta sahibi doğrudan bu numarayı görür."
+        />
+        <SwitchRow label="7/24 açığız" value={is247} onValueChange={setIs247} />
+        {!is247 && <Field label="Çalışma saatleri" value={hours} onChangeText={setHours} placeholder="Pzt–Cmt 09:00–20:00, Pazar kapalı" />}
+        <SwitchRow label="Acil hasta kabul ediyoruz" value={emergency || is247} onValueChange={setEmergency} disabled={is247} />
+
+        <Text variant="caption" tone="muted" style={{ marginTop: 4, marginBottom: 8 }}>
+          Hizmetler
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {CLINIC_SERVICES.map((s) => (
+            <Chip key={s} label={s} active={services.includes(s)} onPress={() => toggleService(s)} />
           ))}
         </View>
+        <Field label="Hasta sahiplerine not" value={note} onChangeText={setNote} multiline maxLength={500} placeholder="Örn. Gece gelmeden önce mutlaka arayın; egzotik hasta kabul etmiyoruz." />
 
-        <Field label="Doğrulama telefonunuz *" value={phone} onChange={setPhone} phone placeholder="05xx xxx xx xx" hint="Bu numarayı arayarak doğrulayacağız; uygulamada gösterilmez." />
-        <Field label="E-posta" value={email} onChange={setEmail} email placeholder="isteğe bağlı" />
-
-        <View className="h-px bg-border my-4" />
-        <Text className="text-white font-bold text-base mb-3">Hasta sahiplerinin göreceği bilgiler</Text>
-
-        <Field label="Klinik telefonu" value={clinicPhone} onChange={setClinicPhone} phone placeholder="0312 xxx xx xx" />
-        <Field label="Mesai dışı acil hattı" value={emergencyPhone} onChange={setEmergencyPhone} phone placeholder="varsa (nöbet / cep)" hint="Gece arayan hasta sahibi doğrudan bu numarayı görür." />
-
-        <View className="flex-row items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 mb-3">
-          <Text className="text-white text-base">7/24 açığız</Text>
-          <Switch value={is247} onValueChange={setIs247} trackColor={{ true: '#ff7f1c', false: '#44474c' }} />
-        </View>
-        {!is247 && (
-          <Field
-            label="Çalışma saatleri"
-            value={hours}
-            onChange={setHours}
-            placeholder="Pzt–Cmt 09:00–20:00, Pazar kapalı"
-          />
-        )}
-        <View className="flex-row items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 mb-4">
-          <Text className="text-white text-base flex-1 mr-3">Acil hasta kabul ediyoruz</Text>
-          <Switch value={emergency || is247} onValueChange={setEmergency} disabled={is247} trackColor={{ true: '#ff7f1c', false: '#44474c' }} />
-        </View>
-
-        <Text className="text-gray-label text-xs font-semibold uppercase tracking-wide mb-2">Hizmetler</Text>
-        <View className="flex-row flex-wrap gap-2 mb-4">
-          {CLINIC_SERVICES.map((s) => {
-            const on = services.includes(s);
-            return (
-              <TouchableOpacity
-                key={s}
-                onPress={() => toggleService(s)}
-                className={`rounded-full px-3.5 py-2 border ${on ? 'border-orange-accent bg-orange-accent/10' : 'border-border bg-surface'}`}
-              >
-                <Text className={`text-sm ${on ? 'text-white font-semibold' : 'text-gray-text'}`}>{s}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <Field label="Hasta sahiplerine not" value={note} onChange={setNote} multiline placeholder="Örn. Gece gelmeden önce mutlaka arayın; egzotik hasta kabul etmiyoruz." />
-
-        <TouchableOpacity onPress={() => setConsent(!consent)} className="flex-row items-start gap-3 mt-2" activeOpacity={0.7}>
-          <View className={`w-6 h-6 rounded-md border-2 items-center justify-center mt-0.5 ${consent ? 'bg-orange-accent border-orange-accent' : 'border-border bg-surface'}`}>
-            {consent && <Text className="text-white text-sm font-bold">✓</Text>}
-          </View>
-          <Text className="text-gray-text text-sm flex-1 leading-relaxed">
-            Verdiğim bilgilerin başvurumun doğrulanması ve klinik bilgilerinin uygulamada gösterilmesi
-            amacıyla işlenmesini kabul ediyorum (KVKK). Doğrulama telefonum yayımlanmaz.
+        <Checkbox checked={consent} onPress={() => setConsent(!consent)}>
+          <Text variant="callout" tone="muted">
+            Verdiğim bilgilerin başvurumun doğrulanması ve klinik bilgilerinin uygulamada gösterilmesi amacıyla
+            işlenmesini kabul ediyorum (KVKK). Doğrulama telefonum yayımlanmaz.
           </Text>
-        </TouchableOpacity>
+        </Checkbox>
 
-        <TouchableOpacity
-          onPress={submit}
-          disabled={!ready || submitting}
-          className={`rounded-2xl py-4 items-center mt-6 ${!ready || submitting ? 'bg-surface opacity-50' : 'bg-orange-accent'}`}
-        >
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-base">Başvuruyu gönder</Text>}
-        </TouchableOpacity>
-        {!phoneOk && phone.length > 0 && (
-          <Text className="text-gray-muted text-xs text-center mt-2">Telefon numarası en az 10 haneli olmalı.</Text>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        <Button title="Başvuruyu gönder" size="lg" full disabled={!ready} loading={submitting} onPress={submit} style={{ marginTop: 20 }} />
+      </View>
+    </Screen>
   );
 }

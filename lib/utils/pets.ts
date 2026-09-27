@@ -14,7 +14,3 @@ export function speciesLabel(species: string | null | undefined, possessive = fa
       return possessive ? `${species}` : species;
   }
 }
-
-export function speciesEmoji(species: string | null | undefined): string {
-  return species === 'cat' ? '🐱' : species === 'dog' ? '🐶' : '🐾';
-}

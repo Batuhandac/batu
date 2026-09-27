@@ -1,13 +1,29 @@
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import {
+  Screen,
+  Text,
+  Icon,
+  IconBadge,
+  Card,
+  Section,
+  Group,
+  ListRow,
+  Avatar,
+  Button,
+  LogoMark,
+  Wordmark,
+  type IconName,
+} from '@/components/ds';
+import { useTheme, radius, shadow } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useLocation } from '@/lib/hooks/useLocation';
-import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
+import { speciesLabel } from '@/lib/utils/pets';
+import { getRegisteredClinic } from '@/lib/data/registry';
+import { getClinicById } from '@/lib/data/query';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -17,236 +33,215 @@ function greeting(): string {
   return 'İyi akşamlar';
 }
 
+const QUICK: { icon: IconName; title: string; text: string; href: string }[] = [
+  { icon: 'list', title: 'Yakın klinikler', text: 'Açık olanlar önce', href: '/(tabs)/nearby' },
+  { icon: 'map', title: 'Harita', text: 'Çevrendeki klinikler', href: '/(tabs)/map' },
+  { icon: 'bandage-outline', title: 'İlk yardım', text: 'Veterinere kadar', href: '/first-aid' },
+  { icon: 'id-card-outline', title: 'Acil kart', text: 'Dostunun bilgileri', href: '/(tabs)/pets' },
+];
+
 export default function HomeScreen() {
+  const t = useTheme();
   const { pets, load: loadPets } = usePets();
   const { favorites, load: loadFavs } = useFavorites();
   const { source, label } = useLocation();
 
   useFocusEffect(useCallback(() => { loadPets(); loadFavs(); }, [loadPets, loadFavs]));
 
-  const primaryPet = pets.find((p) => p.is_primary) ?? pets[0];
-  const primaryVetFav = favorites.find((f) => f.is_primary_vet);
+  const primaryVet = favorites.find((f) => f.is_primary_vet);
+  const primaryVetName = primaryVet
+    ? getRegisteredClinic(primaryVet.clinic_id)?.name ?? getClinicById(primaryVet.clinic_id)?.name ?? 'Kayıtlı klinik'
+    : null;
 
-  const handleEmergency = () => {
+  const startEmergency = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     router.push('/emergency');
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-
-        {/* Üst başlık */}
-        <View className="px-6 pt-5 flex-row items-start justify-between">
-          <View>
-            <Text className="text-gray-text text-base">{greeting()} 👋</Text>
-            <Text className="text-white text-2xl font-bold mt-0.5" style={{ fontFamily: 'System', letterSpacing: -0.5 }}>
-              Pati SOS
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/nearby')}
-            className="flex-row items-center gap-1.5 bg-card border border-border rounded-full px-3 py-1.5 mt-1"
-            style={{ maxWidth: 170 }}
-          >
-            <Text className="text-sm">📍</Text>
-            <Text className="text-gray-label text-sm font-semibold" numberOfLines={1}>
-              {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Konumun' : 'Konum seç'}
-            </Text>
-          </TouchableOpacity>
+    <Screen scroll>
+      {/* Üst bar */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LogoMark size={34} />
+          <Wordmark size={21} />
         </View>
-
-        {/* ACİL hero */}
-        <TouchableOpacity
-          onPress={handleEmergency}
-          activeOpacity={0.9}
-          className="mx-5 mt-5"
+        <Pressable
+          onPress={() => router.push('/(tabs)/nearby')}
           accessibilityRole="button"
-          accessibilityLabel="Acil veteriner bul"
+          accessibilityLabel="Konum"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            maxWidth: 170,
+            paddingHorizontal: 12,
+            height: 36,
+            borderRadius: radius.pill,
+            backgroundColor: t.surface,
+            borderWidth: 1,
+            borderColor: t.border,
+          }}
         >
-          <LinearGradient
-            colors={['rgba(255,127,28,0.95)', 'rgba(220,80,0,0.85)', 'rgba(19,19,21,0.92)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              borderRadius: 28,
-              padding: 24,
-              shadowColor: '#ff7f1c',
-              shadowOpacity: 0.35,
-              shadowRadius: 28,
-              shadowOffset: { width: 0, height: 12 },
-              elevation: 12,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.1)',
-            }}
-          >
-            <View className="items-center" style={{ gap: 12 }}>
-              {/* Icon */}
-              <View
-                className="w-16 h-16 rounded-full items-center justify-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
-              >
-                <Text className="text-3xl">🚨</Text>
-              </View>
-              {/* Text */}
-              <View className="items-center">
-                <Text className="text-white text-2xl font-bold text-center" style={{ letterSpacing: -0.3 }}>
-                  ACİL VETERİNER BUL
-                </Text>
-                <Text className="text-white/80 text-sm text-center mt-1">
-                  En yakın açık klinik · tek dokunuşla arama · ilk yardım
-                </Text>
-              </View>
-              {/* CTA */}
-              <View
-                className="flex-row items-center gap-2 rounded-full px-6 py-3 mt-1"
-                style={{ backgroundColor: 'rgba(255,127,28,0.9)' }}
-              >
-                <View className="w-2 h-2 rounded-full bg-white" />
-                <Text className="text-white font-bold text-sm">Hemen Bul</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Hızlı erişim */}
-        <View className="flex-row gap-3 px-5 mt-4">
-          <QuickTile emoji="🗺️" label="Harita" onPress={() => router.push('/(tabs)/map')} />
-          <QuickTile emoji="🏥" label="Klinik Ekle" onPress={() => router.push('/clinic/add')} />
-          <QuickTile emoji="🐾" label="Petlerim" onPress={() => router.push('/(tabs)/pets')} />
-        </View>
-
-        {/* Pet profili */}
-        <View className="px-5 mt-6">
-          <Text className="text-white font-bold text-lg mb-3" style={{ letterSpacing: -0.3 }}>
-            Kayıtlı Dostların
+          <Icon name={source === 'gps' ? 'navigate' : 'location-outline'} size={15} color={t.primary} />
+          <Text variant="caption" numberOfLines={1}>
+            {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Konumun' : 'Konum seç'}
           </Text>
-          {primaryPet ? (
-            <TouchableOpacity
-              onPress={() => router.push(`/pets/${primaryPet.id}`)}
-              activeOpacity={0.85}
-              className="bg-card border border-border rounded-3xl p-4 flex-row items-center gap-4"
-            >
-              <View
-                className="w-14 h-14 rounded-full items-center justify-center"
-                style={{ backgroundColor: 'rgba(68,71,76,0.8)' }}
-              >
-                <Text className="text-3xl">{speciesEmoji(primaryPet.species)}</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-bold text-base">{primaryPet.name}</Text>
-                <Text className="text-gray-text text-sm mt-0.5">
-                  {primaryPet.breed ?? speciesLabel(primaryPet.species)}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => router.push(`/pets/${primaryPet.id}`)}
-                className="rounded-full px-4 py-2 border"
-                style={{ backgroundColor: 'rgba(68,71,76,0.6)', borderColor: 'rgba(234,195,51,0.25)' }}
-              >
-                <Text style={{ color: '#eac333', fontSize: 12, fontWeight: '700' }}>Profili Gör</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={() => router.push('/pets/create')}
-              activeOpacity={0.85}
-              className="bg-card border border-border rounded-3xl p-4 flex-row items-center gap-4"
-              style={{ borderStyle: 'dashed' }}
-            >
-              <View
-                className="w-14 h-14 rounded-full items-center justify-center"
-                style={{ backgroundColor: 'rgba(68,71,76,0.5)' }}
-              >
-                <Text className="text-3xl">➕</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-bold text-base">Acil kart oluştur</Text>
-                <Text className="text-gray-text text-sm mt-0.5">Acilde veterinere ne söyleyeceğin hazır olsun</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+        </Pressable>
+      </View>
 
-          {primaryVetFav && (
-            <TouchableOpacity
-              onPress={() => router.push(`/clinic/${primaryVetFav.clinic_id}`)}
-              className="bg-surface border border-border rounded-2xl px-4 py-3 flex-row items-center gap-3 mt-3"
-              activeOpacity={0.85}
-            >
-              <Text className="text-xl">⭐</Text>
-              <Text className="text-gray-label text-sm font-medium flex-1">Düzenli veterinerin</Text>
-              <Text className="text-gray-muted">›</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        <Text variant="overline" tone="subtle">
+          {greeting()}
+        </Text>
+        <Text variant="title" style={{ marginTop: 4 }}>
+          Dostunun yanındayız.
+        </Text>
+      </View>
 
-        {/* Yakın klinikler harita önizlemesi */}
-        <View className="px-5 mt-6">
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-white font-bold text-lg" style={{ letterSpacing: -0.3 }}>
-              Yakınındaki Klinikler
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/nearby')}>
-              <Text style={{ color: '#eac333', fontSize: 13, fontWeight: '700' }}>Tümünü Gör</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/map')}
-            activeOpacity={0.9}
-            className="bg-card border border-border rounded-3xl overflow-hidden"
-            style={{ height: 140 }}
-          >
-            {/* Harita placeholder */}
-            <View className="flex-1 items-center justify-center" style={{ backgroundColor: '#1a1f2e' }}>
-              <Text className="text-4xl mb-1">🗺️</Text>
-              <Text className="text-gray-text text-sm">Haritada Görüntüle</Text>
-            </View>
-            {/* Open count overlay */}
-            <View
-              className="absolute bottom-3 left-3 flex-row items-center gap-2 rounded-full px-3 py-1.5"
-              style={{ backgroundColor: 'rgba(31,31,33,0.9)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
-            >
-              <View className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff7f1c' }} />
-              <Text className="text-white text-xs font-semibold">Açık Klinikler</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* İpucu */}
-        <View className="px-5 mt-4">
-          <View
-            className="flex-row gap-3 rounded-2xl px-4 py-3"
-            style={{ backgroundColor: 'rgba(42,42,43,0.7)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}
-          >
-            <Text className="text-lg">💡</Text>
-            <Text className="text-gray-text text-sm flex-1 leading-relaxed">
-              Gitmeden önce mutlaka <Text className="text-gray-label font-semibold">ara</Text>. Klinik
-              durumu değişebilir; boşuna yola çıkma.
+      {/* ACİL kartı */}
+      <Pressable
+        onPress={startEmergency}
+        accessibilityRole="button"
+        accessibilityLabel="Acil veteriner bul"
+        style={({ pressed }) => ({
+          marginHorizontal: 20,
+          marginTop: 16,
+          borderRadius: radius.xl,
+          backgroundColor: pressed ? t.sosPressed : t.sos,
+          padding: 22,
+          transform: [{ scale: pressed ? 0.985 : 1 }],
+          ...shadow(t, 2),
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <IconBadge name="medkit" size={52} color={t.onSos} background="rgba(255,255,255,0.18)" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, height: 28, borderRadius: radius.pill }}>
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.onSos }} />
+            <Text variant="caption" color={t.onSos} style={{ fontSize: 12 }}>
+              7/24
             </Text>
           </View>
         </View>
-
-        {/* Veteriner hekimlere */}
-        <TouchableOpacity onPress={() => router.push('/vets')} className="mx-5 mt-4 py-3 items-center" activeOpacity={0.7}>
-          <Text className="text-gray-muted text-sm">
-            🩺 Veteriner hekim misiniz? <Text style={{ color: '#bac8dc', fontWeight: '600' }}>Kliniğinizi ücretsiz doğrulayın</Text>
+        <Text variant="title" color={t.onSos} style={{ marginTop: 18 }}>
+          Acil veteriner bul
+        </Text>
+        <Text variant="callout" color="rgba(255,255,255,0.9)" style={{ marginTop: 4 }}>
+          En yakın açık klinik, tek dokunuşla arama ve yolda yapman gerekenler.
+        </Text>
+        <View
+          style={{
+            marginTop: 18,
+            height: 48,
+            borderRadius: radius.md,
+            backgroundColor: t.onSos,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
+        >
+          <Text variant="button" color={t.sos}>
+            Hemen başla
           </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+          <Icon name="arrow-forward" size={18} color={t.sos} />
+        </View>
+      </Pressable>
 
-function QuickTile({ emoji, label, onPress }: { emoji: string; label: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      className="flex-1 bg-card border border-border rounded-2xl py-4 items-center"
-      style={{ gap: 6 }}
-    >
-      <Text className="text-2xl">{emoji}</Text>
-      <Text className="text-gray-label text-xs font-bold">{label}</Text>
-    </TouchableOpacity>
+      {/* Hızlı erişim */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20, marginTop: 16 }}>
+        {QUICK.map((q) => (
+          <Card key={q.title} onPress={() => router.push(q.href as never)} style={{ width: '47.5%', flexGrow: 1 }} accessibilityLabel={q.title}>
+            <IconBadge name={q.icon} size={40} />
+            <Text variant="bodyStrong" style={{ marginTop: 12 }}>
+              {q.title}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {q.text}
+            </Text>
+          </Card>
+        ))}
+      </View>
+
+      {/* Dostlar */}
+      <Section title="Dostların" action={pets.length > 0 ? 'Tümü' : undefined} onAction={() => router.push('/(tabs)/pets')}>
+        {pets.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }} style={{ marginHorizontal: -20 }}>
+            <View style={{ width: 8 }} />
+            {pets.map((p) => (
+              <Card key={p.id} onPress={() => router.push(`/pets/${p.id}`)} style={{ width: 200 }} accessibilityLabel={p.name}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Avatar label={p.name} size={44} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyStrong" numberOfLines={1}>
+                      {p.name}
+                    </Text>
+                    <Text variant="caption" tone="muted" numberOfLines={1}>
+                      {p.breed ?? speciesLabel(p.species)}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            ))}
+            <Card onPress={() => router.push('/pets/create')} tone="alt" style={{ width: 150, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel="Dost ekle">
+              <Icon name="add" size={22} color={t.primary} />
+              <Text variant="caption" tone="primary">
+                Dost ekle
+              </Text>
+            </Card>
+            <View style={{ width: 8 }} />
+          </ScrollView>
+        ) : (
+          <Card>
+            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+              <IconBadge name="paw" size={48} />
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyStrong">Acil kartını şimdi hazırla</Text>
+                <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+                  Kilo, alerji ve ilaç bilgisi acil anda ekranında olsun. 1 dakika sürer.
+                </Text>
+              </View>
+            </View>
+            <Button title="Kart oluştur" variant="soft" icon="add" onPress={() => router.push('/pets/create')} style={{ marginTop: 14 }} full />
+          </Card>
+        )}
+      </Section>
+
+      {primaryVetName && primaryVet && (
+        <Section title="Veterinerin">
+          <Group>
+            <ListRow icon="heart" title={primaryVetName} subtitle="Düzenli veterinerin" onPress={() => router.push(`/clinic/${primaryVet.clinic_id}`)} last />
+          </Group>
+        </Section>
+      )}
+
+      {/* İpucu */}
+      <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        <Card tone="honey">
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Icon name="information-circle" size={22} color={t.honey} />
+            <View style={{ flex: 1 }}>
+              <Text variant="bodyStrong">Gitmeden önce mutlaka ara</Text>
+              <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+                Klinik dolu ya da o an kapalı olabilir. Aramak, varınca zaman kazandırır.
+              </Text>
+            </View>
+          </View>
+        </Card>
+      </View>
+
+      {/* Veteriner hekimlere */}
+      <Pressable onPress={() => router.push('/vets')} style={{ paddingHorizontal: 20, marginTop: 20 }} accessibilityRole="button">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+          <Icon name="medical-outline" size={16} color={t.textMuted} />
+          <Text variant="caption" tone="muted">
+            Veteriner hekim misiniz?{' '}
+            <Text variant="caption" tone="primary">
+              Kliniğinizi ücretsiz doğrulayın
+            </Text>
+          </Text>
+        </View>
+      </Pressable>
+    </Screen>
   );
 }

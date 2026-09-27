@@ -1,80 +1,41 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon, type IconName } from '@/components/ds';
+import { useTheme, fonts } from '@/lib/theme';
 
-function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
-  if (focused) {
-    return (
-      <View
-        style={{
-          backgroundColor: '#ff7f1c',
-          borderRadius: 999,
-          paddingHorizontal: 16,
-          paddingVertical: 6,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 4,
-          marginBottom: 2,
-        }}
-      >
-        <Text style={{ fontSize: 15 }}>{emoji}</Text>
-        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{label}</Text>
-      </View>
-    );
-  }
-  return (
-    <View style={{ alignItems: 'center', paddingBottom: 2 }}>
-      <Text style={{ fontSize: 20, opacity: 0.45 }}>{emoji}</Text>
-    </View>
+function tabIcon(active: IconName, idle: IconName) {
+  return ({ focused, color }: { focused: boolean; color: string }) => (
+    <Icon name={focused ? active : idle} size={24} color={color} />
   );
 }
 
 export default function TabsLayout() {
+  const t = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarActiveTintColor: t.primary,
+        tabBarInactiveTintColor: t.textSubtle,
+        tabBarLabelStyle: { fontFamily: fonts.bold, fontSize: 11 },
         tabBarStyle: {
-          backgroundColor: 'rgba(31,31,33,0.96)',
-          borderTopColor: 'rgba(255,255,255,0.06)',
+          backgroundColor: t.surface,
+          borderTopColor: t.border,
           borderTopWidth: 1,
-          paddingBottom: 0,
-          paddingTop: 0,
-          height: 72,
+          height: 64 + Math.max(insets.bottom, 10),
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 10),
         },
+        sceneStyle: { backgroundColor: t.bg },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Ana Sayfa" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="nearby/index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📍" label="Yakın" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🗺️" label="Harita" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="pets/index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🐾" label="Petlerim" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" label="Ayarlar" focused={focused} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Ana sayfa', tabBarIcon: tabIcon('home', 'home-outline') }} />
+      <Tabs.Screen name="nearby/index" options={{ title: 'Klinikler', tabBarIcon: tabIcon('list', 'list-outline') }} />
+      <Tabs.Screen name="map" options={{ title: 'Harita', tabBarIcon: tabIcon('map', 'map-outline') }} />
+      <Tabs.Screen name="pets/index" options={{ title: 'Dostlarım', tabBarIcon: tabIcon('paw', 'paw-outline') }} />
+      <Tabs.Screen name="settings" options={{ title: 'Ayarlar', tabBarIcon: tabIcon('settings', 'settings-outline') }} />
     </Tabs>
   );
 }

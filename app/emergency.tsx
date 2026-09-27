@@ -3,40 +3,38 @@
 // alanları, az okuma, sakinleştirici dil, yapacak somut bir iş ("ararken
 // şunları söyle") ve dürüstlük (bilmediğimiz saati "açık" göstermeyiz).
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { Screen, Text, Icon, IconBadge, IconButton, Button, Card, Badge, Checkbox } from '@/components/ds';
+import { useTheme, radius } from '@/lib/theme';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { usePets } from '@/lib/hooks/usePets';
 import { useLocationStore } from '@/stores/location';
 import { callClinic } from '@/lib/utils/call';
 import { speciesLabel } from '@/lib/utils/pets';
+import { clinicStatus, formatDistance, isOpenNow } from '@/lib/utils/status';
 import { track } from '@/lib/analytics';
-import { FIRST_AID, BEFORE_YOU_GO, NEVER_HUMAN_MEDS } from '@/lib/content/firstAid';
+import { BEFORE_YOU_GO } from '@/lib/content/firstAid';
+import { FirstAidList } from '@/components/clinic/FirstAidList';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { DistrictPicker } from '@/components/location/DistrictPicker';
 import { DataAttribution } from '@/components/ui/DataAttribution';
-import { formatDistance } from '@/components/clinic/ClinicCard';
 import type { Clinic, Pet } from '@/types';
 
-const GREEN = '#38A169';
 const KEEP_AWAKE_TAG = 'pati-sos-emergency';
-const ORANGE = '#ff7f1c';
-
-const isOpen = (c: Clinic) => c.status === 'open' || c.is_24_7;
 const canCall = (c: Clinic) => !!(c.phone || c.emergency_phone);
 
+// Açıksa klinik hattı; kapalı saatte mesai dışı hattı varsa onu ara
+function phoneOf(c: Clinic): Clinic {
+  if (c.emergency_phone && (!c.phone || c.status !== 'open')) return { ...c, phone: c.emergency_phone };
+  return c;
+}
+
 export default function EmergencyScreen() {
-  // Arama metnini okurken ekran kararmasın (izin verilmezse sessizce geç)
-  useEffect(() => {
-    activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
-    return () => {
-      Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
-    };
-  }, []);
+  const t = useTheme();
   const { clinics, loading, fetch } = useClinics();
   const { lat, lng, source, label, granted, loading: locating, request, refresh, setManual } = useLocation();
   const { pets, load: loadPets } = usePets();
@@ -44,10 +42,17 @@ export default function EmergencyScreen() {
   const [picker, setPicker] = useState(false);
   const [dirClinic, setDirClinic] = useState<Clinic | null>(null);
   const [petId, setPetId] = useState<string | null>(null);
-  const [openGuide, setOpenGuide] = useState<string | null>(null);
   const [checked, setChecked] = useState<number[]>([]);
 
-  // Açılışta: gerçek konumu hemen al (acil anında evde değil, başka yerde olabilir)
+  // Arama metnini okurken ekran kararmasın (izin verilmezse sessizce geç)
+  useEffect(() => {
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
+    return () => {
+      Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
+    };
+  }, []);
+
+  // Açılışta gerçek konumu hemen al (acil anında evde değil, başka yerde olabilir)
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
     track('emergency_cta_tap');
@@ -66,12 +71,10 @@ export default function EmergencyScreen() {
 
   const { best, others } = useMemo(() => {
     // Yarım saat içinde kapanacak kliniği ancak başka seçenek yoksa öne çıkar
-    const good = (c: Clinic) => isOpen(c) && canCall(c);
+    const good = (c: Clinic) => isOpenNow(c) && canCall(c);
     const bestClinic =
-      clinics.find((c) => good(c) && !(c.closes_in_min != null && c.closes_in_min < 30)) ??
-      clinics.find(good) ??
-      null;
-    const rest = clinics.filter((c) => c !== bestClinic && (isOpen(c) || (c.status === 'unknown' && canCall(c))));
+      clinics.find((c) => good(c) && !(c.closes_in_min != null && c.closes_in_min < 30)) ?? clinics.find(good) ?? null;
+    const rest = clinics.filter((c) => c !== bestClinic && (isOpenNow(c) || (c.status === 'unknown' && canCall(c))));
     return { best: bestClinic, others: rest.slice(0, 4) };
   }, [clinics]);
 
@@ -79,154 +82,139 @@ export default function EmergencyScreen() {
   const searching = locating || loading || (lat == null && !askedLocation);
 
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Üst */}
-        <View className="px-5 pt-3 flex-row items-start justify-between">
-          <View className="flex-1 pr-3">
-            <Text className="text-white text-2xl font-extrabold" style={{ letterSpacing: -0.4 }}>
-              Yanındayız 🐾
-            </Text>
-            <Text className="text-gray-text text-base mt-1 leading-relaxed">
-              Derin bir nefes al. En hızlı yolu birlikte bulalım.
-            </Text>
-          </View>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={12} className="bg-card rounded-full px-4 py-2" accessibilityLabel="Acil modu kapat">
-            <Text className="text-gray-label font-semibold">Kapat</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Konum satırı */}
-        <TouchableOpacity onPress={() => setPicker(true)} className="mx-5 mt-4 flex-row items-center gap-2" activeOpacity={0.7}>
-          <Text className="text-gray-muted text-sm">
-            📍 {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Bulunduğun konuma göre' : 'Konum bekleniyor'}
+    <Screen scroll edges={['top', 'bottom']}>
+      {/* Üst */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8 }}>
+        <View style={{ flex: 1, paddingRight: 12 }}>
+          <Text variant="overline" tone="sos">
+            Acil mod
           </Text>
-          <Text style={{ color: ORANGE, fontSize: 13, fontWeight: '600' }}>Değiştir</Text>
-        </TouchableOpacity>
-
-        {/* 1. ADIM — En iyi seçenek */}
-        <View className="px-5 mt-4">
-          {searching && !best ? (
-            <View className="bg-card border border-border rounded-3xl p-6 items-center">
-              <ActivityIndicator color={ORANGE} size="large" />
-              <Text className="text-white font-semibold text-base mt-4">
-                {locating || lat == null ? 'Konumun alınıyor…' : 'Açık veterinerler aranıyor…'}
-              </Text>
-              <Text className="text-gray-muted text-sm mt-1 text-center">Birkaç saniye sürebilir.</Text>
-            </View>
-          ) : best ? (
-            <BestClinicCard clinic={best} onDirections={() => setDirClinic(best)} />
-          ) : lat != null ? (
-            <View className="bg-card border border-border rounded-3xl p-5">
-              <Text className="text-white font-bold text-lg">Şu an açık olduğunu bildiğimiz bir klinik yok</Text>
-              <Text className="text-gray-text text-sm mt-2 leading-relaxed">
-                Aşağıdaki klinikleri aramayı dene — birçoğu mesai dışında acil hattına yönlendirir.
-                Kimse açmazsa konumu değiştirip daha geniş bölgede ara.
-              </Text>
-            </View>
-          ) : null}
+          <Text variant="display" style={{ marginTop: 4 }}>
+            Yanındayız.
+          </Text>
+          <Text variant="body" tone="muted" style={{ marginTop: 4 }}>
+            Derin bir nefes al. En hızlı yolu birlikte bulalım.
+          </Text>
         </View>
+        <IconButton icon="close" onPress={() => router.back()} accessibilityLabel="Acil modu kapat" />
+      </View>
 
-        {/* Diğer seçenekler */}
-        {others.length > 0 && (
-          <View className="px-5 mt-5">
-            <Text className="text-gray-label text-xs font-bold uppercase tracking-wide mb-2">
-              {best ? 'Açmazsa sıradaki' : 'Aranabilecek klinikler'}
+      <Pressable onPress={() => setPicker(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 20, marginTop: 14 }} accessibilityRole="button">
+        <Icon name={source === 'gps' ? 'navigate' : 'location-outline'} size={15} color={t.textMuted} />
+        <Text variant="caption" tone="muted">
+          {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Bulunduğun konuma göre' : 'Konum bekleniyor'}
+        </Text>
+        <Text variant="caption" tone="primary">
+          · Değiştir
+        </Text>
+      </Pressable>
+
+      {/* 1 — En uygun seçenek */}
+      <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
+        {searching && !best ? (
+          <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
+            <ActivityIndicator color={t.primary} size="large" />
+            <Text variant="bodyStrong" style={{ marginTop: 14 }}>
+              {locating || lat == null ? 'Konumun alınıyor…' : 'Açık veterinerler aranıyor…'}
             </Text>
-            {others.map((c) => (
-              <AltRow key={c.id} clinic={c} onDirections={() => setDirClinic(c)} />
-            ))}
+            <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+              Birkaç saniye sürebilir.
+            </Text>
+          </Card>
+        ) : best ? (
+          <BestClinicCard clinic={best} onDirections={() => setDirClinic(best)} />
+        ) : lat != null ? (
+          <Card tone="honey">
+            <Text variant="bodyStrong">Şu an açık olduğunu bildiğimiz bir klinik yok</Text>
+            <Text variant="callout" tone="muted" style={{ marginTop: 4 }}>
+              Aşağıdaki klinikleri aramayı dene; birçoğu mesai dışında acil hattına yönlendirir. Kimse
+              açmazsa konumu değiştirip daha geniş bir bölgede ara.
+            </Text>
+          </Card>
+        ) : null}
+      </View>
+
+      {others.length > 0 && (
+        <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
+          <Text variant="overline" tone="subtle" style={{ marginBottom: 10 }}>
+            {best ? 'Açmazsa sıradaki' : 'Aranabilecek klinikler'}
+          </Text>
+          {others.map((c) => (
+            <AltRow key={c.id} clinic={c} onDirections={() => setDirClinic(c)} />
+          ))}
+          <Button title="Tüm yakın klinikler" variant="ghost" icon="list" onPress={() => router.push('/(tabs)/nearby')} style={{ alignSelf: 'flex-start' }} />
+        </View>
+      )}
+
+      {/* 2 — Ararken söyle */}
+      <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <IconBadge name="chatbubble-ellipses-outline" size={36} />
+            <Text variant="headline">Ararken şunları söyle</Text>
           </View>
-        )}
-
-        {!searching && (
-          <TouchableOpacity onPress={() => router.push('/(tabs)/nearby')} className="mx-5 mt-2 py-2">
-            <Text style={{ color: ORANGE, fontWeight: '600' }}>Tüm yakın klinikleri gör →</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* 2. ADIM — Ararken söyle */}
-        <View className="mx-5 mt-6 bg-card border border-border rounded-3xl p-5">
-          <Text className="text-white font-bold text-lg">📋 Ararken şunları söyle</Text>
           {pets.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3" contentContainerStyle={{ gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
               {pets.map((p) => (
-                <TouchableOpacity
+                <Pressable
                   key={p.id}
                   onPress={() => setPetId(p.id)}
-                  className="rounded-full px-4 py-2 border"
-                  style={{ borderColor: pet?.id === p.id ? ORANGE : 'rgba(255,255,255,0.1)', backgroundColor: pet?.id === p.id ? 'rgba(255,127,28,0.15)' : 'transparent' }}
+                  style={{
+                    paddingHorizontal: 14,
+                    height: 34,
+                    borderRadius: radius.pill,
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: pet?.id === p.id ? t.primary : t.border,
+                    backgroundColor: pet?.id === p.id ? t.primarySoft : 'transparent',
+                  }}
                 >
-                  <Text className="text-white text-sm">{p.name}</Text>
-                </TouchableOpacity>
+                  <Text variant="caption" color={pet?.id === p.id ? t.primary : t.text}>
+                    {p.name}
+                  </Text>
+                </Pressable>
               ))}
             </ScrollView>
           )}
           {pet ? <PetScript pet={pet} /> : <GenericScript />}
-        </View>
+        </Card>
+      </View>
 
-        {/* 3. ADIM — Yola çıkmadan önce */}
-        <View className="mx-5 mt-4 bg-card border border-border rounded-3xl p-5">
-          <Text className="text-white font-bold text-lg mb-3">🎒 Yola çıkmadan önce</Text>
-          {BEFORE_YOU_GO.map((item, i) => {
-            const done = checked.includes(i);
-            return (
-              <TouchableOpacity
-                key={item}
-                onPress={() => setChecked((c) => (done ? c.filter((x) => x !== i) : [...c, i]))}
-                className="flex-row items-center gap-3 py-2"
-                activeOpacity={0.7}
-              >
-                <View
-                  className="w-6 h-6 rounded-md items-center justify-center border-2"
-                  style={{ borderColor: done ? GREEN : '#44474c', backgroundColor: done ? GREEN : 'transparent' }}
-                >
-                  {done && <Text className="text-white text-xs font-bold">✓</Text>}
-                </View>
-                <Text className={`text-base flex-1 ${done ? 'text-gray-muted line-through' : 'text-gray-label'}`}>{item}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* 4. Veterinere ulaşana kadar */}
-        <View className="mx-5 mt-4">
-          <Text className="text-white font-bold text-lg mb-1">🩹 Veterinere ulaşana kadar</Text>
-          <Text className="text-gray-muted text-xs mb-3 leading-relaxed">
-            Tedavi değildir; zarar vermemek ve zaman kazanmak içindir. Veterinerin söyledikleri her zaman önce gelir.
-          </Text>
-          <View className="rounded-2xl p-3 mb-3" style={{ backgroundColor: 'rgba(229,62,62,0.12)' }}>
-            <Text className="text-red-400 text-sm font-semibold leading-relaxed">⛔ {NEVER_HUMAN_MEDS}</Text>
+      {/* 3 — Yola çıkmadan önce */}
+      <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <IconBadge name="bag-handle-outline" size={36} />
+            <Text variant="headline">Yola çıkmadan önce</Text>
           </View>
-          {FIRST_AID.map((g) => {
-            const expanded = openGuide === g.key;
-            return (
-              <View key={g.key} className="bg-card border border-border rounded-2xl mb-2 overflow-hidden">
-                <TouchableOpacity onPress={() => setOpenGuide(expanded ? null : g.key)} className="flex-row items-center px-4 py-3.5" activeOpacity={0.8}>
-                  <Text className="text-lg mr-3">{g.emoji}</Text>
-                  <Text className="text-white font-semibold text-base flex-1">{g.title}</Text>
-                  <Text className="text-gray-muted text-lg">{expanded ? '−' : '+'}</Text>
-                </TouchableOpacity>
-                {expanded && (
-                  <View className="px-4 pb-4">
-                    {g.steps.map((s) => (
-                      <Text key={s} className="text-gray-label text-sm leading-relaxed mb-1.5">✓  {s}</Text>
-                    ))}
-                    {g.avoid.map((s) => (
-                      <Text key={s} className="text-red-400 text-sm leading-relaxed mb-1.5">✕  {s}</Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
+          <View style={{ gap: 12 }}>
+            {BEFORE_YOU_GO.map((item, i) => {
+              const done = checked.includes(i);
+              return (
+                <Checkbox key={item} checked={done} onPress={() => setChecked((c) => (done ? c.filter((x) => x !== i) : [...c, i]))}>
+                  <Text variant="body" tone={done ? 'subtle' : 'default'} style={done ? { textDecorationLine: 'line-through' } : undefined}>
+                    {item}
+                  </Text>
+                </Checkbox>
+              );
+            })}
+          </View>
+        </Card>
+      </View>
 
-        <DataAttribution clinics={[...(best ? [best] : []), ...others]} />
-        <Text className="text-gray-muted text-xs text-center px-8 leading-relaxed">
-          Pati SOS teşhis ya da tedavi önermez. Klinik bilgileri değişebilir; gitmeden önce ara.
+      {/* 4 — Veterinere ulaşana kadar */}
+      <View style={{ paddingHorizontal: 20, marginTop: 26 }}>
+        <Text variant="headline">Veterinere ulaşana kadar</Text>
+        <Text variant="caption" tone="muted" style={{ marginTop: 2, marginBottom: 12 }}>
+          Tedavi değildir; zarar vermemek ve zaman kazanmak içindir. Veterinerin söyledikleri her zaman önce gelir.
         </Text>
-      </ScrollView>
+        <FirstAidList />
+      </View>
+
+      <DataAttribution clinics={[...(best ? [best] : []), ...others]} />
+      <Text variant="caption" tone="subtle" center style={{ paddingHorizontal: 32 }}>
+        Pati SOS teşhis ya da tedavi önermez. Klinik bilgileri değişebilir; gitmeden önce ara.
+      </Text>
 
       {dirClinic && (
         <DirectionsModal
@@ -247,100 +235,90 @@ export default function EmergencyScreen() {
           if (!ok) setPicker(true);
         }}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
-// Açıksa klinik hattı; kapalı saatte mesai dışı hattı varsa onu ara
-function phoneOf(c: Clinic): Clinic {
-  if (c.emergency_phone && (!c.phone || c.status !== 'open')) return { ...c, phone: c.emergency_phone };
-  return c;
-}
-
 function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections: () => void }) {
-  const closingSoon = clinic.closes_in_min != null && clinic.closes_in_min < 60;
-  const why = [
-    clinic.is_24_7 ? '7/24 açık' : closingSoon ? `${clinic.closes_in_min} dk sonra kapanıyor` : 'Şu an açık',
-    clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null,
-    clinic.accepts_emergency && !clinic.is_24_7 ? 'acil kabul' : null,
-    clinic.is_verified ? 'klinik onaylı' : null,
-  ].filter(Boolean);
+  const t = useTheme();
+  const s = clinicStatus(clinic);
   const target = phoneOf(clinic);
   return (
-    <View className="rounded-3xl p-5 border" style={{ backgroundColor: 'rgba(56,161,105,0.1)', borderColor: 'rgba(56,161,105,0.45)' }}>
-      <Text style={{ color: '#68D391', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>EN UYGUN SEÇENEK</Text>
-      <Text className="text-white text-2xl font-extrabold mt-1" numberOfLines={2}>{clinic.name}</Text>
-      <Text className="text-gray-label text-sm mt-1">{why.join(' · ')}</Text>
-      {closingSoon && (
-        <Text style={{ color: ORANGE, fontSize: 13, fontWeight: '600', marginTop: 4 }}>
-          Kapanmak üzere — gelmekte olduğunu haber vermek için hemen ara.
+    <View style={{ borderRadius: radius.xl, backgroundColor: t.surface, borderWidth: 2, borderColor: t.primary, padding: 20 }}>
+      <Text variant="overline" tone="primary">
+        En uygun seçenek
+      </Text>
+      <Text variant="title" style={{ marginTop: 6 }} numberOfLines={2}>
+        {clinic.name}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+        <Badge label={s.label} tone="open" dot />
+        {clinic.distance_km > 0 ? <Badge label={formatDistance(clinic.distance_km)} tone="neutral" icon="navigate-outline" /> : null}
+        {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
+        {clinic.is_verified ? <Badge label="Klinik onaylı" tone="primary" icon="shield-checkmark" /> : null}
+      </View>
+      {clinic.address ? (
+        <Text variant="caption" tone="muted" numberOfLines={1} style={{ marginTop: 10 }}>
+          {clinic.address}
         </Text>
-      )}
-      {clinic.address ? <Text className="text-gray-muted text-xs mt-1" numberOfLines={1}>{clinic.address}</Text> : null}
+      ) : null}
+      {s.closingSoon ? (
+        <Text variant="caption" tone="sos" style={{ marginTop: 6 }}>
+          Kapanmak üzere — geldiğini haber vermek için hemen ara.
+        </Text>
+      ) : null}
 
-      <TouchableOpacity
+      <Button
+        title="Şimdi ara"
+        subtitle={target.phone ?? undefined}
+        icon="call"
+        size="lg"
+        full
         onPress={() => callClinic(target, 'emergency')}
-        activeOpacity={0.85}
-        className="rounded-2xl items-center justify-center mt-4"
-        style={{ backgroundColor: GREEN, minHeight: 72 }}
+        style={{ marginTop: 16 }}
         accessibilityLabel={`${clinic.name} şimdi ara`}
-      >
-        <Text className="text-white text-xl font-extrabold">📞  ŞİMDİ ARA</Text>
-        <Text className="text-white/80 text-sm">{target.phone}</Text>
-      </TouchableOpacity>
-
-      <View className="flex-row gap-3 mt-3">
-        <TouchableOpacity onPress={onDirections} className="flex-1 bg-card rounded-2xl py-3.5 items-center" activeOpacity={0.85}>
-          <Text className="text-white font-semibold">🗺️ Yol tarifi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push(`/clinic/${clinic.id}`)} className="flex-1 bg-card rounded-2xl py-3.5 items-center" activeOpacity={0.85}>
-          <Text className="text-white font-semibold">Detaylar</Text>
-        </TouchableOpacity>
+      />
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+        <Button title="Yol tarifi" icon="navigate-outline" variant="secondary" onPress={onDirections} style={{ flex: 1 }} />
+        <Button title="Detaylar" icon="information-circle-outline" variant="secondary" onPress={() => router.push(`/clinic/${clinic.id}`)} style={{ flex: 1 }} />
       </View>
     </View>
   );
 }
 
 function AltRow({ clinic, onDirections }: { clinic: Clinic; onDirections: () => void }) {
-  const open = isOpen(clinic);
+  const t = useTheme();
+  const s = clinicStatus(clinic);
   return (
-    <View className="bg-card border border-border rounded-2xl px-4 py-3 mb-2 flex-row items-center gap-3">
-      <TouchableOpacity className="flex-1" onPress={() => router.push(`/clinic/${clinic.id}`)} activeOpacity={0.8}>
-        <Text className="text-white font-semibold text-base" numberOfLines={1}>{clinic.name}</Text>
-        <Text className="text-gray-muted text-xs mt-0.5">
-          {[
-            open
-              ? clinic.is_24_7
-                ? '7/24'
-                : clinic.closes_in_min != null && clinic.closes_in_min < 60
-                ? `${clinic.closes_in_min} dk sonra kapanıyor`
-                : 'Açık'
-              : 'Saat bilinmiyor',
-            clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        </Text>
-      </TouchableOpacity>
-      {canCall(clinic) ? (
-        <TouchableOpacity
-          onPress={() => callClinic(phoneOf(clinic), 'emergency_alt')}
-          className="rounded-full px-4 py-2.5"
-          style={{ backgroundColor: open ? GREEN : 'rgba(68,71,76,0.9)' }}
-          accessibilityLabel={`${clinic.name} ara`}
-        >
-          <Text className="text-white font-bold">📞 Ara</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity onPress={onDirections} className="rounded-full px-4 py-2.5 bg-surface">
-          <Text className="text-gray-label font-semibold">🗺️ Git</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <Card style={{ marginBottom: 8, paddingVertical: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/clinic/${clinic.id}`)} accessibilityRole="button">
+          <Text variant="bodyStrong" numberOfLines={1}>
+            {clinic.name}
+          </Text>
+          <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+            {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
+          </Text>
+        </Pressable>
+        {canCall(clinic) ? (
+          <Button
+            title="Ara"
+            icon="call"
+            size="sm"
+            variant={s.tone === 'open' ? 'primary' : 'soft'}
+            onPress={() => callClinic(phoneOf(clinic), 'emergency_alt')}
+            accessibilityLabel={`${clinic.name} ara`}
+          />
+        ) : (
+          <Button title="Git" icon="navigate-outline" size="sm" variant="secondary" onPress={onDirections} />
+        )}
+      </View>
+    </Card>
   );
 }
 
 function PetScript({ pet }: { pet: Pet }) {
+  const t = useTheme();
   const intro = [
     `${speciesLabel(pet.species, true)} ${pet.name}`,
     pet.breed,
@@ -350,45 +328,60 @@ function PetScript({ pet }: { pet: Pet }) {
     .filter(Boolean)
     .join(', ');
   const facts = [
-    pet.allergies ? `Alerjisi: ${pet.allergies}` : null,
-    pet.medications ? `Kullandığı ilaçlar: ${pet.medications}` : null,
-    pet.chronic_conditions ? `Kronik hastalığı: ${pet.chronic_conditions}` : null,
-    pet.emergency_note ? `Not: ${pet.emergency_note}` : null,
-  ].filter(Boolean) as string[];
+    pet.allergies ? { k: 'Alerji', v: pet.allergies } : null,
+    pet.medications ? { k: 'İlaçlar', v: pet.medications } : null,
+    pet.chronic_conditions ? { k: 'Kronik', v: pet.chronic_conditions } : null,
+    pet.emergency_note ? { k: 'Not', v: pet.emergency_note } : null,
+  ].filter(Boolean) as { k: string; v: string }[];
   return (
-    <View className="mt-3">
-      <Text className="text-gray-label text-base leading-relaxed">
-        "Merhaba, acil bir durum için arıyorum. <Text className="text-white font-bold">{intro}.</Text>"
+    <View style={{ marginTop: 14 }}>
+      <Text variant="body">
+        "Merhaba, acil bir durum için arıyorum. <Text variant="bodyStrong">{intro}.</Text>"
       </Text>
-      <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: 'rgba(255,127,28,0.1)' }}>
-        <Text style={{ color: ORANGE, fontWeight: '700' }}>Sen ekle: Ne oldu, ne zaman başladı?</Text>
-        <Text className="text-gray-text text-sm mt-1">Yediği / yuttuğu bir şey varsa ne olduğunu söyle.</Text>
+      <View style={{ borderRadius: radius.md, padding: 12, marginTop: 12, backgroundColor: t.sosSoft }}>
+        <Text variant="bodyStrong" tone="sos">
+          Sen ekle: ne oldu, ne zaman başladı?
+        </Text>
+        <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+          Yediği ya da yuttuğu bir şey varsa ne olduğunu söyle.
+        </Text>
       </View>
       {facts.map((f) => (
-        <Text key={f} className="text-white text-base mt-2 leading-relaxed">• {f}</Text>
+        <View key={f.k} style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+          <Text variant="bodyStrong" style={{ width: 70 }}>
+            {f.k}
+          </Text>
+          <Text variant="body" style={{ flex: 1 }}>
+            {f.v}
+          </Text>
+        </View>
       ))}
-      <Text className="text-gray-label text-base mt-3">"Şimdi gelebilir miyim? Yaklaşık ne kadar beklerim?"</Text>
+      <Text variant="body" tone="muted" style={{ marginTop: 12 }}>
+        "Şimdi gelebilir miyim? Yaklaşık ne kadar beklerim?"
+      </Text>
     </View>
   );
 }
 
 function GenericScript() {
+  const t = useTheme();
   return (
-    <View className="mt-3">
+    <View style={{ marginTop: 12, gap: 8 }}>
       {[
         'Hayvanın türü, yaşı ve yaklaşık kilosu',
         'Ne oldu ve ne zaman başladı',
-        'Yediği / yuttuğu bir şey varsa ne olduğu',
-        'Kullandığı ilaçlar, bilinen hastalıkları',
+        'Yediği ya da yuttuğu bir şey varsa ne olduğu',
+        'Kullandığı ilaçlar ve bilinen hastalıkları',
         '"Şimdi gelebilir miyim?"',
-      ].map((t) => (
-        <Text key={t} className="text-white text-base mt-1.5 leading-relaxed">• {t}</Text>
+      ].map((x) => (
+        <View key={x} style={{ flexDirection: 'row', gap: 10 }}>
+          <Icon name="ellipse" size={8} color={t.primary} />
+          <Text variant="body" style={{ flex: 1, marginTop: -6 }}>
+            {x}
+          </Text>
+        </View>
       ))}
-      <TouchableOpacity onPress={() => router.push('/pets/create')} className="mt-4">
-        <Text className="text-gray-muted text-sm">
-          Sonraki sefer için petinin acil kartını oluştur — burada otomatik görünür. →
-        </Text>
-      </TouchableOpacity>
+      <Button title="Sonraki sefer için acil kart oluştur" variant="ghost" icon="id-card-outline" onPress={() => router.push('/pets/create')} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
     </View>
   );
 }

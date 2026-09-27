@@ -42,29 +42,27 @@ Submit bittikten ~10-15 dk sonra build, App Store Connect → TestFlight sekmesi
 "Processing" → "Ready to Test" olur. İç test grubuna kendini ekleyip telefonda
 TestFlight uygulamasıyla test edebilirsin.
 
-## Önemli: Yayın Öncesi Veri
+## Yayın Öncesi Veri
 
-Uygulama **seed/demo veriyle** TestFlight'a çıkabilir (test için sorun değil), ama
-**App Store yayınına** çıkmadan önce admin panelden gerçek Ankara klinikleri telefon
-ile doğrulanmalı. Detay: `RELEASE.md`.
+Klinik listesi üç kaynaktan gelir ve build'e gömülü OpenStreetMap verisiyle
+(`lib/data/clinics.ts`, GitHub Actions ile her ayın 1.inde güncellenir) anahtar olmadan
+da çalışır. Canlı ve daha zengin veri için:
 
-## Submit Öncesi Supabase
-
-TestFlight build'i çalışırken canlı veri görmek için `.env` dolu olmalı:
-```
-EXPO_PUBLIC_SUPABASE_URL=...
-EXPO_PUBLIC_SUPABASE_ANON_KEY=...
-EXPO_PUBLIC_POSTHOG_KEY=...
-```
-Supabase'de `supabase/schema.sql` + `nearby_clinics.sql` + `seed_demo.sql` çalıştırılmış olmalı.
+- **Google Places (New)** anahtarı: GitHub secret `EXPO_PUBLIC_GOOGLE_PLACES_KEY`
+  (bkz. `.github/SECRETS_SETUP.md`). Yerelde `.env` içine aynı adla yazılır.
+- **Firebase**: yapılandırma `app.json > extra.firebase` içinde. Yayından önce
+  `firestore.rules` ve `storage.rules` Firebase Console'da yayınlanmış olmalı
+  (bkz. `FIREBASE_SETUP.md`). Bildirim/talep moderasyonu: `YONETICI_REHBERI.md`.
 
 ## Mağaza Görselleri
 
-`store/screenshots/` içinde 5 adet 1290×2796 (6.7") App Store görseli hazır:
-- `01_sos.png` — "Gece 02:00, petin kötü. İlk açtığın app."
-- `02_list.png` — "Açık. Acil kabul. Doğrulanmış. Saniyeler içinde."
-- `03_verify.png` — "Maps yalan söyleyebilir. Biz son doğrulama zamanını gösteririz."
-- `04_petcard.png` — "Petinin acil kartı tek tuşla kliniğe gider."
-- `05_free.png` — "Ankara'da ücretsiz. Hazırlıklı ol."
+`store/screenshots/` içinde 6 adet 1290×2796 (6.7") App Store görseli hazır:
+- `01_acil.png` — "Acil anında en yakın açık veteriner."
+- `02_arama.png` — "Ne söyleyeceğin hazır."
+- `03_liste.png` — "Açık ve yakın olan önce."
+- `04_kart.png` — "Dostunun acil kartı cebinde."
+- `05_ilkyardim.png` — "Veterinere ulaşana kadar."
+- `06_gece.png` — "Gece 03:00'te de yanında." (koyu tema)
 
-Bunları App Store Connect → uygulaman → 6.7" Display bölümüne yükle.
+Görseller uygulamanın gerçek ekranlarından üretildi. App Store Connect →
+uygulaman → 6.7" Display bölümüne bu sırayla yükle.

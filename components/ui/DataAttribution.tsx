@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/ds';
 import type { Clinic } from '@/types';
 
 // Veri kaynağı atfı zorunlu:
@@ -15,12 +16,9 @@ export function DataAttribution({ clinics }: { clinics: Pick<Clinic, 'source' | 
   const osm = usesSource(clinics, 'builtin');
   if (!google && !osm) return null;
   return (
-    <View className="items-center py-3 px-4">
-      <Text className="text-gray-muted text-xs text-center">
-        Klinik bilgileri:{' '}
-        {google && <Text style={{ fontWeight: '600' }}>Google Maps</Text>}
-        {google && osm ? ' · ' : ''}
-        {osm && '© OpenStreetMap katkıcıları'}
+    <View style={{ alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20 }}>
+      <Text variant="caption" tone="subtle" center style={{ fontSize: 12 }}>
+        Klinik bilgileri: {[google ? 'Google Maps' : null, osm ? '© OpenStreetMap katkıcıları' : null].filter(Boolean).join(' · ')}
       </Text>
     </View>
   );

@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, ActivityIndicator, ScrollView, Pressable } from 'react-native';
 import MapView, { Marker, Callout, Region } from 'react-native-maps';
 import { router, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, Chip, IconButton, Icon } from '@/components/ds';
+import { useTheme, radius, shadow, type Theme } from '@/lib/theme';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { DistrictPicker } from '@/components/location/DistrictPicker';
-import { formatDistance } from '@/components/clinic/ClinicCard';
 import { usesSource } from '@/components/ui/DataAttribution';
+import { clinicStatus, formatDistance } from '@/lib/utils/status';
 import type { Clinic, NearbyFilters } from '@/types';
 
 const DEFAULT_REGION: Region = {
@@ -18,16 +21,14 @@ const DEFAULT_REGION: Region = {
 
 const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false };
 
-function markerColor(clinic: Clinic): string {
-  if (clinic.status === 'open' || clinic.is_24_7) return '#22c55e';
-  if (clinic.status === 'closed') return '#8e9196';
-  return '#eac333'; // saat bilinmiyor
+function markerColor(t: Theme, clinic: Clinic): string {
+  const s = clinicStatus(clinic);
+  return s.tone === 'open' ? t.open : s.tone === 'closed' ? t.closed : t.unknown;
 }
 
-const PANEL = 'rgba(31,31,33,0.94)';
-const PANEL_BORDER = 'rgba(255,255,255,0.08)';
-
 export default function MapScreen() {
+  const t = useTheme();
+  const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const { clinics, loading, fetch } = useClinics();
   const { lat, lng, source, isStale, granted, request, refresh, setManual } = useLocation();
@@ -58,149 +59,101 @@ export default function MapScreen() {
 
   const google = usesSource(clinics, 'google');
   const osm = usesSource(clinics, 'builtin');
+  const openCount = clinics.filter((c) => clinicStatus(c).tone === 'open').length;
 
   return (
-    <View className="flex-1 bg-bg">
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
         initialRegion={lat != null && lng != null ? { latitude: lat, longitude: lng, latitudeDelta: 0.12, longitudeDelta: 0.12 } : DEFAULT_REGION}
-        userInterfaceStyle="dark"
+        userInterfaceStyle={t.dark ? 'dark' : 'light'}
         showsUserLocation={source === 'gps'}
         showsMyLocationButton={false}
       >
-        {clinics.map((clinic) => (
-          <Marker
-            key={clinic.id}
-            coordinate={{ latitude: clinic.lat, longitude: clinic.lng }}
-            pinColor={markerColor(clinic)}
-          >
-            <Callout tooltip onPress={() => router.push(`/clinic/${clinic.id}`)}>
-              <View
-                style={{
-                  backgroundColor: '#1f1f21',
-                  borderRadius: 12,
-                  padding: 10,
-                  borderWidth: 1,
-                  borderColor: PANEL_BORDER,
-                  minWidth: 200,
-                  maxWidth: 250,
-                }}
-              >
-                <Text style={{ color: '#e4e2e3', fontWeight: 'bold', fontSize: 13 }} numberOfLines={2}>
-                  {clinic.name}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                  <Text style={{ color: markerColor(clinic), fontSize: 11, fontWeight: '700' }}>
-                    {clinic.status === 'open' || clinic.is_24_7 ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Saat bilinmiyor'}
+        {clinics.map((clinic) => {
+          const s = clinicStatus(clinic);
+          return (
+            <Marker key={clinic.id} coordinate={{ latitude: clinic.lat, longitude: clinic.lng }} pinColor={markerColor(t, clinic)}>
+              <Callout tooltip onPress={() => router.push(`/clinic/${clinic.id}`)}>
+                <View
+                  style={{
+                    backgroundColor: t.surface,
+                    borderRadius: radius.md,
+                    padding: 12,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    minWidth: 210,
+                    maxWidth: 260,
+                    ...shadow(t, 2),
+                  }}
+                >
+                  <Text variant="bodyStrong" numberOfLines={2}>
+                    {clinic.name}
                   </Text>
-                  {clinic.is_24_7 && <Text style={{ color: '#c4c6cc', fontSize: 11 }}>7/24</Text>}
-                  {clinic.distance_km > 0 && (
-                    <Text style={{ color: '#c4c6cc', fontSize: 11 }}>{formatDistance(clinic.distance_km)}</Text>
-                  )}
+                  <Text variant="caption" color={markerColor(t, clinic)} style={{ marginTop: 4 }}>
+                    {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
+                  </Text>
+                  <Text variant="caption" tone="primary" style={{ marginTop: 8 }}>
+                    Detay ve arama →
+                  </Text>
                 </View>
-                <Text style={{ color: '#8e9196', fontSize: 10, marginTop: 6 }}>Detay ve arama için dokun →</Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+              </Callout>
+            </Marker>
+          );
+        })}
       </MapView>
 
-      {/* Filtreler + konum */}
-      <View
-        style={{
-          position: 'absolute',
-          top: Platform.OS === 'ios' ? 56 : 12,
-          left: 12,
-          right: 12,
-          flexDirection: 'row',
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
-      >
-        {[
-          { key: 'only_open' as const, label: 'Şu an açık' },
-          { key: 'only_24_7' as const, label: '7/24' },
-          { key: 'only_emergency' as const, label: 'Acil' },
-        ].map(({ key, label }) => (
-          <TouchableOpacity
-            key={key}
-            onPress={() => toggleFilter(key)}
-            style={{
-              borderRadius: 20,
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderWidth: 1,
-              backgroundColor: filters[key] ? '#ff7f1c' : PANEL,
-              borderColor: filters[key] ? '#ff7f1c' : PANEL_BORDER,
-            }}
-          >
-            <Text style={{ color: filters[key] ? '#fff' : '#c4c6cc', fontSize: 12, fontWeight: '600' }}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          onPress={() => setPicker(true)}
-          style={{ borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, backgroundColor: PANEL, borderColor: PANEL_BORDER }}
-        >
-          <Text style={{ color: '#c4c6cc', fontSize: 12 }}>📍 Konum</Text>
-        </TouchableOpacity>
+      {/* Filtreler */}
+      <View style={{ position: 'absolute', top: insets.top + 8, left: 0, right: 0 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+          <Chip label="Şu an açık" icon="time-outline" active={filters.only_open} onPress={() => toggleFilter('only_open')} />
+          <Chip label="7/24" icon="moon-outline" active={filters.only_24_7} onPress={() => toggleFilter('only_24_7')} />
+          <Chip label="Acil kabul" icon="medkit-outline" active={filters.only_emergency} onPress={() => toggleFilter('only_emergency')} />
+        </ScrollView>
       </View>
 
-      {/* Durum / sayı */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 24,
-          alignSelf: 'center',
-          backgroundColor: PANEL,
-          borderRadius: 20,
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          maxWidth: '70%',
-        }}
-      >
-        {loading && <ActivityIndicator color="#ff7f1c" size="small" />}
-        <Text style={{ color: '#c4c6cc', fontSize: 12 }} numberOfLines={2}>
-          {loading ? 'Yükleniyor…' : `${clinics.length} klinik`}
-          {google ? ' · Google Maps' : ''}
-          {osm ? ' · © OpenStreetMap katkıcıları' : ''}
-        </Text>
+      {/* Sağ düğmeler */}
+      <View style={{ position: 'absolute', right: 16, bottom: 90, gap: 10 }}>
+        <IconButton icon="navigate" onPress={useGps} accessibilityLabel="Konumuma git" size={48} />
+        <IconButton icon="add" variant="primary" onPress={() => router.push('/clinic/add')} accessibilityLabel="Klinik ekle" size={48} />
       </View>
 
-      {/* Klinik ekle FAB */}
-      <TouchableOpacity
-        onPress={() => router.push('/clinic/add')}
-        activeOpacity={0.85}
-        accessibilityLabel="Klinik ekle"
+      {/* Alt bilgi */}
+      <Pressable
+        onPress={() => setPicker(true)}
         style={{
           position: 'absolute',
-          bottom: 24,
+          left: 16,
           right: 16,
-          backgroundColor: '#ff7f1c',
-          width: 56,
-          height: 56,
-          borderRadius: 28,
+          bottom: 20,
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: '#ff7f1c',
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
+          gap: 10,
+          backgroundColor: t.surface,
+          borderRadius: radius.md,
+          borderWidth: 1,
+          borderColor: t.border,
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          ...shadow(t, 2),
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 28, marginTop: -2 }}>+</Text>
-      </TouchableOpacity>
+        {loading ? <ActivityIndicator color={t.primary} size="small" /> : <Icon name="location-outline" size={18} color={t.primary} />}
+        <View style={{ flex: 1 }}>
+          <Text variant="callout">{loading ? 'Klinikler yükleniyor…' : `${openCount} açık · ${clinics.length} klinik`}</Text>
+          {(google || osm) && (
+            <Text variant="caption" tone="subtle" style={{ fontSize: 11 }} numberOfLines={1}>
+              {[google ? 'Google Maps' : null, osm ? '© OpenStreetMap katkıcıları' : null].filter(Boolean).join(' · ')}
+            </Text>
+          )}
+        </View>
+        <Text variant="caption" tone="primary">
+          Konum
+        </Text>
+      </Pressable>
 
-      <DistrictPicker
-        visible={picker}
-        onClose={() => setPicker(false)}
-        onPick={(d) => setManual(d.lat, d.lng, d.name)}
-        onUseGps={useGps}
-      />
+      <DistrictPicker visible={picker} onClose={() => setPicker(false)} onPick={(d) => setManual(d.lat, d.lng, d.name)} onUseGps={useGps} />
     </View>
   );
 }

@@ -1,84 +1,81 @@
 import React, { useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, FlatList, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, Text, Card, Avatar, Badge, Button, EmptyState, Icon, IconButton } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
-import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
+import { speciesLabel } from '@/lib/utils/pets';
 import type { Pet } from '@/types';
 
-function PetRow({ pet, onPress }: { pet: Pet; onPress: () => void }) {
-  const emoji = speciesEmoji(pet.species);
+function PetRow({ pet }: { pet: Pet }) {
+  const t = useTheme();
+  const details = [speciesLabel(pet.species), pet.breed, pet.age_years != null ? `${pet.age_years} yaş` : null, pet.weight_kg != null ? `${pet.weight_kg} kg` : null]
+    .filter(Boolean)
+    .join(' · ');
+  const alerts = [pet.allergies ? 'Alerji' : null, pet.medications ? 'İlaç' : null, pet.chronic_conditions ? 'Kronik' : null].filter(Boolean) as string[];
   return (
-    <TouchableOpacity onPress={onPress} className="bg-card border border-border rounded-2xl px-5 py-4 mb-3 mx-4 flex-row items-center gap-4" activeOpacity={0.85}>
-      <Text className="text-3xl">{emoji}</Text>
-      <View className="flex-1">
-        <View className="flex-row items-center gap-2">
-          <Text className="text-white font-bold text-base">{pet.name}</Text>
-          {pet.is_primary && (
-            <View className="bg-orange-accent/20 border border-orange-accent/40 rounded-full px-2 py-0.5">
-              <Text className="text-orange-accent text-xs">Acil kart</Text>
+    <Card onPress={() => router.push(`/pets/${pet.id}`)} style={{ marginHorizontal: 20, marginBottom: 12 }} accessibilityLabel={pet.name}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Avatar label={pet.name} size={52} />
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text variant="bodyStrong" style={{ fontSize: 17 }}>
+              {pet.name}
+            </Text>
+            {pet.is_primary ? <Badge label="Acil modda" tone="primary" /> : null}
+          </View>
+          <Text variant="caption" tone="muted" style={{ marginTop: 2 }} numberOfLines={1}>
+            {details}
+          </Text>
+          {alerts.length > 0 && (
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+              {alerts.map((a) => (
+                <Badge key={a} label={a} tone="sos" />
+              ))}
             </View>
           )}
         </View>
-        <Text className="text-gray-text text-sm mt-0.5">
-          {[speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ')}
-        </Text>
-        {pet.emergency_note && (
-          <Text className="text-yellow-400 text-xs mt-1" numberOfLines={1}>⚠️ {pet.emergency_note}</Text>
-        )}
+        <Icon name="chevron-forward" size={20} color={t.textSubtle} />
       </View>
-      <Text className="text-gray-muted text-xl">›</Text>
-    </TouchableOpacity>
+    </Card>
   );
 }
 
 export default function PetsScreen() {
+  const t = useTheme();
   const { pets, loading, load } = usePets();
 
-  // Ekrana her dönüldüğünde (örn. pet ekledikten sonra) listeyi yenile
+  // Ekrana her dönüldüğünde (ör. kart ekledikten sonra) listeyi yenile
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
     <Screen>
-      <View className="flex-row items-center justify-between px-5 pt-6 pb-4">
-        <View>
-          <Text className="text-white text-2xl font-bold">Petlerim</Text>
-          <Text className="text-gray-muted text-sm mt-0.5">Acil sağlık kartların</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="title">Dostlarım</Text>
+          <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+            Acil anda veterinere söyleyeceklerin
+          </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => router.push('/pets/create')}
-          className="bg-orange-accent rounded-full px-4 py-2.5 flex-row items-center gap-1"
-          activeOpacity={0.85}
-        >
-          <Text className="text-white font-bold text-sm">+ Ekle</Text>
-        </TouchableOpacity>
+        <IconButton icon="add" variant="primary" onPress={() => router.push('/pets/create')} accessibilityLabel="Dost ekle" size={44} />
       </View>
 
-      {loading && (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#ff7f1c" />
-        </View>
-      )}
-
-      {!loading && pets.length === 0 && (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-5xl mb-4">🐾</Text>
-          <Text className="text-white font-bold text-lg text-center mb-2">Henüz pet yok</Text>
-          <Text className="text-gray-text text-sm text-center mb-6">
-            Petinin acil kartını oluştur. 30 saniye yeterli.
-          </Text>
-          <TouchableOpacity onPress={() => router.push('/pets/create')} className="bg-orange-accent rounded-2xl py-4 px-8">
-            <Text className="text-white font-bold">Acil Kart Oluştur</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!loading && pets.length > 0 && (
+      {loading && pets.length === 0 ? (
+        <ActivityIndicator color={t.primary} style={{ marginTop: 40 }} />
+      ) : (
         <FlatList
           data={pets}
-          keyExtractor={i => i.id}
-          renderItem={({ item }) => <PetRow pet={item} onPress={() => router.push(`/pets/${item.id}`)} />}
-          contentContainerStyle={{ paddingVertical: 4 }}
+          keyExtractor={(i) => i.id}
+          renderItem={({ item }) => <PetRow pet={item} />}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          ListEmptyComponent={
+            <EmptyState
+              icon="paw"
+              title="Dostunun acil kartını oluştur"
+              text="Tür, kilo, alerji ve ilaç bilgisi acil anında Acil Mod'da otomatik karşına çıkar. Bilgiler yalnızca telefonunda saklanır."
+              action={<Button title="Kart oluştur" icon="add" full onPress={() => router.push('/pets/create')} />}
+            />
+          }
         />
       )}
     </Screen>

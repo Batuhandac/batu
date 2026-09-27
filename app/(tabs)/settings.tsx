@@ -1,81 +1,79 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, Text, Group, ListRow, LogoMark, Wordmark } from '@/components/ds';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 
-function Row({ label, onPress, danger }: { label: string; onPress?: () => void; danger?: boolean }) {
+function GroupTitle({ children }: { children: string }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="flex-row items-center justify-between py-4 border-b border-border"
-      activeOpacity={0.7}
-    >
-      <Text className={`text-base ${danger ? 'text-red-400' : 'text-white'}`}>{label}</Text>
-      <Text className="text-gray-muted">›</Text>
-    </TouchableOpacity>
+    <Text variant="overline" tone="subtle" style={{ marginTop: 24, marginBottom: 8, marginLeft: 4 }}>
+      {children}
+    </Text>
   );
 }
 
 export default function SettingsScreen() {
-  const handleDeleteData = () => {
-    Alert.alert(
-      'Verilerin',
-      'Pet kartların, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. ' +
-        'Gönderdiğin yorum, fotoğraf veya bildirimlerin silinmesi için support@patisos.app adresine yaz — ' +
-        'KVKK kapsamında 30 gün içinde işleme alınır.',
-      [{ text: 'Tamam' }]
-    );
-  };
-
-  const showSources = () => {
-    Alert.alert(
-      'Veri kaynakları',
-      'Klinik bilgileri: © OpenStreetMap katkıcıları (ODbL lisansı), Google Maps ve kliniklerin kendi ' +
-        'onayladığı bilgiler. Kullanıcıların eklediği klinikler kontrol edildikten sonra yayımlanır.',
-      [{ text: 'Tamam' }]
-    );
-  };
-
   return (
-    <Screen scroll>
-      <View className="px-6 pt-6">
-        <Text className="text-white text-2xl font-bold mb-6">Ayarlar</Text>
+    <Screen scroll contentStyle={{ paddingHorizontal: 20 }}>
+      <Text variant="title" style={{ marginTop: 12 }}>
+        Ayarlar
+      </Text>
 
-        <View className="bg-card border border-border rounded-2xl px-5 mb-6">
-          <Row label="🐾 Pet kartlarım" onPress={() => router.push('/(tabs)/pets')} />
-          <Row label="🏥 Bildiğin bir kliniği ekle" onPress={() => router.push('/clinic/add')} />
-          <Row label="🩺 Veteriner hekimler için" onPress={() => router.push('/vets')} />
+      <GroupTitle>Uygulama</GroupTitle>
+      <Group>
+        <ListRow icon="paw-outline" title="Acil kartlarım" subtitle="Dostlarının sağlık bilgileri" onPress={() => router.push('/(tabs)/pets')} />
+        <ListRow icon="bandage-outline" title="İlk yardım rehberi" subtitle="Veterinere ulaşana kadar" onPress={() => router.push('/first-aid')} />
+        <ListRow icon="add-circle-outline" title="Bildiğin bir kliniği ekle" subtitle="Kontrol edildikten sonra yayınlanır" onPress={() => router.push('/clinic/add')} last />
+      </Group>
+
+      <GroupTitle>İzinler</GroupTitle>
+      <Group>
+        <ListRow icon="location-outline" title="Konum izni" onPress={() => Linking.openSettings()} />
+        <ListRow icon="notifications-outline" title="Bildirim izni" onPress={() => Linking.openSettings()} last />
+      </Group>
+
+      <GroupTitle>Veteriner hekimler</GroupTitle>
+      <Group>
+        <ListRow icon="medical-outline" title="Kliniğinizi doğrulayın" subtitle="Ücretsiz, reklam değil" onPress={() => router.push('/vets')} last />
+      </Group>
+
+      <GroupTitle>Hakkında</GroupTitle>
+      <Group>
+        <ListRow icon="document-text-outline" title="Kullanım koşulları" onPress={() => Linking.openURL('https://patisos.app/kullanim-kosullari')} />
+        <ListRow icon="lock-closed-outline" title="Gizlilik politikası" onPress={() => Linking.openURL('https://patisos.app/gizlilik-politikasi')} />
+        <ListRow
+          icon="layers-outline"
+          title="Veri kaynakları"
+          onPress={() =>
+            Alert.alert(
+              'Veri kaynakları',
+              'Klinik bilgileri: © OpenStreetMap katkıcıları (ODbL lisansı), Google Maps ve kliniklerin kendi onayladığı bilgiler. Kullanıcıların eklediği klinikler kontrol edildikten sonra yayınlanır.'
+            )
+          }
+        />
+        <ListRow
+          icon="trash-outline"
+          title="Verilerim ve silme talebi"
+          onPress={() =>
+            Alert.alert(
+              'Verilerin',
+              'Acil kartların, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. Gönderdiğin yorum, fotoğraf ya da bildirimlerin silinmesi için support@patisos.app adresine yaz; KVKK kapsamında 30 gün içinde yanıtlanır.'
+            )
+          }
+          last
+        />
+      </Group>
+
+      <Disclaimer />
+
+      <View style={{ alignItems: 'center', marginTop: 28, gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <LogoMark size={22} />
+          <Wordmark size={15} />
         </View>
-
-        <View className="bg-card border border-border rounded-2xl px-5 mb-6">
-          <Row label="Konum izni" onPress={() => Linking.openSettings()} />
-          <Row label="Bildirim izni" onPress={() => Linking.openSettings()} />
-        </View>
-
-        <View className="bg-card border border-border rounded-2xl px-5 mb-6">
-          <Row label="Kullanım Koşulları" onPress={() => Linking.openURL('https://patisos.app/kullanim-kosullari')} />
-          <Row label="Gizlilik Politikası" onPress={() => Linking.openURL('https://patisos.app/gizlilik-politikasi')} />
-          <Row label="Veri kaynakları" onPress={showSources} />
-          <Row
-            label="Sorumluluk reddi"
-            onPress={() =>
-              Alert.alert(
-                'Sorumluluk reddi',
-                'Pati SOS teşhis ya da tedavi önermez ve klinik bilgilerinin doğruluğunu garanti etmez. ' +
-                  'Acil durumlarda gitmeden önce kliniği arayın.',
-                [{ text: 'Anladım' }]
-              )
-            }
-          />
-          <Row label="Verilerim ve silme talebi" onPress={handleDeleteData} />
-        </View>
-
-        <Disclaimer />
-
-        <Text className="text-gray-muted text-xs text-center mt-6">
-          Pati SOS v{Constants.expoConfig?.version ?? '1.0.0'}
+        <Text variant="caption" tone="subtle">
+          Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · Türkiye'de sevgiyle yapıldı
         </Text>
       </View>
     </Screen>

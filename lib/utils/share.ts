@@ -3,7 +3,7 @@ import type { Pet } from '@/types';
 import { speciesLabel } from '@/lib/utils/pets';
 
 export function buildPetCardText(pet: Pet): string {
-  const lines: string[] = [`🐾 ${pet.name}`];
+  const lines: string[] = ['PATİ SOS · ACİL SAĞLIK KARTI', '', pet.name];
   const meta: string[] = [];
   if (pet.species) meta.push(speciesLabel(pet.species));
   if (pet.breed) meta.push(pet.breed);
@@ -15,7 +15,7 @@ export function buildPetCardText(pet: Pet): string {
   if (pet.medications) lines.push(`İlaçlar: ${pet.medications}`);
   if (pet.last_vaccine_date) lines.push(`Son aşı: ${pet.last_vaccine_date}`);
   if (pet.last_parasite_date) lines.push(`Son parazit: ${pet.last_parasite_date}`);
-  if (pet.emergency_note) lines.push(`⚠️ Acil not: ${pet.emergency_note}`);
+  if (pet.emergency_note) lines.push(`ACİL NOT: ${pet.emergency_note}`);
   if (pet.owner_name || pet.owner_phone) {
     lines.push(`Sahip: ${[pet.owner_name, pet.owner_phone].filter(Boolean).join(' — ')}`);
   }

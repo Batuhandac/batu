@@ -1,58 +1,57 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, Text, Button, IconBadge } from '@/components/ds';
+import { DistrictList } from '@/components/location/DistrictPicker';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { useOnboardingStore } from '@/stores/onboarding';
-import { DistrictList } from '@/components/location/DistrictPicker';
 
 export default function LocationScreen() {
   const { request, loading, setManual } = useLocation();
   const { setCompleted } = useOnboardingStore();
 
-  const handleGrant = async () => {
-    await request();
-    setCompleted(true);
-    router.replace('/(tabs)');
-  };
-
-  const handleSkip = () => {
+  const finish = () => {
     setCompleted(true);
     router.replace('/(tabs)');
   };
 
   return (
-    <Screen scroll>
-      <View className="px-6 pt-12 pb-8 gap-8">
-        <View className="items-center">
-          <Text className="text-5xl mb-6">📍</Text>
-          <Text className="text-white text-2xl font-bold text-center mb-3">
-            Konum İzni
-          </Text>
-          <Text className="text-gray-text text-base text-center leading-relaxed">
-            Acil anında sana en yakın açık veterineri gösterebilmek için konumuna ihtiyacımız var.
-            Konumun sadece telefonunda kullanılır, hiçbir yere gönderilmez.
-          </Text>
-        </View>
+    <Screen scroll edges={['top', 'bottom']} contentStyle={{ paddingHorizontal: 24, paddingTop: 40 }}>
+      <IconBadge name="location" size={72} />
+      <Text variant="title" style={{ marginTop: 20 }}>
+        Konumunu kullanalım mı?
+      </Text>
+      <Text variant="body" tone="muted" style={{ marginTop: 8 }}>
+        Sana en yakın açık veterinerleri gösterebilmemiz için. Konumun yalnızca telefonunda
+        kullanılır, hiçbir yere kaydedilmez.
+      </Text>
 
-        <View className="gap-4">
-          <TouchableOpacity
-            onPress={handleGrant}
-            disabled={loading}
-            activeOpacity={0.85}
-            className="rounded-2xl py-4 items-center"
-            style={{ backgroundColor: '#ff7f1c' }}
-          >
-            <Text className="text-white font-bold text-lg">
-              {loading ? 'Bekleniyor...' : 'Konuma izin ver ve başla'}
-            </Text>
-          </TouchableOpacity>
+      <Button
+        title="Konumumu kullan"
+        icon="navigate"
+        size="lg"
+        full
+        loading={loading}
+        onPress={async () => {
+          await request();
+          finish();
+        }}
+        style={{ marginTop: 28 }}
+      />
 
-          <Text className="text-gray-muted text-sm text-center mb-1">veya ilçe seç:</Text>
-
-          <DistrictList onPick={(d) => { setManual(d.lat, d.lng, d.name); handleSkip(); }} />
-        </View>
+      <View style={{ marginTop: 32 }}>
+        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+          Ya da ilçeni seç
+        </Text>
+        <DistrictList
+          onPick={(d) => {
+            setManual(d.lat, d.lng, d.name);
+            finish();
+          }}
+        />
       </View>
+
+      <Button title="Şimdi değil" variant="ghost" onPress={finish} style={{ marginTop: 20, alignSelf: 'center' }} />
     </Screen>
   );
 }

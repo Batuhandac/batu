@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
+import { Sheet, Text, Button, IconBadge } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { submitCallFeedback } from '@/lib/data/community';
 import { track } from '@/lib/analytics';
 
@@ -12,8 +14,9 @@ interface Props {
 
 type Step = 'phone' | 'emergency' | 'sending' | 'done' | 'failed';
 
-// Aramadan ~10 dk sonra gelen bildirime dokununca açılır: "Telefonu açtı mı?"
+// Aramadan ~10 dk sonra gelen bildirime dokununca açılır: "Telefonu açtılar mı?"
 export function FeedbackModal({ visible, onClose, clinicId, clinicName }: Props) {
+  const t = useTheme();
   const [step, setStep] = useState<Step>('phone');
   const [phoneAnswered, setPhoneAnswered] = useState<boolean | null>(null);
 
@@ -31,62 +34,54 @@ export function FeedbackModal({ visible, onClose, clinicId, clinicName }: Props)
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={reset}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className="bg-surface rounded-t-3xl p-6 pb-10">
-          {step === 'phone' && (
-            <>
-              <Text className="text-white text-lg font-bold text-center mb-1">{clinicName}</Text>
-              <Text className="text-gray-text text-sm text-center mb-6">Aradığında telefonu açtılar mı?</Text>
-              <View className="flex-row gap-3">
-                <Choice label="Açtı" good onPress={() => { setPhoneAnswered(true); setStep('emergency'); }} />
-                <Choice label="Açmadı" onPress={() => send(false, null)} />
-              </View>
-            </>
-          )}
-          {step === 'emergency' && (
-            <>
-              <Text className="text-white text-lg font-bold text-center mb-6">Acil hastayı kabul ettiler mi?</Text>
-              <View className="flex-row gap-3">
-                <Choice label="Evet" good onPress={() => send(phoneAnswered ?? true, true)} />
-                <Choice label="Hayır" onPress={() => send(phoneAnswered ?? true, false)} />
-              </View>
-            </>
-          )}
-          {step === 'sending' && <ActivityIndicator color="#ff7f1c" className="my-8" />}
-          {(step === 'done' || step === 'failed') && (
-            <>
-              <Text className={`text-xl font-bold text-center mb-2 ${step === 'done' ? 'text-green-light' : 'text-red-400'}`}>
-                {step === 'done' ? 'Teşekkürler!' : 'Gönderilemedi'}
-              </Text>
-              <Text className="text-gray-text text-sm text-center mb-6">
-                {step === 'done'
-                  ? 'Cevabın, bir sonraki acilde başka bir pati sahibinin doğru kliniği bulmasına yardım edecek. Umarız dostun iyidir. 🐾'
-                  : 'İnternet bağlantını kontrol edip daha sonra tekrar deneyebilirsin.'}
-              </Text>
-              <TouchableOpacity onPress={reset} className="bg-card border border-border rounded-2xl py-4 items-center">
-                <Text className="text-white font-semibold">Kapat</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {(step === 'phone' || step === 'emergency') && (
-            <TouchableOpacity onPress={reset} className="py-3 items-center mt-2">
-              <Text className="text-gray-muted text-sm">Şimdi değil</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <Sheet visible={visible} onClose={reset} title={clinicName}>
+      <View style={{ paddingHorizontal: 20 }}>
+        {step === 'phone' && (
+          <>
+            <Text variant="headline" style={{ marginBottom: 16 }}>
+              Aradığında telefona çıktılar mı?
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button title="Evet" icon="checkmark" style={{ flex: 1 }} onPress={() => { setPhoneAnswered(true); setStep('emergency'); }} />
+              <Button title="Hayır" icon="close" variant="secondary" style={{ flex: 1 }} onPress={() => send(false, null)} />
+            </View>
+          </>
+        )}
+        {step === 'emergency' && (
+          <>
+            <Text variant="headline" style={{ marginBottom: 16 }}>
+              Acil hastayı kabul ettiler mi?
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button title="Evet" icon="checkmark" style={{ flex: 1 }} onPress={() => send(phoneAnswered ?? true, true)} />
+              <Button title="Hayır" icon="close" variant="secondary" style={{ flex: 1 }} onPress={() => send(phoneAnswered ?? true, false)} />
+            </View>
+          </>
+        )}
+        {step === 'sending' && <ActivityIndicator color={t.primary} style={{ marginVertical: 28 }} />}
+        {(step === 'done' || step === 'failed') && (
+          <View style={{ alignItems: 'center' }}>
+            <IconBadge
+              name={step === 'done' ? 'heart' : 'cloud-offline-outline'}
+              size={56}
+              color={step === 'done' ? t.sos : t.textMuted}
+              background={step === 'done' ? t.sosSoft : t.surfaceAlt}
+            />
+            <Text variant="headline" center style={{ marginTop: 12 }}>
+              {step === 'done' ? 'Teşekkürler' : 'Gönderilemedi'}
+            </Text>
+            <Text variant="callout" tone="muted" center style={{ marginTop: 4, marginBottom: 18 }}>
+              {step === 'done'
+                ? 'Cevabın, bir sonraki acilde başka bir pati sahibinin doğru kliniği bulmasına yardım edecek. Umarız dostun iyidir.'
+                : 'İnternet bağlantını kontrol edip daha sonra tekrar deneyebilirsin.'}
+            </Text>
+            <Button title="Kapat" variant="secondary" full onPress={reset} />
+          </View>
+        )}
+        {(step === 'phone' || step === 'emergency') && (
+          <Button title="Şimdi değil" variant="ghost" onPress={reset} style={{ marginTop: 8, alignSelf: 'center' }} />
+        )}
       </View>
-    </Modal>
-  );
-}
-
-function Choice({ label, good, onPress }: { label: string; good?: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`flex-1 rounded-2xl py-4 items-center border ${good ? 'bg-green-open/20 border-green-open' : 'bg-red-sos/20 border-red-sos'}`}
-    >
-      <Text className={`text-base font-semibold ${good ? 'text-green-light' : 'text-red-400'}`}>{label}</Text>
-    </TouchableOpacity>
+    </Sheet>
   );
 }

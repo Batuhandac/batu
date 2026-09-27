@@ -2,9 +2,11 @@
 // için genel kabul görmüş, temkinli ilk yardım adımları. Her rehber aynı
 // mesajla biter: önce veterineri ara, onun söylediklerini uygula.
 
+import type { IconName } from '@/components/ds/Icon';
+
 export interface FirstAidGuide {
   key: string;
-  emoji: string;
+  icon: IconName;
   title: string;
   steps: string[];
   avoid: string[];
@@ -13,7 +15,7 @@ export interface FirstAidGuide {
 export const FIRST_AID: FirstAidGuide[] = [
   {
     key: 'poison',
-    emoji: '☠️',
+    icon: 'skull-outline',
     title: 'Zehirlenme şüphesi',
     steps: [
       'Ne yediğini, ne kadar ve ne zaman yediğini not et.',
@@ -27,7 +29,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'breathing',
-    emoji: '😮‍💨',
+    icon: 'cloud-outline',
     title: 'Nefes almakta zorlanıyor',
     steps: [
       'Sakin ve serin bir ortamda tut, tasmasını / boyunluğunu çıkar.',
@@ -38,7 +40,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'bleeding',
-    emoji: '🩸',
+    icon: 'water-outline',
     title: 'Kanama',
     steps: [
       'Temiz bir bez ya da gazlı bezle yaraya sabit bastır.',
@@ -49,7 +51,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'heat',
-    emoji: '🌡️',
+    icon: 'thermometer-outline',
     title: 'Sıcak çarpması',
     steps: [
       'Hemen gölge ve serin bir yere al.',
@@ -60,7 +62,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'trauma',
-    emoji: '🚗',
+    icon: 'car-outline',
     title: 'Kaza, düşme, ezilme',
     steps: [
       'İyi görünse bile iç kanama olabilir — mutlaka muayene ettir.',
@@ -71,7 +73,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'seizure',
-    emoji: '⚡',
+    icon: 'flash-outline',
     title: 'Nöbet (kasılma, bilinç kaybı)',
     steps: [
       'Etrafındaki sert ve sivri eşyaları uzaklaştır, ortamı karart ve sessizleştir.',
@@ -82,7 +84,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'urinary',
-    emoji: '🐱',
+    icon: 'alert-circle-outline',
     title: 'Kedi idrar yapamıyor',
     steps: [
       'Sık sık kuma gidip çıkaramıyorsa, özellikle erkek kedilerde saatler içinde hayati olabilir.',
@@ -92,7 +94,7 @@ export const FIRST_AID: FirstAidGuide[] = [
   },
   {
     key: 'bloat',
-    emoji: '🐕',
+    icon: 'warning-outline',
     title: 'Köpekte karın şişmesi, kusamama',
     steps: [
       'Karnı şişmiş, huzursuz ve kusmaya çalışıp çıkaramıyorsa (özellikle iri ırklarda) mide dönmesi olabilir — dakikalar önemli.',

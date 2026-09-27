@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Alert, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen, Header, Text, Field, Button, Icon } from '@/components/ds';
+import { useTheme, radius } from '@/lib/theme';
 import { submitClinicReport, isFirebaseConfigured } from '@/lib/data/community';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { track } from '@/lib/analytics';
 
 const REPORT_TYPES = [
-  { key: 'missing_phone', label: 'Telefon eksik — numarasını biliyorum' },
-  { key: 'wrong_phone', label: 'Telefon yanlış / ulaşılamıyor' },
+  { key: 'missing_phone', label: 'Telefon eksik, numarasını biliyorum' },
+  { key: 'wrong_phone', label: 'Telefon yanlış ya da ulaşılamıyor' },
   { key: 'wrong_hours', label: 'Çalışma saatleri yanlış' },
   { key: 'not_emergency', label: 'Acil hasta kabul etmiyor' },
-  { key: 'wrong_location', label: 'Konum / adres yanlış' },
+  { key: 'wrong_location', label: 'Konum ya da adres yanlış' },
   { key: 'closed_permanently', label: 'Kalıcı olarak kapandı' },
-  { key: 'other', label: 'Diğer' },
+  { key: 'other', label: 'Başka bir sorun' },
 ];
 
 export default function ReportScreen() {
+  const t = useTheme();
   const { id, type: initialType } = useLocalSearchParams<{ id: string; type?: string }>();
   const [type, setType] = useState<string | null>(initialType ?? null);
   const [detail, setDetail] = useState('');
@@ -26,7 +28,7 @@ export default function ReportScreen() {
   const submit = async () => {
     if (!type) return;
     if (!isFirebaseConfigured) {
-      Alert.alert('Şu an gönderilemiyor', 'Bildirim sistemi henüz aktif değil.');
+      Alert.alert('Şu an gönderilemiyor', 'Bildirim sistemi henüz etkin değil.');
       return;
     }
     setSubmitting(true);
@@ -42,53 +44,52 @@ export default function ReportScreen() {
       return;
     }
     track('report_submitted', { clinic_id: id, type });
-    Alert.alert('Teşekkürler 🐾', 'Bildirimin bize ulaştı. Kontrol edip düzelteceğiz.', [
-      { text: 'Tamam', onPress: () => router.back() },
-    ]);
+    Alert.alert('Teşekkürler', 'Bildirimin bize ulaştı. Kontrol edip düzelteceğiz.', [{ text: 'Tamam', onPress: () => router.back() }]);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity onPress={() => router.back()} className="mb-6">
-          <Text className="text-gray-text text-base">✕ Kapat</Text>
-        </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold mb-2">Bilgiyi düzelt</Text>
-        <Text className="text-gray-text text-sm mb-6 leading-relaxed">
-          Doğru bilgi, acildeki birinin boşuna yola çıkmamasını sağlar. Ne yanlış?
-        </Text>
-
-        {REPORT_TYPES.map((r) => (
-          <TouchableOpacity
-            key={r.key}
-            onPress={() => setType(r.key)}
-            className={`border rounded-2xl px-5 py-4 mb-3 flex-row items-center gap-3 ${type === r.key ? 'border-orange-accent bg-orange-accent/10' : 'border-border bg-surface'}`}
-          >
-            <View className={`w-5 h-5 rounded-full border-2 ${type === r.key ? 'border-orange-accent bg-orange-accent' : 'border-gray-muted'}`} />
-            <Text className="text-white flex-1">{r.label}</Text>
-          </TouchableOpacity>
-        ))}
-
-        <TextInput
+    <Screen scroll edges={['top', 'bottom']}>
+      <Header title="Bilgiyi düzelt" subtitle="Doğru bilgi, acildeki birinin boşuna yola çıkmamasını sağlar. Ne yanlış?" onBack={() => router.back()} />
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ gap: 8, marginBottom: 16 }}>
+          {REPORT_TYPES.map((r) => {
+            const on = type === r.key;
+            return (
+              <Pressable
+                key={r.key}
+                onPress={() => setType(r.key)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: radius.md,
+                  borderWidth: 1.5,
+                  borderColor: on ? t.primary : t.border,
+                  backgroundColor: on ? t.primarySoft : t.surface,
+                }}
+              >
+                <Icon name={on ? 'radio-button-on' : 'radio-button-off'} size={20} color={on ? t.primary : t.textSubtle} />
+                <Text variant="body" style={{ flex: 1 }}>
+                  {r.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Field
+          label={needsPhone ? 'Doğru telefon numarası' : 'Doğrusu nedir? (isteğe bağlı)'}
           value={detail}
           onChangeText={setDetail}
-          placeholder={needsPhone ? 'Doğru telefon numarası (ör. 0312 123 45 67)' : 'Doğrusu nedir? (isteğe bağlı)'}
-          placeholderTextColor="#8e9196"
+          placeholder={needsPhone ? '0312 123 45 67' : 'Kısaca yaz'}
           keyboardType={needsPhone ? 'phone-pad' : 'default'}
           multiline={!needsPhone}
           maxLength={500}
-          className="bg-surface border border-border rounded-2xl px-4 py-3 text-white mt-2 text-base"
-          style={needsPhone ? undefined : { textAlignVertical: 'top', minHeight: 80 }}
         />
-
-        <TouchableOpacity
-          onPress={submit}
-          disabled={!type || submitting}
-          className={`rounded-2xl py-4 items-center mt-6 ${!type || submitting ? 'bg-surface opacity-50' : 'bg-orange-accent'}`}
-        >
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-base">Gönder</Text>}
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <Button title="Gönder" size="lg" full disabled={!type} loading={submitting} onPress={submit} />
+      </View>
+    </Screen>
   );
 }

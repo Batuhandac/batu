@@ -1,113 +1,72 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { Card, Text, Icon, Badge, IconButton } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { callClinic } from '@/lib/utils/call';
+import { clinicStatus, formatDistance } from '@/lib/utils/status';
 import type { Clinic } from '@/types';
 
-interface Props {
-  clinic: Clinic;
-}
+export { formatDistance };
 
-export function formatDistance(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`;
-}
-
-export function ClinicCard({ clinic }: Props) {
-  const open = clinic.status === 'open' || clinic.is_24_7;
-  const accentColor = open ? '#eac333' : clinic.accepts_emergency ? '#ff7f1c' : '#44474c';
-  const statusColor = open ? '#eac333' : '#8e9196';
-  // Kapalı bir kliniği asla "Acil" diye gösterme — gece yanlış adrese gidilmesin
-  const statusLabel = open ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Saat bilinmiyor';
-
-  const onPress = () => {
-    Haptics.selectionAsync().catch(() => {});
-    router.push(`/clinic/${clinic.id}`);
-  };
+export function ClinicCard({ clinic }: { clinic: Clinic }) {
+  const t = useTheme();
+  const s = clinicStatus(clinic);
+  const meta = [clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null, clinic.district].filter(Boolean).join(' · ');
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.82}
-      onPress={onPress}
-      className="mb-3 mx-4 rounded-2xl overflow-hidden flex-row"
-      style={{
-        backgroundColor: 'rgba(42,42,43,0.75)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+    <Card
+      onPress={() => {
+        Haptics.selectionAsync().catch(() => {});
+        router.push(`/clinic/${clinic.id}`);
       }}
-      accessibilityRole="button"
-      accessibilityLabel={`${clinic.name}, ${statusLabel}${clinic.distance_km > 0 ? ', ' + formatDistance(clinic.distance_km) : ''}`}
+      accessibilityLabel={`${clinic.name}, ${s.label}${meta ? ', ' + meta : ''}`}
+      style={{ marginHorizontal: 20, marginBottom: 12 }}
     >
-      {/* Sol durum şeridi */}
-      <View style={{ width: 4, backgroundColor: accentColor }} />
-
-      <View className="flex-1 p-4 flex-row items-center gap-3">
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-white font-bold text-base flex-shrink" numberOfLines={1} style={{ letterSpacing: -0.2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text variant="bodyStrong" numberOfLines={1} style={{ flexShrink: 1, fontSize: 17 }}>
               {clinic.name}
             </Text>
-            {clinic.is_verified && <Text style={{ color: '#68D391', fontSize: 13 }}>✓</Text>}
+            {clinic.is_verified ? <Icon name="shield-checkmark" size={16} color={t.primary} /> : null}
           </View>
-
-          <Text className="text-gray-text text-sm mt-0.5" numberOfLines={1}>
-            {[clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null, clinic.district]
-              .filter(Boolean)
-              .join(' · ')}
-            {clinic.rating != null && clinic.rating > 0 ? `  ★ ${clinic.rating.toFixed(1)}` : ''}
-          </Text>
-
-          <View className="flex-row flex-wrap items-center gap-2 mt-2">
-            <View
-              className="flex-row items-center gap-1.5 rounded-full px-3 py-1"
-              style={{ backgroundColor: `${statusColor}18`, borderWidth: 1, borderColor: `${statusColor}30` }}
-            >
-              <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
-              <Text style={{ color: statusColor, fontSize: 12, fontWeight: '700' }}>{statusLabel}</Text>
-            </View>
-            {open && clinic.closes_in_min != null && clinic.closes_in_min < 60 && (
-              <Tag label={`${clinic.closes_in_min} dk sonra kapanıyor`} orange />
-            )}
-            {clinic.is_24_7 && <Tag label="7/24" />}
-            {clinic.accepts_emergency && !clinic.is_24_7 && <Tag label="Acil kabul" orange />}
-            {clinic.source === 'community' && <Tag label="🐾 Topluluk" />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            {meta ? (
+              <Text variant="caption" tone="muted" numberOfLines={1} style={{ flexShrink: 1 }}>
+                {meta}
+              </Text>
+            ) : null}
+            {clinic.rating != null && clinic.rating > 0 ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                <Icon name="star" size={12} color={t.honey} />
+                <Text variant="caption" tone="muted">
+                  {clinic.rating.toFixed(1).replace('.', ',')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+            <Badge label={s.label} tone={s.tone} dot />
+            {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
+            {clinic.accepts_emergency && !clinic.is_24_7 ? <Badge label="Acil kabul" tone="sos" /> : null}
+            {clinic.source === 'community' ? <Badge label="Kullanıcı ekledi" tone="neutral" /> : null}
           </View>
         </View>
 
-        {/* Doğrudan ara — acilde detay sayfasına girmeye gerek kalmasın */}
-        {clinic.phone ? (
-          <TouchableOpacity
-            onPress={() => callClinic(clinic, 'list')}
-            activeOpacity={0.85}
-            hitSlop={8}
-            className="w-12 h-12 rounded-full items-center justify-center"
-            style={{ backgroundColor: open ? '#38A169' : 'rgba(68,71,76,0.9)' }}
-            accessibilityRole="button"
+        {clinic.phone || clinic.emergency_phone ? (
+          <IconButton
+            icon="call"
+            variant={s.tone === 'open' ? 'primary' : 'soft'}
+            size={48}
+            onPress={() => callClinic(clinic.phone ? clinic : { ...clinic, phone: clinic.emergency_phone! }, 'list')}
             accessibilityLabel={`${clinic.name} ara`}
-          >
-            <Text style={{ fontSize: 20 }}>📞</Text>
-          </TouchableOpacity>
+          />
         ) : (
-          <View className="w-8 h-8 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(68,71,76,0.7)' }}>
-            <Text className="text-gray-label text-base">›</Text>
-          </View>
+          <Icon name="chevron-forward" size={20} color={t.textSubtle} />
         )}
       </View>
-    </TouchableOpacity>
-  );
-}
-
-function Tag({ label, orange }: { label: string; orange?: boolean }) {
-  return (
-    <View
-      className="rounded-full px-2.5 py-1"
-      style={
-        orange
-          ? { backgroundColor: 'rgba(255,127,28,0.12)', borderWidth: 1, borderColor: 'rgba(255,127,28,0.3)' }
-          : { backgroundColor: 'rgba(68,71,76,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }
-      }
-    >
-      <Text style={{ color: orange ? '#ff7f1c' : '#e4e2e3', fontSize: 12, fontWeight: '600' }}>{label}</Text>
-    </View>
+    </Card>
   );
 }

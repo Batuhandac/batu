@@ -1,45 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen, Header, Text, Field, Segmented, Button } from '@/components/ds';
 import { usePets } from '@/lib/hooks/usePets';
 import { getPet } from '@/lib/data/localStore';
 import { track } from '@/lib/analytics';
 
-const SPECIES = [
-  { key: 'dog', label: '🐶 Köpek' },
-  { key: 'cat', label: '🐱 Kedi' },
-  { key: 'other', label: '🐾 Diğer' },
-];
-
-function Field({ label, value, onChange, placeholder, keyboardType, required, multiline }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  keyboardType?: 'decimal-pad' | 'phone-pad';
-  required?: boolean;
-  multiline?: boolean;
-}) {
-  return (
-    <View className="mb-4">
-      <Text className="text-gray-label text-xs font-semibold uppercase tracking-wide mb-1.5">
-        {label}{required && ' *'}
-      </Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor="#8e9196"
-        keyboardType={keyboardType}
-        multiline={multiline}
-        numberOfLines={multiline ? 3 : 1}
-        className="bg-surface border border-border rounded-xl px-4 py-3 text-white text-base"
-        style={multiline ? { textAlignVertical: 'top', minHeight: 80 } : undefined}
-      />
-    </View>
-  );
-}
+type Species = 'dog' | 'cat' | 'other';
 
 const num = (s: string) => {
   const n = parseFloat(s.replace(',', '.'));
@@ -52,7 +19,7 @@ export default function PetFormScreen() {
   const editing = !!id;
   const { upsert } = usePets();
   const [name, setName] = useState('');
-  const [species, setSpecies] = useState('');
+  const [species, setSpecies] = useState<Species | null>(null);
   const [breed, setBreed] = useState('');
   const [ageYears, setAgeYears] = useState('');
   const [weightKg, setWeightKg] = useState('');
@@ -65,13 +32,14 @@ export default function PetFormScreen() {
   const [ownerName, setOwnerName] = useState('');
   const [ownerPhone, setOwnerPhone] = useState('');
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | undefined>();
 
   useEffect(() => {
     if (!id) return;
     getPet(id).then((p) => {
       if (!p) return;
       setName(p.name);
-      setSpecies(p.species ?? '');
+      setSpecies((p.species as Species) ?? null);
       setBreed(p.breed ?? '');
       setAgeYears(p.age_years != null ? String(p.age_years) : '');
       setWeightKg(p.weight_kg != null ? String(p.weight_kg) : '');
@@ -88,7 +56,7 @@ export default function PetFormScreen() {
 
   const save = async () => {
     if (!name.trim()) {
-      Alert.alert('Eksik bilgi', 'Petinin adını yaz.');
+      setNameError('Dostunun adını yaz.');
       return;
     }
     setSaving(true);
@@ -96,7 +64,7 @@ export default function PetFormScreen() {
       const pet = await upsert({
         ...(id ? { id } : {}),
         name: name.trim(),
-        species: species || null,
+        species,
         breed: breed.trim() || null,
         age_years: num(ageYears),
         weight_kg: num(weightKg),
@@ -119,74 +87,74 @@ export default function PetFormScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View className="px-6 pt-6 pb-12">
-            <View className="flex-row items-center justify-between mb-2">
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text className="text-gray-text text-base">✕ İptal</Text>
-              </TouchableOpacity>
-              <Text className="text-white text-lg font-bold">{editing ? 'Kartı Düzenle' : 'Acil Kart Oluştur'}</Text>
-              <TouchableOpacity onPress={save} disabled={saving}>
-                <Text className={`text-base font-bold ${saving ? 'text-gray-muted' : 'text-orange-accent'}`}>
-                  {saving ? '…' : 'Kaydet'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text className="text-gray-muted text-sm mb-6 leading-relaxed">
-              Acil anında veterinere söylemen gerekenler burada durur ve Acil Mod'da otomatik gösterilir.
-              Bilgiler sadece telefonunda saklanır.
+    <Screen edges={['top', 'bottom']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <Screen scroll edges={[]}>
+          <Header
+            title={editing ? 'Kartı düzenle' : 'Acil kart oluştur'}
+            subtitle="Acil anında veterinere söylemen gerekenler burada durur ve Acil Mod'da otomatik gösterilir. Bilgiler yalnızca telefonunda saklanır."
+            onBack={() => router.back()}
+          />
+          <View style={{ paddingHorizontal: 20 }}>
+            <Field
+              label="Adı"
+              value={name}
+              onChangeText={(v) => {
+                setName(v);
+                setNameError(undefined);
+              }}
+              placeholder="Örn. Boncuk"
+              error={nameError}
+              maxLength={40}
+            />
+            <Text variant="caption" tone="muted" style={{ marginBottom: 6 }}>
+              Türü
             </Text>
-
-            <Field label="Adı" value={name} onChange={setName} placeholder="Örn. Boncuk" required />
-
-            <View className="mb-4">
-              <Text className="text-gray-label text-xs font-semibold uppercase tracking-wide mb-1.5">Tür</Text>
-              <View className="flex-row gap-2">
-                {SPECIES.map((s) => (
-                  <TouchableOpacity
-                    key={s.key}
-                    onPress={() => setSpecies(s.key)}
-                    className={`flex-1 border rounded-xl py-3 items-center ${species === s.key ? 'border-orange-accent bg-orange-accent/10' : 'border-border bg-surface'}`}
-                  >
-                    <Text className="text-white text-sm">{s.label}</Text>
-                  </TouchableOpacity>
-                ))}
+            <Segmented<Species>
+              value={species}
+              onChange={setSpecies}
+              options={[
+                { key: 'dog', label: 'Köpek' },
+                { key: 'cat', label: 'Kedi' },
+                { key: 'other', label: 'Diğer' },
+              ]}
+            />
+            <Field label="Irkı" value={breed} onChangeText={setBreed} placeholder="Örn. Golden Retriever" />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Field label="Yaşı" value={ageYears} onChangeText={setAgeYears} placeholder="3" keyboardType="decimal-pad" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field label="Kilosu (kg)" value={weightKg} onChangeText={setWeightKg} placeholder="25" keyboardType="decimal-pad" />
               </View>
             </View>
 
-            <Field label="Irk" value={breed} onChange={setBreed} placeholder="Örn. Golden Retriever" />
-            <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="Yaş" value={ageYears} onChange={setAgeYears} placeholder="3" keyboardType="decimal-pad" /></View>
-              <View className="flex-1"><Field label="Kilo (kg)" value={weightKg} onChange={setWeightKg} placeholder="25" keyboardType="decimal-pad" /></View>
+            <Text variant="overline" tone="subtle" style={{ marginTop: 8, marginBottom: 12 }}>
+              Sağlık bilgileri · isteğe bağlı
+            </Text>
+            <Field label="Alerjileri" value={allergies} onChangeText={setAllergies} placeholder="Örn. Penisilin, tavuk" />
+            <Field label="Kullandığı ilaçlar" value={medications} onChangeText={setMedications} placeholder="Örn. İnsülin, günde 2 ünite" multiline />
+            <Field label="Kronik hastalık" value={chronic} onChangeText={setChronic} placeholder="Örn. Diyabet, kalp üfürümü" />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Field label="Son aşı" value={vaccine} onChangeText={setVaccine} placeholder="Mart 2026" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field label="Son parazit" value={parasite} onChangeText={setParasite} placeholder="Ağustos 2026" />
+              </View>
             </View>
+            <Field label="Acil not" value={emergencyNote} onChangeText={setEmergencyNote} placeholder="Kliniğe mutlaka söylenmesi gereken bir durum" multiline />
 
-            <Text className="text-gray-muted text-xs uppercase tracking-wide font-bold mb-3 mt-2">Sağlık (isteğe bağlı)</Text>
-            <Field label="Alerji" value={allergies} onChange={setAllergies} placeholder="Örn. Penisilin, tavuk" />
-            <Field label="Kronik hastalık" value={chronic} onChange={setChronic} placeholder="Örn. Diyabet, kalp yetmezliği" />
-            <Field label="Kullandığı ilaçlar" value={medications} onChange={setMedications} placeholder="Örn. İnsülin 2 ü/gün" multiline />
-            <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="Son aşı" value={vaccine} onChange={setVaccine} placeholder="Mart 2026" /></View>
-              <View className="flex-1"><Field label="Son parazit" value={parasite} onChange={setParasite} placeholder="Ağustos 2026" /></View>
-            </View>
-            <Field label="Acil not" value={emergencyNote} onChange={setEmergencyNote} placeholder="Kliniğe söylenmesi gereken özel durum…" multiline />
+            <Text variant="overline" tone="subtle" style={{ marginTop: 8, marginBottom: 12 }}>
+              Sahibi
+            </Text>
+            <Field label="Adın" value={ownerName} onChangeText={setOwnerName} placeholder="Adın soyadın" />
+            <Field label="Telefonun" value={ownerPhone} onChangeText={setOwnerPhone} placeholder="05xx xxx xx xx" keyboardType="phone-pad" />
 
-            <Text className="text-gray-muted text-xs uppercase tracking-wide font-bold mb-3 mt-2">Sahip</Text>
-            <Field label="Adın" value={ownerName} onChange={setOwnerName} placeholder="Adın" />
-            <Field label="Telefonun" value={ownerPhone} onChange={setOwnerPhone} placeholder="05xx xxx xx xx" keyboardType="phone-pad" />
-
-            <TouchableOpacity
-              onPress={save}
-              disabled={saving}
-              className="rounded-2xl py-4 items-center mt-2"
-              style={{ backgroundColor: '#ff7f1c', opacity: saving ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-bold text-base">{editing ? 'Değişiklikleri kaydet' : 'Kartı kaydet'}</Text>
-            </TouchableOpacity>
+            <Button title={editing ? 'Değişiklikleri kaydet' : 'Kartı kaydet'} size="lg" full loading={saving} onPress={save} style={{ marginTop: 8 }} />
           </View>
-        </ScrollView>
+        </Screen>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }

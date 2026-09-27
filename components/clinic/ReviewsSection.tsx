@@ -1,12 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import { Stars } from '@/components/ui/Stars';
-import {
-  fetchReviews,
-  addReview,
-  summarizeReviews,
-  isFirebaseConfigured,
-} from '@/lib/data/community';
+import { Text, Button, Card, Sheet, Field, Section, EmptyState } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
+import { fetchReviews, addReview, summarizeReviews, isFirebaseConfigured } from '@/lib/data/community';
 import { getAuthorName, setAuthorName } from '@/lib/deviceId';
 import { track } from '@/lib/analytics';
 import type { Review } from '@/types';
@@ -23,6 +20,7 @@ function timeAgo(iso: string): string {
 }
 
 export function ReviewsSection({ clinicId, clinicName }: { clinicId: string; clinicName: string }) {
+  const t = useTheme();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
@@ -35,70 +33,61 @@ export function ReviewsSection({ clinicId, clinicName }: { clinicId: string; cli
 
   useEffect(() => { load(); }, [load]);
 
+  // Firebase yapılandırılmamışsa bölümü gizle (yerel mod)
+  if (!isFirebaseConfigured) return null;
   const summary = summarizeReviews(reviews);
 
-  // Firebase yapılandırılmamışsa bölümü gizle (yerel-only mod)
-  if (!isFirebaseConfigured) return null;
-
   return (
-    <View className="px-4 mt-6">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-white text-lg font-bold">Yorumlar</Text>
-        <TouchableOpacity
-          onPress={() => setModal(true)}
-          className="bg-red-sos rounded-full px-4 py-1.5"
-          activeOpacity={0.85}
-        >
-          <Text className="text-white text-sm font-semibold">Yorum yaz</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Özet */}
+    <Section title="Deneyimler" action="Yorum yaz" onAction={() => setModal(true)}>
       {summary.count > 0 && (
-        <View className="flex-row items-center gap-3 mb-4 bg-card border border-border rounded-2xl px-4 py-3">
-          <Text className="text-white text-3xl font-bold">{summary.average.toFixed(1)}</Text>
+        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+          <Text variant="display">{summary.average.toFixed(1).replace('.', ',')}</Text>
           <View>
             <Stars value={summary.average} size={18} />
-            <Text className="text-gray-muted text-xs mt-1">{summary.count} değerlendirme</Text>
+            <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+              {summary.count} değerlendirme
+            </Text>
           </View>
-        </View>
+        </Card>
       )}
 
-      {loading && <ActivityIndicator color="#E53E3E" className="my-4" />}
-
-      {!loading && reviews.length === 0 && (
-        <View className="bg-card border border-border rounded-2xl px-4 py-6 items-center">
-          <Text className="text-3xl mb-2">💬</Text>
-          <Text className="text-gray-text text-sm text-center">
-            Henüz yorum yok. İlk yorumu sen yaz, diğer pati sahiplerine yardım et!
-          </Text>
-        </View>
-      )}
-
-      {!loading &&
+      {loading ? (
+        <ActivityIndicator color={t.primary} style={{ marginVertical: 16 }} />
+      ) : reviews.length === 0 ? (
+        <Card tone="alt" padded={false}>
+          <EmptyState
+            icon="chatbubbles-outline"
+            title="Henüz deneyim paylaşılmamış"
+            text="Telefona çıktılar mı, acil kabul ettiler mi? Kısa bir not başka bir pati sahibine yol gösterir."
+          />
+        </Card>
+      ) : (
         reviews.map((r) => (
-          <View key={r.id} className="bg-card border border-border rounded-2xl px-4 py-3 mb-2.5">
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-white font-semibold text-sm">{r.author_name}</Text>
-              <Text className="text-gray-muted text-xs">{timeAgo(r.created_at)}</Text>
+          <Card key={r.id} style={{ marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text variant="bodyStrong">{r.author_name}</Text>
+              <Text variant="caption" tone="subtle">
+                {timeAgo(r.created_at)}
+              </Text>
             </View>
-            <Stars value={r.rating} size={13} />
-            {!!r.comment && <Text className="text-gray-label text-sm mt-2 leading-relaxed">{r.comment}</Text>}
-          </View>
-        ))}
+            <View style={{ marginTop: 4 }}>
+              <Stars value={r.rating} size={13} />
+            </View>
+            {!!r.comment && (
+              <Text variant="callout" style={{ marginTop: 8 }}>
+                {r.comment}
+              </Text>
+            )}
+          </Card>
+        ))
+      )}
 
-      <AddReviewModal
-        visible={modal}
-        onClose={() => setModal(false)}
-        clinicId={clinicId}
-        clinicName={clinicName}
-        onSubmitted={load}
-      />
-    </View>
+      <AddReviewSheet visible={modal} onClose={() => setModal(false)} clinicId={clinicId} clinicName={clinicName} onSubmitted={load} />
+    </Section>
   );
 }
 
-function AddReviewModal({
+function AddReviewSheet({
   visible,
   onClose,
   clinicId,
@@ -126,59 +115,35 @@ function AddReviewModal({
     const ok = await addReview(clinicId, rating, comment);
     setSaving(false);
     if (ok) {
-      await track('review_added', { clinic_id: clinicId, rating });
+      track('review_added', { clinic_id: clinicId, rating });
       setComment('');
       onClose();
       onSubmitted();
     } else {
-      Alert.alert('Gönderilemedi', 'Yorum kaydedilemedi. İnternet bağlantını kontrol et.');
+      Alert.alert('Gönderilemedi', 'İnternet bağlantını kontrol edip tekrar dene.');
     }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className="bg-surface rounded-t-3xl p-6 pb-10">
-          <Text className="text-white text-xl font-bold text-center mb-1">Yorumun</Text>
-          <Text className="text-gray-muted text-sm text-center mb-5" numberOfLines={1}>{clinicName}</Text>
-
-          <View className="items-center mb-5">
-            <Stars value={rating} size={38} onChange={setRating} />
-          </View>
-
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Adın (opsiyonel)"
-            placeholderTextColor="#718096"
-            maxLength={40}
-            className="bg-card border border-border rounded-2xl px-4 py-3 text-white mb-3"
-          />
-          <TextInput
-            value={comment}
-            onChangeText={setComment}
-            placeholder="Deneyimini yaz: ulaşılabilir miydi, acil kabul etti mi, ilgi nasıldı?"
-            placeholderTextColor="#718096"
-            maxLength={1000}
-            multiline
-            numberOfLines={4}
-            className="bg-card border border-border rounded-2xl px-4 py-3 text-white mb-5"
-            style={{ minHeight: 96, textAlignVertical: 'top' }}
-          />
-
-          <TouchableOpacity
-            onPress={submit}
-            disabled={saving}
-            className={`bg-red-sos rounded-2xl py-4 items-center ${saving ? 'opacity-50' : ''}`}
-            activeOpacity={0.85}
-          >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-base">Gönder</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} className="py-3 items-center mt-1">
-            <Text className="text-gray-text">Vazgeç</Text>
-          </TouchableOpacity>
+    <Sheet visible={visible} onClose={onClose} title="Deneyimini paylaş">
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text variant="callout" tone="muted" numberOfLines={1}>
+          {clinicName}
+        </Text>
+        <View style={{ alignItems: 'center', marginVertical: 18 }}>
+          <Stars value={rating} size={36} onChange={setRating} />
         </View>
+        <Field label="Adın (isteğe bağlı)" value={name} onChangeText={setName} maxLength={40} placeholder="Görünecek ad" />
+        <Field
+          label="Deneyimin"
+          value={comment}
+          onChangeText={setComment}
+          maxLength={1000}
+          multiline
+          placeholder="Telefona çıktılar mı, acil kabul ettiler mi, ilgi nasıldı?"
+        />
+        <Button title="Gönder" full loading={saving} onPress={submit} />
       </View>
-    </Modal>
+    </Sheet>
   );
 }

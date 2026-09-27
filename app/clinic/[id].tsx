@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Linking, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Linking, ActivityIndicator, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import MapView, { Marker } from 'react-native-maps';
+import { Text, Icon, IconButton, Button, Card, Badge, Group, ListRow, Avatar, Section, EmptyState, Chip } from '@/components/ds';
+import { useTheme, radius } from '@/lib/theme';
 import { Stars } from '@/components/ui/Stars';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 import { DataAttribution } from '@/components/ui/DataAttribution';
@@ -12,25 +13,16 @@ import { PhotosSection } from '@/components/clinic/PhotosSection';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { FeedbackModal } from '@/components/clinic/FeedbackModal';
 import { ReviewsSection } from '@/components/clinic/ReviewsSection';
-import { formatDistance } from '@/components/clinic/ClinicCard';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { getClinicById, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { fetchPlaceClinic } from '@/lib/data/places';
 import { applyProfile, loadClinicProfiles } from '@/lib/data/profiles';
-import { withLiveStatus } from '@/lib/utils/openingHours';
+import { withLiveStatus, istanbulNow } from '@/lib/utils/openingHours';
+import { clinicStatus, formatDistance } from '@/lib/utils/status';
 import { callClinic } from '@/lib/utils/call';
 import { track } from '@/lib/analytics';
 import type { Clinic } from '@/types';
-
-function Stat({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
-  return (
-    <View className="flex-1 items-center">
-      <Text style={{ color: valueColor ?? '#e4e2e3', fontWeight: '700', fontSize: 16 }}>{value}</Text>
-      <Text className="text-gray-muted text-xs mt-0.5">{label}</Text>
-    </View>
-  );
-}
 
 function sourceNote(c: Clinic): string {
   if (c.is_verified) {
@@ -43,6 +35,7 @@ function sourceNote(c: Clinic): string {
 }
 
 export default function ClinicDetailScreen() {
+  const t = useTheme();
   const { id, feedback } = useLocalSearchParams<{ id: string; feedback?: string }>();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,13 +64,11 @@ export default function ClinicDetailScreen() {
 
   const handleWhatsApp = async () => {
     if (!clinic?.phone) return;
-    // Telefonu uluslararası formata çevir (sadece rakam; TR için 0 → 90)
+    // Telefonu uluslararası biçime çevir (yalnız rakam; TR için 0 → 90)
     let digits = clinic.phone.replace(/\D/g, '');
     if (digits.startsWith('0')) digits = '90' + digits.slice(1);
     if (!digits.startsWith('90') && digits.length === 10) digits = '90' + digits;
-    const msg = encodeURIComponent(
-      `Merhaba, Pati SOS üzerinden ulaşıyorum. Acil bir durum için ${clinic.name} hakkında bilgi alabilir miyim?`
-    );
+    const msg = encodeURIComponent(`Merhaba, Pati SOS üzerinden ulaşıyorum. Acil bir durum için bilgi alabilir miyim?`);
     track('call_tap', { clinic_id: id, via: 'whatsapp' });
     const url = `whatsapp://send?phone=${digits}&text=${msg}`;
     try {
@@ -90,219 +81,179 @@ export default function ClinicDetailScreen() {
 
   const handleDirections = () => {
     track('directions_tap', { clinic_id: id });
-    track('directions_interstitial_shown', { clinic_id: id });
     setShowDirections(true);
   };
 
-  if (loading) {
+  if (loading || !clinic) {
     return (
-      <SafeAreaView className="flex-1 bg-bg items-center justify-center">
-        <ActivityIndicator color="#ff7f1c" size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+          <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel="Geri" size={40} />
+        </View>
+        {loading ? (
+          <ActivityIndicator color={t.primary} size="large" style={{ marginTop: 80 }} />
+        ) : (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Klinik bulunamadı"
+            text="İnternet bağlantını kontrol edip tekrar dene."
+            action={<Button title="Geri dön" variant="secondary" onPress={() => router.back()} full />}
+          />
+        )}
       </SafeAreaView>
     );
   }
 
-  if (!clinic) {
-    return (
-      <SafeAreaView className="flex-1 bg-bg items-center justify-center px-6">
-        <Text className="text-white text-center">Klinik bulunamadı. İnternet bağlantını kontrol edip tekrar dene.</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4">
-          <Text className="text-gray-text underline">Geri dön</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  const open = clinic.status === 'open' || clinic.is_24_7;
-  const statusLabel = open ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Bilinmiyor';
-  const statusColor = open ? '#68D391' : clinic.status === 'closed' ? '#FC8181' : '#c4c6cc';
+  const s = clinicStatus(clinic);
   const weekdayText = clinic.weekday_text ?? [];
-  const initial = clinic.name.trim().charAt(0).toUpperCase();
+  const todayIdx = (istanbulNow().dow + 6) % 7; // weekday_text Pazartesi'den başlar
   const place = [clinic.district, clinic.city].filter(Boolean).join(', ');
+  const meta = [place || null, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ');
 
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={['bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Kapak */}
-        <LinearGradient
-          colors={open ? ['#1f6b48', '#1f2a24', '#131315'] : ['#3a2a20', '#1f1f21', '#131315']}
-          style={{ paddingTop: 56, paddingBottom: 20, paddingHorizontal: 16 }}
-        >
-          <View className="flex-row items-center justify-between mb-4">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-              accessibilityLabel="Geri"
-            >
-              <Text className="text-white text-xl">‹</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => toggle(id)}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-              accessibilityLabel={isFav(id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-            >
-              <Text className="text-xl">{isFav(id) ? '❤️' : '🤍'}</Text>
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 6 }}>
+        <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel="Geri" size={40} />
+        <IconButton
+          icon={isFav(id) ? 'heart' : 'heart-outline'}
+          color={isFav(id) ? t.sos : undefined}
+          onPress={() => toggle(id)}
+          accessibilityLabel={isFav(id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+          size={40}
+        />
+      </View>
 
-          <View className="items-center">
-            <View
-              className="w-20 h-20 rounded-3xl items-center justify-center mb-3"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 2, borderColor: statusColor }}
-            >
-              <Text className="text-white text-3xl font-extrabold">{initial}</Text>
-            </View>
-            <Text className="text-white text-2xl font-bold text-center px-4">{clinic.name}</Text>
-            {clinic.is_verified && (
-              <View className="flex-row items-center gap-1 mt-2 rounded-full px-3 py-1" style={{ backgroundColor: 'rgba(104,211,145,0.15)' }}>
-                <Text style={{ color: '#68D391', fontSize: 12, fontWeight: '700' }}>✓ Klinik onaylı bilgiler</Text>
-              </View>
-            )}
-            {(place || clinic.distance_km > 0) && (
-              <Text className="text-gray-text text-sm mt-2">
-                📍 {[place, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
-              </Text>
-            )}
-            {clinic.rating ? (
-              <View className="flex-row items-center gap-1 mt-1.5">
-                <Stars value={clinic.rating} size={14} />
-                <Text className="text-gray-text text-xs">
-                  {clinic.rating.toFixed(1)}
-                  {clinic.rating_count ? ` (${clinic.rating_count})` : ''}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Kimlik */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Avatar label={clinic.name} size={64} />
+            <View style={{ flex: 1 }}>
+              <Text variant="title">{clinic.name}</Text>
+              {meta ? (
+                <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+                  {meta}
                 </Text>
-              </View>
-            ) : null}
+              ) : null}
+            </View>
           </View>
-
-          <View className="flex-row mt-5 bg-black/20 rounded-2xl py-3">
-            <Stat
-              label={open && clinic.closes_in_min != null && clinic.closes_in_min < 60 ? `${clinic.closes_in_min} dk sonra kapanıyor` : 'Şu an'}
-              value={statusLabel}
-              valueColor={statusColor}
-            />
-            <View className="w-px bg-white/10" />
-            <Stat label="Çalışma" value={clinic.is_24_7 ? '7/24' : weekdayText.length ? 'Saatli' : '—'} />
-            <View className="w-px bg-white/10" />
-            <Stat label="Acil" value={clinic.accepts_emergency ? 'Kabul' : '—'} valueColor={clinic.accepts_emergency ? '#ff7f1c' : undefined} />
+          {clinic.rating ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
+              <Stars value={clinic.rating} size={14} />
+              <Text variant="caption" tone="muted">
+                {clinic.rating.toFixed(1).replace('.', ',')}
+                {clinic.rating_count ? ` · ${clinic.rating_count} değerlendirme` : ''}
+              </Text>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+            <Badge label={s.label} tone={s.tone} dot />
+            {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
+            {clinic.accepts_emergency && !clinic.is_24_7 ? <Badge label="Acil kabul" tone="sos" /> : null}
+            {clinic.is_verified ? <Badge label="Klinik onaylı" tone="primary" icon="shield-checkmark" /> : null}
+            {clinic.source === 'community' ? <Badge label="Kullanıcı ekledi" /> : null}
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Eylemler — acilde en önemli şey: tek dokunuşla aramak */}
-        <View className="px-4 mt-4 gap-3">
+        <View style={{ paddingHorizontal: 20, marginTop: 20, gap: 10 }}>
           {clinic.phone ? (
-            <TouchableOpacity
-              onPress={() => callClinic(clinic, 'detail')}
-              className="rounded-2xl py-5 items-center"
-              style={{ backgroundColor: '#38A169' }}
-              activeOpacity={0.85}
-              accessibilityLabel={`${clinic.name} ara`}
-            >
-              <Text className="text-white font-extrabold text-lg">📞  Hemen Ara</Text>
-              <Text className="text-white/80 text-sm mt-0.5">{clinic.phone}</Text>
-            </TouchableOpacity>
+            <Button title="Hemen ara" subtitle={clinic.phone} icon="call" size="lg" full onPress={() => callClinic(clinic, 'detail')} accessibilityLabel={`${clinic.name} ara`} />
           ) : (
-            <View className="bg-card border border-border rounded-2xl p-4">
-              <Text className="text-white font-semibold">Telefon bilgisi yok</Text>
-              <Text className="text-gray-text text-sm mt-1 leading-relaxed">
-                Bu kliniğin telefonunu bilmiyoruz. Yol tarifini kullanabilir ya da numarayı biliyorsan
-                bildirerek başkalarına yardım edebilirsin.
+            <Card tone="honey">
+              <Text variant="bodyStrong">Telefon bilgisi yok</Text>
+              <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+                Bu kliniğin numarasını bilmiyoruz. Biliyorsan bildir; bir sonraki acilde başkası arayabilsin.
               </Text>
-              <TouchableOpacity onPress={() => router.push(`/clinic/${id}/report?type=missing_phone`)} className="mt-3">
-                <Text style={{ color: '#ff7f1c', fontWeight: '700' }}>Telefonu bildir →</Text>
-              </TouchableOpacity>
-            </View>
+              <Button title="Telefonu bildir" variant="ghost" icon="add-circle-outline" onPress={() => router.push(`/clinic/${id}/report?type=missing_phone`)} style={{ alignSelf: 'flex-start', marginTop: 4, marginLeft: -12 }} />
+            </Card>
           )}
-
           {clinic.emergency_phone ? (
-            <TouchableOpacity
+            <Button
+              title="Mesai dışı acil hattı"
+              subtitle={clinic.emergency_phone}
+              icon="moon"
+              variant="sos"
+              full
               onPress={() => callClinic({ ...clinic, phone: clinic.emergency_phone! }, 'emergency_line')}
-              className="rounded-2xl py-4 items-center border"
-              style={{ backgroundColor: 'rgba(255,127,28,0.12)', borderColor: 'rgba(255,127,28,0.4)' }}
-              activeOpacity={0.85}
-            >
-              <Text style={{ color: '#ff7f1c', fontWeight: '800', fontSize: 15 }}>🌙  Mesai dışı acil hattı</Text>
-              <Text className="text-gray-text text-sm mt-0.5">{clinic.emergency_phone}</Text>
-            </TouchableOpacity>
+            />
           ) : null}
-
-          <View className="flex-row gap-3">
-            <TouchableOpacity onPress={handleDirections} className="flex-1 bg-card border border-border rounded-2xl py-4 items-center" activeOpacity={0.85}>
-              <Text className="text-xl mb-0.5">🗺️</Text>
-              <Text className="text-white font-bold text-sm">Yol Tarifi</Text>
-            </TouchableOpacity>
-            {clinic.phone ? (
-              <TouchableOpacity onPress={handleWhatsApp} className="flex-1 bg-card border border-border rounded-2xl py-4 items-center" activeOpacity={0.85}>
-                <Text className="text-xl mb-0.5">💬</Text>
-                <Text className="text-white font-bold text-sm">WhatsApp</Text>
-              </TouchableOpacity>
-            ) : null}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button title="Yol tarifi" icon="navigate-outline" variant="secondary" onPress={handleDirections} style={{ flex: 1 }} />
+            {clinic.phone ? <Button title="WhatsApp" icon="logo-whatsapp" variant="secondary" onPress={handleWhatsApp} style={{ flex: 1 }} /> : null}
           </View>
         </View>
 
         {/* Bilgiler */}
-        <View className="mt-5 bg-card border border-border rounded-2xl mx-4 p-4 gap-4">
-          {clinic.address ? (
-            <View>
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide">Adres</Text>
-              <Text className="text-white text-sm mt-1">{clinic.address}</Text>
+        <Section title="Bilgiler">
+          <Group>
+            {clinic.address ? <ListRow icon="location-outline" title={clinic.address} subtitle="Adres" onPress={handleDirections} /> : null}
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: t.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: weekdayText.length ? 10 : 0 }}>
+                <Icon name="time-outline" size={20} color={t.primary} />
+                <Text variant="bodyStrong">Çalışma saatleri</Text>
+              </View>
+              {weekdayText.length > 0 ? (
+                weekdayText.map((line, i) => {
+                  const [day, ...rest] = line.split(':');
+                  const today = weekdayText.length === 7 && i === todayIdx;
+                  return (
+                    <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
+                      <Text variant={today ? 'bodyStrong' : 'callout'} tone={today ? 'primary' : 'muted'}>
+                        {day?.trim()}
+                        {today ? ' · bugün' : ''}
+                      </Text>
+                      <Text variant={today ? 'bodyStrong' : 'callout'} tone={today ? 'primary' : 'default'}>
+                        {rest.join(':').trim()}
+                      </Text>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text variant="callout" tone="muted" style={{ marginTop: 6 }}>
+                  Bilinmiyor — gitmeden önce mutlaka ara.
+                </Text>
+              )}
             </View>
-          ) : null}
-          {weekdayText.length > 0 ? (
-            <View>
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Çalışma Saatleri</Text>
-              {weekdayText.map((line, i) => {
-                const [day, ...rest] = line.split(':');
-                return (
-                  <View key={i} className="flex-row justify-between py-0.5">
-                    <Text className="text-gray-text text-sm" style={{ minWidth: 40 }}>{day?.trim()}</Text>
-                    <Text className="text-white text-sm text-right">{rest.join(':').trim()}</Text>
-                  </View>
-                );
-              })}
+            <View style={{ padding: 16 }}>
+              <Text variant="caption" tone="subtle">
+                {sourceNote(clinic)} Durum değişebilir; gitmeden önce ara.
+              </Text>
             </View>
-          ) : (
-            <View>
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide">Çalışma Saatleri</Text>
-              <Text className="text-gray-text text-sm mt-1">Bilinmiyor — gitmeden önce mutlaka ara.</Text>
-            </View>
-          )}
+          </Group>
+
           {clinic.services && clinic.services.length > 0 ? (
-            <View>
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Hizmetler</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {clinic.services.map((s) => (
-                  <View key={s} className="bg-surface border border-border rounded-full px-3 py-1">
-                    <Text className="text-gray-label text-xs">{s}</Text>
-                  </View>
+            <View style={{ marginTop: 14 }}>
+              <Text variant="overline" tone="subtle" style={{ marginBottom: 8 }}>
+                Hizmetler
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {clinic.services.map((x) => (
+                  <Chip key={x} label={x} />
                 ))}
               </View>
             </View>
           ) : null}
+
           {clinic.note ? (
-            <View className="rounded-xl p-3" style={{ backgroundColor: 'rgba(234,195,51,0.1)' }}>
-              <Text style={{ color: '#eac333', fontSize: 12, fontWeight: '700' }}>Klinikten not</Text>
-              <Text className="text-gray-label text-sm mt-1">{clinic.note}</Text>
-            </View>
+            <Card tone="honey" style={{ marginTop: 14 }}>
+              <Text variant="overline" tone="honey">
+                Klinikten not
+              </Text>
+              <Text variant="callout" style={{ marginTop: 4 }}>
+                {clinic.note}
+              </Text>
+            </Card>
           ) : null}
-          <Text className="text-gray-muted text-xs leading-relaxed">{sourceNote(clinic)} Durum değişebilir; gitmeden önce ara.</Text>
-        </View>
+        </Section>
 
-        {/* Topluluk teyidi */}
-        <View className="px-4 mt-4">
-          <PingButton clinicId={id} />
-        </View>
-
-        <TouchableOpacity
-          onPress={() => setPrimaryVet(id)}
-          className="mx-4 mt-3 bg-surface border border-border rounded-2xl py-3 items-center"
+        {/* Konum */}
+        <Pressable
+          onPress={handleDirections}
+          accessibilityRole="button"
+          accessibilityLabel="Yol tarifi"
+          style={{ marginHorizontal: 20, marginTop: 20, height: 160, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: t.border }}
         >
-          <Text className="text-gray-label text-sm">
-            {isPrimaryVet(id) ? '⭐ Düzenli veterinerim (seçili)' : '☆ Düzenli veterinerim olarak kaydet'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Mini harita */}
-        <TouchableOpacity onPress={handleDirections} activeOpacity={0.9} className="mx-4 mt-4 rounded-2xl overflow-hidden" style={{ height: 150 }}>
           <MapView
             style={{ flex: 1 }}
             initialRegion={{ latitude: clinic.lat, longitude: clinic.lng, latitudeDelta: 0.008, longitudeDelta: 0.008 }}
@@ -310,42 +261,49 @@ export default function ClinicDetailScreen() {
             zoomEnabled={false}
             pitchEnabled={false}
             rotateEnabled={false}
-            userInterfaceStyle="dark"
+            userInterfaceStyle={t.dark ? 'dark' : 'light'}
           >
-            <Marker coordinate={{ latitude: clinic.lat, longitude: clinic.lng }} title={clinic.name} />
+            <Marker coordinate={{ latitude: clinic.lat, longitude: clinic.lng }} title={clinic.name} pinColor={t.primary} />
           </MapView>
-          <View className="absolute bottom-3 left-3 right-3 rounded-xl py-2 items-center" style={{ backgroundColor: 'rgba(19,19,21,0.85)' }}>
-            <Text className="text-white text-sm font-semibold">🗺️  Yol Tarifi Al</Text>
-          </View>
-        </TouchableOpacity>
+        </Pressable>
+
+        <View style={{ paddingHorizontal: 20, marginTop: 20, gap: 12 }}>
+          <PingButton clinicId={id} />
+          <Group>
+            <ListRow
+              icon={isPrimaryVet(id) ? 'heart' : 'heart-outline'}
+              title={isPrimaryVet(id) ? 'Düzenli veterinerin' : 'Düzenli veterinerim olarak kaydet'}
+              subtitle={isPrimaryVet(id) ? 'Ana sayfada kısayol olarak görünür' : 'Ana sayfadan tek dokunuşla ulaş'}
+              onPress={() => setPrimaryVet(id)}
+              right={isPrimaryVet(id) ? <Icon name="checkmark-circle" size={22} color={t.primary} /> : undefined}
+              last
+            />
+          </Group>
+        </View>
 
         <PhotosSection clinicId={id} />
         <ReviewsSection clinicId={id} clinicName={clinic.name} />
 
         {/* Veteriner hekimlere: reklam değil, doğru bilgi */}
         {!clinic.is_verified && (
-          <TouchableOpacity
-            onPress={() => router.push(`/clinic/${id}/claim`)}
-            activeOpacity={0.85}
-            className="mx-4 mt-6 rounded-2xl p-4 border"
-            style={{ backgroundColor: 'rgba(186,200,220,0.08)', borderColor: 'rgba(186,200,220,0.25)' }}
-          >
-            <Text className="text-white font-bold text-base">🩺 Bu kliniğin veteriner hekimi misiniz?</Text>
-            <Text className="text-gray-text text-sm mt-1 leading-relaxed">
-              Telefon, çalışma saatleri ve acil hattınızı ücretsiz doğrulayın. Reklam değil — acildeki
-              hasta sahipleri size doğru bilgiyle ulaşsın.
-            </Text>
-            <Text style={{ color: '#bac8dc', fontWeight: '700', marginTop: 8 }}>Bilgilerimi doğrula →</Text>
-          </TouchableOpacity>
+          <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            <Card tone="primary">
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Icon name="medical" size={22} color={t.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="bodyStrong">Bu kliniğin veteriner hekimi misiniz?</Text>
+                  <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+                    Telefon, çalışma saatleri ve acil hattınızı ücretsiz doğrulayın. Reklam değil; acildeki hasta sahipleri size doğru bilgiyle ulaşsın.
+                  </Text>
+                </View>
+              </View>
+              <Button title="Bilgilerimi doğrula" variant="primary" size="md" full onPress={() => router.push(`/clinic/${id}/claim`)} style={{ marginTop: 14 }} />
+            </Card>
+          </View>
         )}
 
-        <View className="flex-row gap-4 px-4 mt-5 justify-center">
-          <TouchableOpacity onPress={() => router.push(`/clinic/${id}/report`)}>
-            <Text className="text-gray-muted text-sm underline">Hatalı bilgi bildir</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View className="px-4 pb-8">
+        <View style={{ paddingHorizontal: 20, marginTop: 16 }}>
+          <Button title="Hatalı bilgiyi bildir" icon="flag-outline" variant="ghost" onPress={() => router.push(`/clinic/${id}/report`)} style={{ alignSelf: 'center' }} />
           <DataAttribution clinics={[clinic]} />
           <Disclaimer />
         </View>
@@ -359,12 +317,7 @@ export default function ClinicDetailScreen() {
         lng={clinic.lng}
         clinicId={id}
       />
-      <FeedbackModal
-        visible={showFeedback}
-        onClose={() => setShowFeedback(false)}
-        clinicId={id}
-        clinicName={clinic.name}
-      />
+      <FeedbackModal visible={showFeedback} onClose={() => setShowFeedback(false)} clinicId={id} clinicName={clinic.name} />
     </SafeAreaView>
   );
 }

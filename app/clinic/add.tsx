@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Alert, TextInput, Switch } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, type Region } from 'react-native-maps';
+import { Screen, Header, Text, Field, Button, SwitchRow, Chip, Card } from '@/components/ds';
+import { useTheme, radius, type } from '@/lib/theme';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { submitCommunityClinic, isFirebaseConfigured } from '@/lib/data/community';
 import { ANKARA_DISTRICTS } from '@/lib/utils/districts';
@@ -19,6 +11,7 @@ import { track } from '@/lib/analytics';
 import type { DayHours } from '@/types';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 function defaultHours(): DayHours[] {
   return Array.from({ length: 7 }, (_, weekday) => ({
@@ -30,6 +23,7 @@ function defaultHours(): DayHours[] {
 }
 
 export default function AddClinicScreen() {
+  const t = useTheme();
   const { lat, lng } = useLocation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -38,30 +32,21 @@ export default function AddClinicScreen() {
   const [is247, setIs247] = useState(false);
   const [emergency, setEmergency] = useState(false);
   const [hours, setHours] = useState<DayHours[]>(defaultHours());
-  const [coord, setCoord] = useState<{ lat: number; lng: number }>({
-    lat: lat ?? 39.9334,
-    lng: lng ?? 32.8597,
-  });
+  const [coord, setCoord] = useState<{ lat: number; lng: number }>({ lat: lat ?? 39.9334, lng: lng ?? 32.8597 });
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | undefined>();
 
-  const region: Region = {
-    latitude: coord.lat,
-    longitude: coord.lng,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
-
-  const updateHour = (weekday: number, patch: Partial<DayHours>) => {
+  const region: Region = { latitude: coord.lat, longitude: coord.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 };
+  const updateHour = (weekday: number, patch: Partial<DayHours>) =>
     setHours((hs) => hs.map((h) => (h.weekday === weekday ? { ...h, ...patch } : h)));
-  };
 
   const save = async () => {
-    if (!name.trim()) { Alert.alert('Eksik bilgi', 'Klinik adı zorunlu.'); return; }
+    if (!name.trim()) {
+      setNameError('Kliniğin adını yaz.');
+      return;
+    }
     if (!isFirebaseConfigured) {
-      Alert.alert(
-        'Yakında',
-        'Klinik ekleme için sunucu bağlantısı henüz aktif değil. Çok yakında açılacak!'
-      );
+      Alert.alert('Şu an gönderilemiyor', 'Klinik ekleme henüz etkin değil.');
       return;
     }
     setSaving(true);
@@ -78,191 +63,143 @@ export default function AddClinicScreen() {
     });
     setSaving(false);
     if (ok) {
-      await track('community_clinic_added');
-      Alert.alert('Teşekkürler! 🐾', 'Klinik bize ulaştı. Bilgileri kontrol ettikten sonra haritada görünecek — acil anında yanlış numara gösterilmesin diye her kaydı kontrol ediyoruz.', [
-        { text: 'Harika', onPress: () => router.back() },
-      ]);
+      track('community_clinic_added');
+      Alert.alert(
+        'Teşekkürler',
+        'Klinik bize ulaştı. Bilgileri kontrol ettikten sonra haritada görünecek. Acil anında yanlış numara gösterilmesin diye her kaydı kontrol ediyoruz.',
+        [{ text: 'Tamam', onPress: () => router.back() }]
+      );
     } else {
-      Alert.alert('Gönderilemedi', 'Klinik kaydedilemedi. İnternet bağlantını kontrol et.');
+      Alert.alert('Gönderilemedi', 'İnternet bağlantını kontrol edip tekrar dene.');
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg">
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View className="px-6 pt-4 pb-12">
-          <View className="flex-row items-center justify-between mb-6">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-gray-text text-base">✕ İptal</Text>
-            </TouchableOpacity>
-            <Text className="text-white font-bold text-base">Klinik Ekle</Text>
-            <View style={{ width: 50 }} />
-          </View>
-
-          <Text className="text-gray-muted text-sm mb-6 leading-relaxed">
-            Bildiğin bir veteriner kliniğini ekle. Diğer pati sahipleri acil anında bu bilgiyle
-            doğru yere ulaşacak. 🐾
-          </Text>
-
-          {/* Ad */}
-          <Field label="Klinik Adı *">
-            <TextInput
-              value={name} onChangeText={setName}
-              placeholder="Örn. Pati Veteriner Kliniği"
-              placeholderTextColor="#718096"
-              className="bg-card border border-border rounded-2xl px-4 py-3 text-white"
-            />
-          </Field>
-
-          {/* Telefon */}
-          <Field label="Telefon">
-            <TextInput
-              value={phone} onChangeText={setPhone}
-              placeholder="+90 312 ..." keyboardType="phone-pad"
-              placeholderTextColor="#718096"
-              className="bg-card border border-border rounded-2xl px-4 py-3 text-white"
-            />
-          </Field>
-
-          {/* Adres */}
-          <Field label="Adres">
-            <TextInput
-              value={address} onChangeText={setAddress}
-              placeholder="Mahalle, cadde, no"
-              placeholderTextColor="#718096"
-              className="bg-card border border-border rounded-2xl px-4 py-3 text-white"
-            />
-          </Field>
-
-          {/* İlçe */}
-          <Field label="İlçe">
-            <View className="flex-row flex-wrap gap-2">
-              {ANKARA_DISTRICTS.map((d) => (
-                <TouchableOpacity
-                  key={d.name}
-                  onPress={() => { setDistrict(d.name); setCoord({ lat: d.lat, lng: d.lng }); }}
-                  className={`rounded-full px-3.5 py-1.5 border ${district === d.name ? 'bg-orange-accent border-orange-accent' : 'bg-card border-border'}`}
-                >
-                  <Text className={`text-sm ${district === d.name ? 'text-white font-semibold' : 'text-gray-text'}`}>
-                    {d.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Field>
-
-          {/* Konum seçici */}
-          <Field label="Konum — haritaya dokunarak işaretle">
-            <View className="rounded-2xl overflow-hidden border border-border" style={{ height: 220 }}>
-              <MapView
-                style={{ flex: 1 }}
-                region={region}
-                userInterfaceStyle="dark"
-                onPress={(e) =>
-                  setCoord({
-                    lat: e.nativeEvent.coordinate.latitude,
-                    lng: e.nativeEvent.coordinate.longitude,
-                  })
-                }
-              >
-                <Marker
-                  coordinate={{ latitude: coord.lat, longitude: coord.lng }}
-                  draggable
-                  onDragEnd={(e) =>
-                    setCoord({
-                      lat: e.nativeEvent.coordinate.latitude,
-                      lng: e.nativeEvent.coordinate.longitude,
-                    })
-                  }
-                  pinColor="#ff7f1c"
-                />
-              </MapView>
-            </View>
-            <Text className="text-gray-muted text-xs mt-1.5">
-              📍 {coord.lat.toFixed(4)}, {coord.lng.toFixed(4)}
-            </Text>
-          </Field>
-
-          {/* Toggle'lar */}
-          <ToggleRow label="7/24 açık" value={is247} onChange={setIs247} />
-          <ToggleRow label="Acil kabul ediyor" value={emergency} onChange={setEmergency} />
-
-          {/* Çalışma saatleri */}
-          {!is247 && (
-            <Field label="Çalışma Saatleri">
-              <View className="bg-card border border-border rounded-2xl px-4 py-2">
-                {hours.map((h) => (
-                  <View key={h.weekday} className="flex-row items-center py-2 border-b border-border/50">
-                    <Text className="text-white text-sm w-24">{DAY_NAMES[h.weekday]}</Text>
-                    {h.closed ? (
-                      <Text className="text-gray-muted text-sm flex-1">Kapalı</Text>
-                    ) : (
-                      <View className="flex-row items-center flex-1 gap-2">
-                        <TimeInput value={h.open} onChange={(v) => updateHour(h.weekday, { open: v })} />
-                        <Text className="text-gray-muted">–</Text>
-                        <TimeInput value={h.close} onChange={(v) => updateHour(h.weekday, { close: v })} />
-                      </View>
-                    )}
-                    <Switch
-                      value={!h.closed}
-                      onValueChange={(open) => updateHour(h.weekday, { closed: !open })}
-                      trackColor={{ false: '#243B55', true: '#38A169' }}
-                      thumbColor="#fff"
-                    />
-                  </View>
-                ))}
-              </View>
-            </Field>
-          )}
-
-          <TouchableOpacity
-            onPress={save}
-            disabled={saving}
-            className={`bg-orange-accent rounded-2xl py-4 items-center mt-4 ${saving ? 'opacity-50' : ''}`}
-            activeOpacity={0.85}
-          >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-lg">Kliniği Ekle</Text>}
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View className="mb-4">
-      <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">{label}</Text>
-      {children}
-    </View>
-  );
-}
-
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <View className="flex-row items-center justify-between bg-card border border-border rounded-2xl px-4 py-3.5 mb-3">
-      <Text className="text-white text-base">{label}</Text>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: '#44474c', true: '#ff7f1c' }}
-        thumbColor="#fff"
+    <Screen scroll edges={['top', 'bottom']}>
+      <Header
+        title="Klinik ekle"
+        subtitle="Bildiğin bir veteriner kliniğini ekle. Kontrol edildikten sonra yayınlanır ve acil anında başka pati sahiplerine yol gösterir."
+        onBack={() => router.back()}
       />
-    </View>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Field
+          label="Klinik adı"
+          value={name}
+          onChangeText={(v) => {
+            setName(v);
+            setNameError(undefined);
+          }}
+          placeholder="Örn. Pati Veteriner Kliniği"
+          error={nameError}
+          maxLength={120}
+        />
+        <Field label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="0312 xxx xx xx" maxLength={30} />
+        <Field label="Adres" value={address} onChangeText={setAddress} placeholder="Mahalle, cadde, numara" maxLength={200} />
+
+        <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
+          İlçe
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {ANKARA_DISTRICTS.map((d) => (
+            <Chip
+              key={d.name}
+              label={d.name}
+              active={district === d.name}
+              onPress={() => {
+                setDistrict(d.name);
+                setCoord({ lat: d.lat, lng: d.lng });
+              }}
+            />
+          ))}
+        </View>
+
+        <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
+          Konum · haritaya dokunarak ya da iğneyi sürükleyerek işaretle
+        </Text>
+        <View style={{ height: 220, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: t.border, marginBottom: 16 }}>
+          <MapView
+            style={{ flex: 1 }}
+            region={region}
+            userInterfaceStyle={t.dark ? 'dark' : 'light'}
+            onPress={(e) => setCoord({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })}
+          >
+            <Marker
+              coordinate={{ latitude: coord.lat, longitude: coord.lng }}
+              draggable
+              onDragEnd={(e) => setCoord({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })}
+              pinColor={t.primary}
+            />
+          </MapView>
+        </View>
+
+        <SwitchRow label="7/24 açık" value={is247} onValueChange={setIs247} />
+        <SwitchRow label="Acil hasta kabul ediyor" value={emergency} onValueChange={setEmergency} />
+
+        {!is247 && (
+          <Card padded={false} style={{ marginBottom: 16 }}>
+            <Text variant="bodyStrong" style={{ padding: 16, paddingBottom: 8 }}>
+              Çalışma saatleri
+            </Text>
+            {WEEK_ORDER.map((wd) => {
+              const h = hours.find((x) => x.weekday === wd)!;
+              return (
+                <View key={wd} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 1, borderTopColor: t.border, gap: 8 }}>
+                  <Text variant="callout" style={{ width: 88 }}>
+                    {DAY_NAMES[wd]}
+                  </Text>
+                  {h.closed ? (
+                    <Text variant="callout" tone="subtle" style={{ flex: 1 }}>
+                      Kapalı
+                    </Text>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 6 }}>
+                      <TimeInput value={h.open} onChange={(v) => updateHour(wd, { open: v })} />
+                      <Text variant="callout" tone="subtle">
+                        –
+                      </Text>
+                      <TimeInput value={h.close} onChange={(v) => updateHour(wd, { close: v })} />
+                    </View>
+                  )}
+                  <Switch
+                    value={!h.closed}
+                    onValueChange={(open) => updateHour(wd, { closed: !open })}
+                    trackColor={{ true: t.primary, false: t.borderStrong }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
+              );
+            })}
+          </Card>
+        )}
+
+        <Button title="Kliniği gönder" size="lg" full loading={saving} onPress={save} />
+      </View>
+    </Screen>
   );
 }
 
 function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useTheme();
   return (
     <TextInput
       value={value}
       onChangeText={onChange}
       placeholder="09:00"
-      placeholderTextColor="#718096"
-      maxLength={5}
+      placeholderTextColor={t.textSubtle}
       keyboardType="numbers-and-punctuation"
-      className="bg-surface border border-border rounded-lg px-2 py-1 text-white text-sm text-center"
-      style={{ width: 56 }}
+      maxLength={5}
+      style={[
+        type.callout,
+        {
+          color: t.text,
+          backgroundColor: t.surfaceAlt,
+          borderRadius: radius.sm,
+          paddingHorizontal: 8,
+          paddingVertical: 6,
+          width: 64,
+          textAlign: 'center',
+        },
+      ]}
     />
   );
 }

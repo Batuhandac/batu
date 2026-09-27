@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Pressable, ActivityIndicator } from 'react-native';
+import { Text, Icon } from '@/components/ds';
+import { useTheme, radius } from '@/lib/theme';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { DistrictPicker } from './DistrictPicker';
 
@@ -15,6 +17,7 @@ function ago(ts: number): string {
 // Listenin hangi konuma göre sıralandığını her zaman gösterir — yanlış
 // konuma göre klinik önermek acilde en tehlikeli hatalardan biri.
 export function LocationBar() {
+  const t = useTheme();
   const { source, label, updatedAt, loading, granted, refresh, request, setManual } = useLocation();
   const [picker, setPicker] = useState(false);
 
@@ -23,37 +26,58 @@ export function LocationBar() {
     if (!ok) setPicker(true);
   };
 
-  const title =
-    source === 'manual' ? `${label ?? 'Seçilen bölge'}` : source === 'gps' ? 'Bulunduğun konum' : 'Konum seçilmedi';
-  const sub = loading
-    ? 'Konum güncelleniyor…'
-    : source === 'manual'
-    ? 'Elle seçildi'
-    : updatedAt
-    ? ago(updatedAt)
-    : '';
+  const title = source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Bulunduğun konum' : 'Konum seçilmedi';
+  const sub = loading ? 'Konum güncelleniyor…' : source === 'manual' ? 'Elle seçildi' : updatedAt ? ago(updatedAt) : '';
 
   return (
-    <View className="flex-row items-center bg-card border border-border rounded-2xl px-3 py-2.5 gap-2">
-      <Text className="text-base">📍</Text>
-      <View className="flex-1">
-        <Text className="text-white text-sm font-semibold" numberOfLines={1}>{title}</Text>
-        {sub ? <Text className="text-gray-muted text-xs">{sub}</Text> : null}
-      </View>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: t.surface,
+        borderWidth: 1,
+        borderColor: t.border,
+        borderRadius: radius.md,
+        paddingLeft: 12,
+        paddingRight: 6,
+        paddingVertical: 6,
+      }}
+    >
+      <Icon name={source === 'gps' ? 'navigate' : 'location-outline'} size={18} color={t.primary} />
+      <Pressable style={{ flex: 1 }} onPress={() => setPicker(true)} accessibilityRole="button" accessibilityLabel="Konumu değiştir">
+        <Text variant="callout" numberOfLines={1}>
+          {title}
+        </Text>
+        {sub ? (
+          <Text variant="caption" tone="subtle" style={{ fontSize: 12 }}>
+            {sub}
+          </Text>
+        ) : null}
+      </Pressable>
       {loading ? (
-        <ActivityIndicator color="#ff7f1c" size="small" />
-      ) : source === 'manual' || source === null ? (
-        <TouchableOpacity onPress={useGps} hitSlop={8} className="rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(255,127,28,0.15)' }}>
-          <Text style={{ color: '#ff7f1c', fontSize: 12, fontWeight: '700' }}>Konumumu kullan</Text>
-        </TouchableOpacity>
+        <ActivityIndicator color={t.primary} style={{ marginRight: 8 }} />
       ) : (
-        <TouchableOpacity onPress={() => refresh()} hitSlop={8} className="rounded-full px-3 py-1.5 bg-surface">
-          <Text className="text-gray-label text-xs font-semibold">Yenile</Text>
-        </TouchableOpacity>
+        <Pressable
+          onPress={source === 'gps' ? () => refresh() : useGps}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            paddingHorizontal: 12,
+            height: 34,
+            borderRadius: radius.pill,
+            backgroundColor: pressed ? t.primarySoft : 'transparent',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 4,
+          })}
+        >
+          <Icon name={source === 'gps' ? 'refresh' : 'navigate-outline'} size={15} color={t.primary} />
+          <Text variant="caption" tone="primary">
+            {source === 'gps' ? 'Yenile' : 'Konumumu kullan'}
+          </Text>
+        </Pressable>
       )}
-      <TouchableOpacity onPress={() => setPicker(true)} hitSlop={8} className="rounded-full px-3 py-1.5 bg-surface">
-        <Text className="text-gray-label text-xs font-semibold">Değiştir</Text>
-      </TouchableOpacity>
       <DistrictPicker
         visible={picker}
         onClose={() => setPicker(false)}

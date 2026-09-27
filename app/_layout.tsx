@@ -1,12 +1,24 @@
 import '../global.css';
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  useFonts,
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  Nunito_900Black,
+} from '@expo-google-fonts/nunito';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOnboardingStore } from '@/stores/onboarding';
 import { track } from '@/lib/analytics';
+import { useTheme } from '@/lib/theme';
+import { LogoMark } from '@/components/ds';
 
 const HANDLED_KEY = 'patisos:handled_notification';
 
@@ -25,7 +37,16 @@ async function openFeedback(response: Notifications.NotificationResponse | null)
 }
 
 export default function RootLayout() {
+  const t = useTheme();
   const { load, hydrated, completed } = useOnboardingStore();
+  const [fontsLoaded, fontError] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+    ...Ionicons.font,
+  });
 
   useEffect(() => {
     load();
@@ -42,20 +63,31 @@ export default function RootLayout() {
       .catch(() => {});
   }, [hydrated, completed]);
 
+  // Yazı tipleri yüklenene kadar markalı bekleme (hata olursa sistem fontuyla devam)
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <LogoMark size={72} />
+      </View>
+    );
+  }
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#131315' } }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: t.bg }}>
+      <StatusBar style={t.dark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="emergency" options={{ presentation: 'fullScreenModal', animation: 'fade_from_bottom' }} />
+        <Stack.Screen name="first-aid" options={{ presentation: 'card' }} />
         <Stack.Screen name="vets" options={{ presentation: 'card' }} />
         <Stack.Screen name="clinic/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="clinic/[id]/report" options={{ presentation: 'modal' }} />
         <Stack.Screen name="clinic/[id]/claim" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="clinic/add" options={{ presentation: 'modal' }} />
         <Stack.Screen name="pets/create" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="pets/[id]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="pets/[id]" options={{ presentation: 'card' }} />
       </Stack>
     </GestureHandlerRootView>
   );

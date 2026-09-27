@@ -1,139 +1,178 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Share } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen, Header, Text, Card, Avatar, Button, Badge, IconButton, Icon } from '@/components/ds';
+import { useTheme, radius } from '@/lib/theme';
 import { getPet, removePet, setPrimaryPet } from '@/lib/data/localStore';
-import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
-import { sharePetCard, shareViaWhatsApp, buildPetCardText } from '@/lib/utils/share';
+import { sharePetCard, shareViaWhatsApp } from '@/lib/utils/share';
+import { speciesLabel } from '@/lib/utils/pets';
 import { track } from '@/lib/analytics';
 import type { Pet } from '@/types';
 
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
+function Row({ label, value, alert, first }: { label: string; value: string; alert?: boolean; first?: boolean }) {
+  const t = useTheme();
   return (
-    <View className="mb-3">
-      <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide">{label}</Text>
-      <Text className="text-white text-sm mt-0.5">{value}</Text>
+    <View style={{ flexDirection: 'row', paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderTopColor: t.border, gap: 12 }}>
+      <Text variant="caption" tone="muted" style={{ width: 96, marginTop: 2 }}>
+        {label}
+      </Text>
+      <Text variant={alert ? 'bodyStrong' : 'body'} tone={alert ? 'sos' : 'default'} style={{ flex: 1 }}>
+        {value}
+      </Text>
     </View>
   );
 }
 
 export default function PetDetailScreen() {
+  const t = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [pet, setPet] = useState<Pet | null>(null);
-
-  // Düzenleme ekranından dönünce güncel hâli göster
-  useFocusEffect(React.useCallback(() => { loadPet(); }, [id]));
 
   const loadPet = async () => {
     const data = await getPet(id);
     if (data) setPet(data);
   };
 
+  // Düzenleme ekranından dönünce güncel hâli göster
+  useFocusEffect(React.useCallback(() => { loadPet(); }, [id]));
+
+  if (!pet) return <Screen>{null}</Screen>;
+
   const handleDelete = () => {
-    Alert.alert('Sil', 'Bu pet kartı silinsin mi?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert('Kart silinsin mi?', `${pet.name} için kaydettiğin bilgiler bu telefondan silinecek.`, [
+      { text: 'Vazgeç', style: 'cancel' },
       {
-        text: 'Sil', style: 'destructive', onPress: async () => {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
           await removePet(id);
           router.back();
-        }
+        },
       },
     ]);
   };
 
-  const handleShare = async () => {
-    if (!pet) return;
-    if (!pet.name) { Alert.alert('Önce kartı doldur'); return; }
-    await track('pet_card_shared', { pet_id: id });
-    await sharePetCard(pet);
-  };
-
-  const handleWhatsApp = async () => {
-    if (!pet) return;
-    await track('pet_card_shared', { pet_id: id, via: 'whatsapp' });
-    await shareViaWhatsApp(pet);
-  };
-
-  if (!pet) return null;
-
-  const emoji = speciesEmoji(pet.species);
-
-  const makePrimary = async () => {
-    await setPrimaryPet(pet.id);
-    await loadPet();
-  };
+  const meta = [speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ');
 
   return (
-    <SafeAreaView className="flex-1 bg-bg">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="px-6 pt-6 pb-12">
-          <View className="flex-row items-center justify-between mb-6">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-gray-text text-base">‹ Geri</Text>
-            </TouchableOpacity>
-            <View className="flex-row gap-5">
-              <TouchableOpacity onPress={() => router.push(`/pets/create?id=${pet.id}`)}>
-                <Text className="text-orange-accent text-sm font-semibold">Düzenle</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleDelete}>
-                <Text className="text-red-400 text-sm">Sil</Text>
-              </TouchableOpacity>
+    <Screen scroll>
+      <Header
+        title=""
+        large={false}
+        onBack={() => router.back()}
+        right={
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <IconButton icon="create-outline" onPress={() => router.push(`/pets/create?id=${pet.id}`)} accessibilityLabel="Düzenle" size={40} />
+            <IconButton icon="trash-outline" onPress={handleDelete} accessibilityLabel="Sil" size={40} color={t.danger} />
+          </View>
+        }
+      />
+
+      {/* Acil sağlık kartı */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ borderRadius: radius.xl, backgroundColor: t.primary, padding: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text variant="overline" color={t.dark ? t.onPrimary : 'rgba(255,255,255,0.8)'}>
+              Acil sağlık kartı
+            </Text>
+            <Icon name="medkit" size={18} color={t.onPrimary} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 14 }}>
+            <Avatar label={pet.name} size={60} color={t.primary} background={t.onPrimary} />
+            <View style={{ flex: 1 }}>
+              <Text variant="title" color={t.onPrimary}>
+                {pet.name}
+              </Text>
+              {meta ? (
+                <Text variant="callout" color={t.onPrimary} style={{ opacity: 0.85 }}>
+                  {meta}
+                </Text>
+              ) : null}
             </View>
           </View>
-
-          <View className="items-center mb-6">
-            <Text className="text-6xl mb-3">{emoji}</Text>
-            <Text className="text-white text-2xl font-bold">{pet.name}</Text>
-            <Text className="text-gray-text mt-1">{[speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ')}</Text>
-            {pet.is_primary ? (
-              <Text className="text-gray-muted text-xs mt-2">⭐ Acil Mod'da bu kart gösterilir</Text>
-            ) : (
-              <TouchableOpacity onPress={makePrimary} className="mt-2">
-                <Text className="text-orange-accent text-xs font-semibold">Acil Mod'da bu kartı göster</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View className="bg-card border border-border rounded-2xl p-5 mb-4">
-            <InfoRow label="Yaş" value={pet.age_years ? `${pet.age_years} yaş` : null} />
-            <InfoRow label="Kilo" value={pet.weight_kg ? `${pet.weight_kg} kg` : null} />
-            <InfoRow label="Alerji" value={pet.allergies} />
-            <InfoRow label="Kronik Hastalık" value={pet.chronic_conditions} />
-            <InfoRow label="İlaçlar" value={pet.medications} />
-            <InfoRow label="Son Aşı" value={pet.last_vaccine_date} />
-            <InfoRow label="Son Parazit" value={pet.last_parasite_date} />
-            {pet.emergency_note && (
-              <View className="mt-2 bg-yellow-900/30 border border-yellow-700/40 rounded-xl p-3">
-                <Text className="text-yellow-300 text-xs font-bold mb-1">⚠️ ACİL NOT</Text>
-                <Text className="text-yellow-100 text-sm">{pet.emergency_note}</Text>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+            {[
+              { k: 'Yaş', v: pet.age_years != null ? `${pet.age_years}` : '—' },
+              { k: 'Kilo', v: pet.weight_kg != null ? `${pet.weight_kg} kg` : '—' },
+            ].map((x) => (
+              <View key={x.k} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: radius.md, padding: 12 }}>
+                <Text variant="caption" color={t.onPrimary} style={{ opacity: 0.8 }}>
+                  {x.k}
+                </Text>
+                <Text variant="headline" color={t.onPrimary}>
+                  {x.v}
+                </Text>
               </View>
-            )}
-          </View>
-
-          {(pet.owner_name || pet.owner_phone) && (
-            <View className="bg-card border border-border rounded-2xl p-5 mb-4">
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Sahip</Text>
-              <InfoRow label="Ad" value={pet.owner_name} />
-              <InfoRow label="Telefon" value={pet.owner_phone} />
-            </View>
-          )}
-
-          <View className="gap-3 mt-2">
-            <TouchableOpacity onPress={handleWhatsApp} className="bg-green-800/60 border border-green-700 rounded-2xl py-4 items-center">
-              <Text className="text-white font-bold text-base">💬 WhatsApp ile Paylaş</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleShare} className="bg-card border border-border rounded-2xl py-4 items-center">
-              <Text className="text-white font-semibold text-base">📤 SMS / Diğer</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="mt-4 bg-surface border border-border rounded-2xl p-4">
-            <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Önizleme</Text>
-            <Text className="text-gray-text text-xs leading-relaxed font-mono">{buildPetCardText(pet)}</Text>
+            ))}
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {pet.is_primary ? (
+          <View style={{ marginTop: 12 }}>
+            <Badge label="Acil Mod'da bu kart gösterilir" tone="primary" icon="checkmark-circle" />
+          </View>
+        ) : (
+          <Button
+            title="Acil Mod'da bu kartı göster"
+            variant="ghost"
+            icon="star-outline"
+            onPress={async () => {
+              await setPrimaryPet(pet.id);
+              await loadPet();
+            }}
+            style={{ alignSelf: 'flex-start', marginTop: 6, marginLeft: -12 }}
+          />
+        )}
+
+        <Card style={{ marginTop: 14, paddingVertical: 6 }}>
+          {(
+            [
+              { label: 'Alerji', value: pet.allergies, alert: true },
+              { label: 'İlaçlar', value: pet.medications, alert: true },
+              { label: 'Kronik hastalık', value: pet.chronic_conditions, alert: true },
+              { label: 'Son aşı', value: pet.last_vaccine_date },
+              { label: 'Son parazit', value: pet.last_parasite_date },
+              { label: 'Acil not', value: pet.emergency_note, alert: true },
+              { label: 'Sahibi', value: [pet.owner_name, pet.owner_phone].filter(Boolean).join(' · ') || null },
+            ].filter((r) => !!r.value) as { label: string; value: string; alert?: boolean }[]
+          ).map((r, i) => (
+            <Row key={r.label} label={r.label} value={r.value} alert={r.alert} first={i === 0} />
+          ))}
+          {!pet.allergies && !pet.medications && !pet.chronic_conditions && !pet.emergency_note && (
+            <Text variant="callout" tone="muted" style={{ paddingVertical: 10 }}>
+              Sağlık bilgisi eklenmemiş. Alerji ya da ilaç varsa eklemen acil anda çok işe yarar.
+            </Text>
+          )}
+        </Card>
+
+        <Text variant="overline" tone="subtle" style={{ marginTop: 24, marginBottom: 10 }}>
+          Kartı paylaş
+        </Text>
+        <View style={{ gap: 10 }}>
+          <Button
+            title="WhatsApp ile gönder"
+            icon="logo-whatsapp"
+            full
+            onPress={() => {
+              track('pet_card_shared', { pet_id: id, via: 'whatsapp' });
+              shareViaWhatsApp(pet);
+            }}
+          />
+          <Button
+            title="Diğer uygulamalarla paylaş"
+            icon="share-outline"
+            variant="secondary"
+            full
+            onPress={() => {
+              track('pet_card_shared', { pet_id: id });
+              sharePetCard(pet);
+            }}
+          />
+        </View>
+        <Text variant="caption" tone="subtle" center style={{ marginTop: 14 }}>
+          Bilgiler yalnızca bu telefonda saklanır.
+        </Text>
+      </View>
+    </Screen>
   );
 }

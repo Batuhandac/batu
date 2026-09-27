@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
+import { Card, Text, Button, Icon } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { submitOpenPing, isFirebaseConfigured } from '@/lib/data/community';
 import { track } from '@/lib/analytics';
 
-interface Props {
-  clinicId: string;
-}
-
-// "Şu an açık mı?" — kliniği az önce arayan / önünden geçen kullanıcının teyidi.
-export function PingButton({ clinicId }: Props) {
+// "Şu an açık mı?" — kliniği az önce arayan ya da önünden geçen kullanıcının teyidi.
+export function PingButton({ clinicId }: { clinicId: string }) {
+  const t = useTheme();
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
 
   const ping = async (isOpen: boolean) => {
@@ -23,31 +22,34 @@ export function PingButton({ clinicId }: Props) {
 
   if (state === 'sent') {
     return (
-      <View className="bg-surface border border-border rounded-2xl p-4 items-center">
-        <Text className="text-green-light text-sm font-semibold">Teşekkürler, başka pati sahiplerine yardım ettin.</Text>
-      </View>
+      <Card tone="primary" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Icon name="heart" size={20} color={t.primary} />
+        <Text variant="callout" tone="primary" style={{ flex: 1 }}>
+          Teşekkürler, başka pati sahiplerine yardım ettin.
+        </Text>
+      </Card>
     );
   }
 
   return (
-    <View className="bg-surface border border-border rounded-2xl p-4">
-      <Text className="text-gray-label text-sm font-semibold mb-1 text-center">Bu klinik şu an açık mı?</Text>
-      <Text className="text-gray-muted text-xs mb-3 text-center">Az önce aradıysan ya da oradaysan bildir.</Text>
+    <Card>
+      <Text variant="bodyStrong">Bu klinik şu an açık mı?</Text>
+      <Text variant="caption" tone="muted" style={{ marginTop: 2, marginBottom: 12 }}>
+        Az önce aradıysan ya da oradaysan bildir.
+      </Text>
       {state === 'sending' ? (
-        <ActivityIndicator color="#ff7f1c" />
+        <ActivityIndicator color={t.primary} />
       ) : (
-        <View className="flex-row gap-3">
-          <TouchableOpacity onPress={() => ping(true)} className="flex-1 bg-green-open/20 border border-green-open rounded-xl py-3 items-center">
-            <Text className="text-green-light text-sm font-semibold">👍 Açık</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => ping(false)} className="flex-1 bg-red-sos/20 border border-red-sos rounded-xl py-3 items-center">
-            <Text className="text-red-400 text-sm font-semibold">👎 Kapalı</Text>
-          </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Button title="Açık" icon="checkmark" variant="soft" size="sm" style={{ flex: 1 }} onPress={() => ping(true)} />
+          <Button title="Kapalı" icon="close" variant="secondary" size="sm" style={{ flex: 1 }} onPress={() => ping(false)} />
         </View>
       )}
       {state === 'failed' && (
-        <Text className="text-red-400 text-xs text-center mt-2">Gönderilemedi — internet bağlantını kontrol edip tekrar dene.</Text>
+        <Text variant="caption" tone="danger" style={{ marginTop: 8 }}>
+          Gönderilemedi — bağlantını kontrol edip tekrar dene.
+        </Text>
       )}
-    </View>
+    </Card>
   );
 }
