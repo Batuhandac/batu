@@ -1,6 +1,7 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yeniden üret: node scripts/gen-clinics-osm.js
 // Veri: © OpenStreetMap katkıcıları, ODbL 1.0 — https://www.openstreetmap.org/copyright
 // 562 veteriner kliniği (Türkiye, amenity=veterinary)
+// osm_base: 2026-09-27T14:34:51Z
 import type { SeedClinic } from './types';
 
 export const CLINICS: SeedClinic[] = [
@@ -25,7 +26,7 @@ export const CLINICS: SeedClinic[] = [
   {"id":"osm-n10278325497","name":"Totem Veteriner Kliniği","address":null,"district":null,"city":null,"lat":38.394669,"lng":27.091043,"phone":"+90 232 224 14 13","opening_hours":null,"emergency":false},
   {"id":"osm-n10282959410","name":"Happy Tails Veteriner Kliniği","address":null,"district":null,"city":null,"lat":39.866351,"lng":32.640332,"phone":null,"opening_hours":null,"emergency":false},
   {"id":"osm-n10285082809","name":"VET34 Veteriner Kliniği","address":null,"district":null,"city":null,"lat":40.905194,"lng":29.16283,"phone":null,"opening_hours":"24/7","emergency":true},
-  {"id":"osm-n10286155817","name":"Yaşam Veteriner Kliniği","address":"Yaşamkent, Şehit Hayrettin Eren Caddesi No:32/C;13","district":null,"city":null,"lat":39.856677,"lng":32.651435,"phone":null,"opening_hours":null,"emergency":false},
+  {"id":"osm-n10286155817","name":"Yaşam Veteriner Kliniği","address":"Yaşamkent, Şehit Hayrettin Eren Caddesi No:32/C, 13","district":null,"city":null,"lat":39.856677,"lng":32.651435,"phone":null,"opening_hours":null,"emergency":false},
   {"id":"osm-n10300293709","name":"ixir Veteriner","address":"Fenerbahçe Mahallesi, Dr. Faruk Ayanoğlu Caddesi","district":"Kadıköy","city":"İstanbul","lat":40.973443,"lng":29.045729,"phone":"+90 216 358 37 33","opening_hours":null,"emergency":false},
   {"id":"osm-n10300760695","name":"Alfa Veteriner","address":null,"district":null,"city":null,"lat":39.851182,"lng":32.662985,"phone":null,"opening_hours":null,"emergency":false},
   {"id":"osm-n10308587624","name":"Vetarya Veteriner","address":null,"district":null,"city":null,"lat":39.861965,"lng":32.673086,"phone":null,"opening_hours":null,"emergency":false},
