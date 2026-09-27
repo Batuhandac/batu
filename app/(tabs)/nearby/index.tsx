@@ -3,16 +3,17 @@ import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react
 import { Screen } from '@/components/ui/Screen';
 import { ClinicCard } from '@/components/clinic/ClinicCard';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { GoogleAttribution } from '@/components/ui/GoogleAttribution';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { ANKARA_DISTRICTS } from '@/lib/utils/districts';
 import { track } from '@/lib/analytics';
 import type { NearbyFilters } from '@/types';
 
-const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_verified: false };
+const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false };
 
 export default function NearbyScreen() {
-  const { clinics, loading, error, offline, cacheTimestamp, fetch } = useClinics();
+  const { clinics, loading, error, offline, cacheTimestamp, live, fetch } = useClinics();
   const { lat, lng, granted, request, setManual } = useLocation();
   const [filters, setFilters] = useState<NearbyFilters>(DEFAULT_FILTERS);
   const [showDistricts, setShowDistricts] = useState(false);
@@ -92,11 +93,11 @@ export default function NearbyScreen() {
             : 'Sana en yakın açık veterinerler'}
         </Text>
         <View className="flex-row gap-2 flex-wrap">
-          <FilterChip label="Hepsi" active={!filters.only_24_7 && !filters.only_emergency && !filters.only_verified} onPress={() => setFilters(DEFAULT_FILTERS)} />
+          <FilterChip label="Hepsi" active={!filters.only_24_7 && !filters.only_emergency && !filters.only_open} onPress={() => setFilters(DEFAULT_FILTERS)} />
           {[
+            { key: 'only_open' as const, label: 'Şu an açık' },
             { key: 'only_24_7' as const, label: '7/24' },
             { key: 'only_emergency' as const, label: 'Acil' },
-            { key: 'only_verified' as const, label: 'Doğrulanmış' },
           ].map(({ key, label }) => (
             <FilterChip key={key} label={label} active={filters[key]} onPress={() => toggleFilter(key)} />
           ))}
@@ -145,6 +146,7 @@ export default function NearbyScreen() {
           renderItem={({ item }) => <ClinicCard clinic={item} />}
           contentContainerStyle={{ paddingVertical: 8 }}
           showsVerticalScrollIndicator={false}
+          ListFooterComponent={live ? <GoogleAttribution /> : null}
         />
       )}
     </Screen>

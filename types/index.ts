@@ -1,5 +1,13 @@
 export type ClinicStatus = 'open' | 'closed' | 'unknown';
 export type VerificationStatus = 'seed' | 'verified' | 'claimed' | 'flagged';
+export type ClinicSource = 'builtin' | 'community' | 'google';
+
+// Google Places çalışma periyodu (0=Pazar … 6=Cumartesi, klinik yerel saati).
+// close yoksa yer 7/24 açıktır.
+export interface OpeningPeriod {
+  open: { day: number; hour: number; minute: number };
+  close?: { day: number; hour: number; minute: number };
+}
 
 export interface Clinic {
   id: string;
@@ -20,8 +28,12 @@ export interface Clinic {
   is_open_now: boolean;
   status: ClinicStatus;
   emergency_score: number;
-  source?: 'builtin' | 'community';
+  source?: ClinicSource;
   rating_count?: number;
+  city?: string | null;
+  // Google kliniklerinde: açık/kapalı durumu bu periyotlardan cihazda hesaplanır
+  opening_periods?: OpeningPeriod[];
+  weekday_text?: string[]; // ["Pazartesi: 09:00–19:00", ...]
 }
 
 // Bir günün çalışma penceresi (0=Pazar … 6=Cumartesi)
@@ -98,7 +110,7 @@ export interface Favorite {
 export interface NearbyFilters {
   only_24_7: boolean;
   only_emergency: boolean;
-  only_verified: boolean;
+  only_open: boolean;
 }
 
 export type District = {

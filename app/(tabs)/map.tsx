@@ -14,7 +14,7 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 0.25,
 };
 
-const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_verified: false };
+const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false };
 
 function markerColor(clinic: Clinic): string {
   if (clinic.status === 'open' || clinic.is_24_7) return '#22c55e';
@@ -24,7 +24,7 @@ function markerColor(clinic: Clinic): string {
 
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
-  const { clinics, loading, fetch } = useClinics();
+  const { clinics, loading, live, fetch } = useClinics();
   const { lat, lng, request, setManual } = useLocation();
   const [filters, setFilters] = useState<NearbyFilters>(DEFAULT_FILTERS);
   const [showDistricts, setShowDistricts] = useState(false);
@@ -161,9 +161,9 @@ export default function MapScreen() {
         }}
       >
         {[
+          { key: 'only_open' as const, label: 'Şu an açık' },
           { key: 'only_24_7' as const, label: '7/24' },
           { key: 'only_emergency' as const, label: 'Acil' },
-          { key: 'only_verified' as const, label: 'Doğrulanmış' },
         ].map(({ key, label }) => (
           <TouchableOpacity
             key={key}
@@ -236,6 +236,7 @@ export default function MapScreen() {
         >
           <Text style={{ color: '#a0aec0', fontSize: 12 }}>
             {clinics.length} klinik gösteriliyor
+            {live ? ' · Google Maps' : ''}
           </Text>
         </View>
       )}

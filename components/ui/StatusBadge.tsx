@@ -16,7 +16,7 @@ export function StatusBadge({ status, last_verified_at, size = 'md' }: Props) {
       <View className="flex-row items-center gap-1.5">
         <View className="w-2 h-2 rounded-full bg-green-open" />
         <Text className={`${textSize} text-green-light font-semibold`}>
-          Açık · {formatVerifiedAt(last_verified_at)}
+          Açık · {last_verified_at ? formatVerifiedAt(last_verified_at) : 'çalışma saatlerine göre'}
         </Text>
       </View>
     );

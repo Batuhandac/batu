@@ -2,30 +2,10 @@
 // istemci tarafı eşdeğeri. Mesafe (haversine), açık-mı (çalışma saatleri)
 // ve emergency_score hesabını cihazda yapar. Backend/internet gerektirmez.
 import type { Clinic, ClinicHours, NearbyFilters, ClinicStatus } from '@/types';
+import { haversine } from '@/lib/utils/geo';
+import { istanbulNow } from '@/lib/utils/openingHours';
 import { CLINICS } from './clinics';
 import type { SeedClinic } from './types';
-
-const R = 6371; // km
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// Avrupa/İstanbul saatinde "şu an" — cihaz farklı saat diliminde olsa bile
-// klinik saatlerini doğru değerlendirmek için ofset uygula (UTC+3).
-function istanbulNow(): { dow: number; minutes: number } {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const ist = new Date(utc + 3 * 3600000);
-  return { dow: ist.getDay(), minutes: ist.getHours() * 60 + ist.getMinutes() };
-}
 
 // Seed verisindeki kurallarla bugünün çalışma penceresini türet
 // (seed_ankara.sql çalışma saati blokları ile aynı mantık).
@@ -83,13 +63,41 @@ function lastVerifiedISO(daysAgo: number | null): string | null {
   return new Date(Date.now() - daysAgo * 86400000).toISOString();
 }
 
+/** Gömülü kaydı, şu anki açık/kapalı durumuyla Clinic'e çevirir. */
+export function seedToClinic(c: SeedClinic, lat?: number, lng?: number): Clinic {
+  const distanceKm = lat != null && lng != null ? haversine(lat, lng, c.lat, c.lng) : 0;
+  const open = isOpenNow(c);
+  return {
+    id: c.id,
+    name: c.name,
+    address: c.address,
+    district: c.district,
+    city: c.city,
+    lat: c.lat,
+    lng: c.lng,
+    phone: c.phone,
+    is_24_7: c.is_24_7,
+    accepts_emergency: c.accepts_emergency,
+    is_verified: c.is_verified,
+    verification_status: c.verification_status as Clinic['verification_status'],
+    last_verified_at: lastVerifiedISO(c.verified_days_ago),
+    rating: c.rating,
+    phone_active: true,
+    distance_km: distanceKm,
+    is_open_now: open,
+    status: statusOf(c, open),
+    emergency_score: score(c, distanceKm, open),
+    source: 'builtin',
+  };
+}
+
 /**
  * Yerel veri üzerinden yakın klinikleri döndürür — Supabase RPC ile aynı şekil.
  */
 export function queryNearbyClinics(
   lat: number,
   lng: number,
-  filters: NearbyFilters = { only_24_7: false, only_emergency: false, only_verified: false },
+  filters: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false },
   radiusKm = 15
 ): Clinic[] {
   const result: Clinic[] = [];
@@ -97,32 +105,11 @@ export function queryNearbyClinics(
   for (const c of CLINICS) {
     if (filters.only_24_7 && !c.is_24_7) continue;
     if (filters.only_emergency && !c.accepts_emergency) continue;
-    if (filters.only_verified && !c.is_verified) continue;
+    if (haversine(lat, lng, c.lat, c.lng) > radiusKm) continue;
 
-    const distanceKm = haversine(lat, lng, c.lat, c.lng);
-    if (distanceKm > radiusKm) continue;
-
-    const open = isOpenNow(c);
-    result.push({
-      id: c.id,
-      name: c.name,
-      address: c.address,
-      district: c.district,
-      lat: c.lat,
-      lng: c.lng,
-      phone: c.phone,
-      is_24_7: c.is_24_7,
-      accepts_emergency: c.accepts_emergency,
-      is_verified: c.is_verified,
-      verification_status: c.verification_status as Clinic['verification_status'],
-      last_verified_at: lastVerifiedISO(c.verified_days_ago),
-      rating: c.rating,
-      phone_active: true,
-      distance_km: distanceKm,
-      is_open_now: open,
-      status: statusOf(c, open),
-      emergency_score: score(c, distanceKm, open),
-    });
+    const clinic = seedToClinic(c, lat, lng);
+    if (filters.only_open && clinic.status !== 'open' && !clinic.is_24_7) continue;
+    result.push(clinic);
   }
 
   result.sort((a, b) => b.emergency_score - a.emergency_score);
@@ -130,10 +117,11 @@ export function queryNearbyClinics(
 }
 
 /**
- * Topluluk kliniklerini (Firestore'dan gelen) mesafe + skor ile zenginleştirir
- * ve yarıçap/filtreye göre eler. useClinics bunları yerel sonuçlarla birleştirir.
+ * Canlı (Google) ve topluluk kliniklerini mesafe + skorla zenginleştirir,
+ * yarıçap/filtreye göre eler. Gömülü veriyle aynı ağırlıklar kullanılır ki
+ * birleşik liste tek skora göre sıralanabilsin.
  */
-export function rankCommunityClinics(
+export function rankClinics(
   clinics: Clinic[],
   lat: number,
   lng: number,
@@ -142,27 +130,27 @@ export function rankCommunityClinics(
 ): Clinic[] {
   const out: Clinic[] = [];
   for (const c of clinics) {
+    const open = c.status === 'open' || c.is_24_7;
     if (filters.only_24_7 && !c.is_24_7) continue;
     if (filters.only_emergency && !c.accepts_emergency) continue;
-    if (filters.only_verified && !c.is_verified) continue;
+    if (filters.only_open && !open) continue;
     const distanceKm = haversine(lat, lng, c.lat, c.lng);
     if (distanceKm > radiusKm) continue;
-    const open = c.is_open_now;
     // Yerel skorlamayla aynı ağırlıklar (ping/feedback nötr 0.5)
-    const fOpen = open ? 1.0 : 0.0;
+    const fOpen = open ? 1.0 : c.status === 'unknown' ? 0.3 : 0.0;
     const fDistance = Math.max(0, Math.min(1, 1 - distanceKm / 15));
     const fRating = (c.rating ?? 3.5) / 5;
     let s =
       0.2 * fOpen +
       0.16 * (c.accepts_emergency ? 1 : 0) +
       0.13 * (c.is_24_7 ? 1 : 0) +
-      0.11 * 0 + // doğrulanmamış
+      0.11 * (c.is_verified ? 1 : 0) +
       0.11 * fDistance +
-      0.1 * 0 +
+      0.1 * 0 + // tazelik verisi yok
       0.08 * 0.5 +
       0.06 * 0.5 +
       0.05 * fRating;
-    if (!open && !c.is_24_7) s *= 0.2;
+    if (c.status === 'closed' && !c.is_24_7) s *= 0.2;
     out.push({ ...c, distance_km: distanceKm, emergency_score: s });
   }
   return out;

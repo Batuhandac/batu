@@ -11,10 +11,11 @@ import { PingButton } from '@/components/clinic/PingButton';
 import { PhotosSection } from '@/components/clinic/PhotosSection';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { useFavorites } from '@/lib/hooks/useFavorites';
-import { getClinicById, getClinicHours } from '@/lib/data/query';
+import { GoogleAttribution } from '@/components/ui/GoogleAttribution';
+import { getClinicById, getClinicHours, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { ReviewsSection } from '@/components/clinic/ReviewsSection';
-import { fetchPlaceDetails } from '@/lib/data/places';
+import { fetchPlaceClinic, refreshPlaceStatus } from '@/lib/data/places';
 import { track } from '@/lib/analytics';
 import { scheduleCallFeedback } from '@/lib/notifications';
 import type { Clinic, ClinicHours } from '@/types';
@@ -34,76 +35,45 @@ export default function ClinicDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [hours, setHours] = useState<ClinicHours[]>([]);
-  const [placesHoursText, setPlacesHoursText] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDirections, setShowDirections] = useState(false);
   const { isFav, isPrimaryVet, toggle, setPrimaryVet, load: loadFavs } = useFavorites();
 
   useEffect(() => {
-    loadClinic();
+    let alive = true;
+    loadClinic().then((c) => {
+      if (!alive) return;
+      setClinic(c);
+      setHours(c && getClinicById(id) ? getClinicHours(id) : []);
+      setLoading(false);
+    });
     loadFavs();
     track('clinic_detail_view', { clinic_id: id });
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
-  const loadClinic = async () => {
+  // Listede gösterilen kayıt (mesafe/durum hazır) → gömülü veri → Google
+  // (önbellek ya da Place Details). Google kliniklerinde durum her açılışta
+  // çalışma saatlerinden yeniden hesaplanır.
+  const loadClinic = async (): Promise<Clinic | null> => {
     setLoading(true);
-    const c = getClinicById(id);
-    if (c) {
-      setClinic({
-        id: c.id,
-        name: c.name,
-        address: c.address,
-        district: c.district,
-        lat: c.lat,
-        lng: c.lng,
-        phone: c.phone,
-        is_24_7: c.is_24_7,
-        accepts_emergency: c.accepts_emergency,
-        is_verified: c.is_verified,
-        verification_status: c.verification_status as Clinic['verification_status'],
-        last_verified_at:
-          c.verified_days_ago == null
-            ? null
-            : new Date(Date.now() - c.verified_days_ago * 86400000).toISOString(),
-        rating: c.rating,
-        phone_active: true,
-        distance_km: 0,
-        is_open_now: false,
-        status: 'unknown',
-        emergency_score: 0,
-      } as Clinic);
-      setHours(getClinicHours(id));
-    } else {
-      // Topluluk veya Places kliniği — bellek kaydından oku
-      const reg = getRegisteredClinic(id);
-      if (reg) {
-        setClinic(reg);
-        setHours([]);
-
-        // Google Places kliniği ise telefon + saatleri lazy fetch et
-        if (id.startsWith('gp-')) {
-          fetchPlaceDetails(id)
-            .then(details => {
-              if (!details) return;
-              if (details.phone) {
-                setClinic(prev => prev ? { ...prev, phone: details.phone, is_24_7: details.is_24_7 } : prev);
-              }
-              if (details.weekday_text.length > 0) {
-                setPlacesHoursText(details.weekday_text);
-              }
-            })
-            .catch(() => {});
-        }
-      }
-    }
-    setLoading(false);
+    const reg = getRegisteredClinic(id);
+    if (reg) return reg.source === 'google' ? refreshPlaceStatus(reg) : reg;
+    const seed = getClinicById(id);
+    if (seed) return seedToClinic(seed);
+    return fetchPlaceClinic(id).catch(() => null);
   };
 
   const handleCall = async () => {
     if (!clinic?.phone) return;
-    await track('call_tap', { clinic_id: id });
-    await scheduleCallFeedback(id, clinic.name);
-    Linking.openURL(`tel:${clinic.phone}`);
+    track('call_tap', { clinic_id: id });
+    // Önce aramayı başlat — geri bildirim bildirimi ilk seferde izin penceresi
+    // açıyor; acil arama o pencereyi beklememeli.
+    // tel: URL'inde boşluk/parantez geçersiz — "(0312) 000 00 00" → "03120000000"
+    await Linking.openURL(`tel:${clinic.phone.replace(/[^\d+]/g, '')}`).catch(() => {});
+    scheduleCallFeedback(id, clinic.name).catch(() => {});
   };
 
   const handleWhatsApp = async () => {
@@ -151,6 +121,9 @@ export default function ClinicDetailScreen() {
   }
 
   const open = clinic.status === 'open' || clinic.is_24_7;
+  const statusLabel = open ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Bilinmiyor';
+  const statusColor = open ? '#68D391' : clinic.status === 'closed' ? '#FC8181' : '#c4c6cc';
+  const weekdayText = hours.length === 0 ? clinic.weekday_text ?? [] : [];
   const initial = clinic.name.trim().charAt(0).toUpperCase();
 
   return (
@@ -158,7 +131,7 @@ export default function ClinicDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Kapak (profil) */}
         <LinearGradient
-          colors={open ? ['#1f6b48', '#15324a', '#0D1B2A'] : ['#3a2030', '#15324a', '#0D1B2A']}
+          colors={open ? ['#1f6b48', '#15324a', '#131315'] : ['#3a2030', '#15324a', '#131315']}
           style={{ paddingTop: 56, paddingBottom: 20, paddingHorizontal: 16 }}
         >
           {/* Üst bar */}
@@ -189,7 +162,7 @@ export default function ClinicDetailScreen() {
             </View>
             <Text className="text-white text-2xl font-bold text-center px-4">{clinic.name}</Text>
             {clinic.district && (
-              <Text className="text-gray-text text-sm mt-1">📍 {clinic.district}, Ankara</Text>
+              <Text className="text-gray-text text-sm mt-1">📍 {clinic.district}, {clinic.city ?? 'Ankara'}</Text>
             )}
             {clinic.rating ? (
               <View className="flex-row items-center gap-1 mt-1.5">
@@ -204,7 +177,7 @@ export default function ClinicDetailScreen() {
 
           {/* İstatistik şeridi */}
           <View className="flex-row mt-5 bg-black/20 rounded-2xl py-3">
-            <Stat label="Durum" value={open ? 'Açık' : 'Kapalı'} valueColor={open ? '#68D391' : '#FC8181'} />
+            <Stat label="Durum" value={statusLabel} valueColor={statusColor} />
             <View className="w-px bg-white/10" />
             <Stat label="Puan" value={clinic.rating ? clinic.rating.toFixed(1) : '—'} />
             <View className="w-px bg-white/10" />
@@ -271,10 +244,10 @@ export default function ClinicDetailScreen() {
               ))}
             </View>
           )}
-          {hours.length === 0 && placesHoursText.length > 0 && (
+          {weekdayText.length > 0 && (
             <View>
               <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Çalışma Saatleri</Text>
-              {placesHoursText.map((line, i) => {
+              {weekdayText.map((line, i) => {
                 const [day, ...rest] = line.split(':');
                 return (
                   <View key={i} className="flex-row justify-between py-0.5">
@@ -355,6 +328,7 @@ export default function ClinicDetailScreen() {
         <ReviewsSection clinicId={id} clinicName={clinic.name} />
 
         <View className="px-4 pb-8">
+          {clinic.source === 'google' && <GoogleAttribution />}
           <Disclaimer />
         </View>
       </ScrollView>

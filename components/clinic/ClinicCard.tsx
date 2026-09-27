@@ -12,8 +12,9 @@ interface Props {
 export function ClinicCard({ clinic }: Props) {
   const open = clinic.status === 'open' || clinic.is_24_7;
   const accentColor = open ? '#eac333' : clinic.accepts_emergency ? '#ff7f1c' : '#44474c';
-  const statusColor = open ? '#eac333' : clinic.accepts_emergency ? '#ff7f1c' : '#8e9196';
-  const statusLabel = open ? 'Açık' : clinic.accepts_emergency ? 'Acil' : 'Kapalı';
+  const statusColor = open ? '#eac333' : '#8e9196';
+  // Kapalı bir kliniği asla "Acil" diye gösterme — gece yanlış adrese gidilmesin
+  const statusLabel = open ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Saat bilinmiyor';
 
   const onPress = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -78,7 +79,7 @@ export function ClinicCard({ clinic }: Props) {
 
         {/* Alt satır: status + ok */}
         <View className="flex-row items-center justify-between mt-1">
-          <View className="flex-row items-center gap-2">
+          <View className="flex-1 flex-row flex-wrap items-center gap-2 mr-2">
             {/* Durum badge */}
             <View
               className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
@@ -92,12 +93,20 @@ export function ClinicCard({ clinic }: Props) {
               <Text style={{ color: statusColor, fontSize: 12, fontWeight: '700' }}>{statusLabel}</Text>
             </View>
             {/* Etiketler */}
-            {clinic.is_24_7 && !open && (
+            {clinic.is_24_7 && (
               <View
                 className="rounded-full px-2.5 py-1"
                 style={{ backgroundColor: 'rgba(68,71,76,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
               >
                 <Text className="text-gray-label text-xs font-semibold">7/24</Text>
+              </View>
+            )}
+            {clinic.accepts_emergency && !clinic.is_24_7 && (
+              <View
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: 'rgba(255,127,28,0.12)', borderWidth: 1, borderColor: 'rgba(255,127,28,0.3)' }}
+              >
+                <Text style={{ color: '#ff7f1c', fontSize: 12, fontWeight: '600' }}>Acil kabul</Text>
               </View>
             )}
             {clinic.source === 'community' && (

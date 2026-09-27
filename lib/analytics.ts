@@ -1,5 +1,5 @@
 import { PostHog } from 'posthog-react-native';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 export const posthog = new PostHog(
   process.env.EXPO_PUBLIC_POSTHOG_KEY ?? 'phc_placeholder',
@@ -21,19 +21,24 @@ interface EventProps {
   [key: string]: string | number | boolean | null | undefined;
 }
 
+// Çağıranlar (ACİL butonu, Ara butonu) bunu await ediyor — ağ isteği arka planda
+// kalmalı ki analitik yüzünden arama/gezinme gecikmesin.
 export async function track(event: EventName, props: EventProps = {}) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   posthog.capture(event, props as any);
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('user_events').insert({
-      user_id: user?.id ?? null,
-      event_name: event,
-      clinic_id: props.clinic_id ?? null,
-      pet_id: props.pet_id ?? null,
-      props,
-    });
-  } catch {
-    // non-critical
-  }
+  if (!isSupabaseConfigured) return;
+  void (async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('user_events').insert({
+        user_id: user?.id ?? null,
+        event_name: event,
+        clinic_id: props.clinic_id ?? null,
+        pet_id: props.pet_id ?? null,
+        props,
+      });
+    } catch {
+      // non-critical
+    }
+  })();
 }

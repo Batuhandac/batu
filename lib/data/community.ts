@@ -14,6 +14,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDb, getStorageInstance, isFirebaseConfigured } from '@/lib/firebase';
 import { getDeviceId, getAuthorName } from '@/lib/deviceId';
+import { istanbulNow } from '@/lib/utils/openingHours';
 import type {
   Clinic,
   CommunityClinicInput,
@@ -46,11 +47,7 @@ export async function submitCommunityClinic(input: CommunityClinicInput): Promis
 function isOpenFromHours(hours: DayHours[] | undefined, is247: boolean): boolean {
   if (is247) return true;
   if (!hours || hours.length === 0) return false;
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const ist = new Date(utc + 3 * 3600000);
-  const dow = ist.getDay();
-  const mins = ist.getHours() * 60 + ist.getMinutes();
+  const { dow, minutes: mins } = istanbulNow();
   const today = hours.find((h) => h.weekday === dow);
   if (!today || today.closed) return false;
   const [oh, om] = today.open.split(':').map(Number);
@@ -68,7 +65,9 @@ export async function fetchCommunityClinics(): Promise<Clinic[]> {
     return snap.docs.map((d) => {
       const data = d.data() as any;
       const open = isOpenFromHours(data.hours, data.is_24_7);
-      const status: ClinicStatus = data.is_24_7 || open ? 'open' : 'closed';
+      const hasHours = Array.isArray(data.hours) && data.hours.length > 0;
+      const status: ClinicStatus =
+        data.is_24_7 || open ? 'open' : hasHours ? 'closed' : 'unknown';
       return {
         id: 'comm-' + d.id,
         name: data.name,

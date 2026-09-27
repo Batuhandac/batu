@@ -1,231 +1,293 @@
-// Google Places API — Ankara veteriner klinikleri
-// Firebase Firestore önbelleği: tüm kullanıcılar tek cache paylaşır (maliyet ~$0)
-// API key yoksa sessizce boş döner, statik veri devreye girer.
+// Google Places API (New) — kullanıcının konumuna göre canlı veteriner verisi.
+// - İki arama paralel: en yakın 20 veteriner (Nearby Search) + çevredeki
+//   7/24 / acil veterinerler (Text Search). Gece en yakınlar kapalıyken bile
+//   açık bir klinik listede olsun diye ikincisi gerekli.
+// - Açık/kapalı durumu Google'ın o anki "openNow" değerinden değil, çalışma
+//   periyotlarından cihazda hesaplanır → önbellek eskise de durum güncel kalır.
+// - Sonuçlar cihazda (AsyncStorage) ~2 km'lik hücre başına 3 gün saklanır.
+// - Anahtar yoksa sessizce boş döner, gömülü veri devreye girer.
+//
+// Google Cloud'da "Places API (New)" etkin olmalı. Eski (legacy) Places API
+// yeni projelerde açılamıyor; bu yüzden legacy uç noktaları kullanılmıyor.
 
-import { getDb } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { Clinic } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import { haversine } from '@/lib/utils/geo';
+import { isAlwaysOpen, statusFromPeriods } from '@/lib/utils/openingHours';
+import type { Clinic, OpeningPeriod } from '@/types';
 
 const KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? '';
-const BASE = 'https://maps.googleapis.com/maps/api/place';
-const ANKARA = { lat: 39.9334, lng: 32.8597 };
+const API = 'https://places.googleapis.com/v1';
+const TIMEOUT_MS = 8000;
 
-// Firebase TTL
-const NEARBY_TTL = 6 * 3600 * 1000;   // 6 saat
-const DETAILS_TTL = 7 * 24 * 3600 * 1000; // 7 gün
+const NEARBY_RADIUS_M = 15000;
+const EMERGENCY_RADIUS_M = 30000;
+export const PLACES_RADIUS_KM = EMERGENCY_RADIUS_M / 1000;
 
-export const isPlacesConfigured = Boolean(KEY && KEY.length > 10);
+const CACHE_KEY = 'patisos:places:v1';
+const CACHE_TTL = 3 * 24 * 3600 * 1000; // 3 gün
+const CELL_DEG = 0.02; // ~2 km
 
-// ─── Yardımcılar ─────────────────────────────────────────────────────────────
+export const isPlacesConfigured = KEY.length > 10;
 
-// Ankara ilçelerini tespit et ("..., Çankaya, Ankara" → "Çankaya")
+const FIELDS = [
+  'id',
+  'displayName',
+  'shortFormattedAddress',
+  'formattedAddress',
+  'addressComponents',
+  'location',
+  'rating',
+  'userRatingCount',
+  'nationalPhoneNumber',
+  'internationalPhoneNumber',
+  'regularOpeningHours',
+  'businessStatus',
+];
+const SEARCH_MASK = FIELDS.map((f) => `places.${f}`).join(',');
+const DETAILS_MASK = FIELDS.join(',');
+
+// ─── HTTP ────────────────────────────────────────────────────────────────────
+
+function headers(fieldMask: string): Record<string, string> {
+  const h: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': KEY,
+    'X-Goog-FieldMask': fieldMask,
+  };
+  // Anahtar Google Cloud'da uygulamaya kısıtlanırsa Google bu başlıklara bakar
+  if (Platform.OS === 'ios') {
+    h['X-Ios-Bundle-Identifier'] = Constants.expoConfig?.ios?.bundleIdentifier ?? 'com.patisos.app';
+  } else if (Platform.OS === 'android') {
+    h['X-Android-Package'] = Constants.expoConfig?.android?.package ?? 'com.patisos.app';
+  }
+  return h;
+}
+
+async function request(path: string, fieldMask: string, body?: object): Promise<any> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API}/${path}`, {
+      method: body ? 'POST' : 'GET',
+      headers: headers(fieldMask),
+      body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(`Places API ${res.status} ${json?.error?.status ?? ''} ${json?.error?.message ?? ''}`);
+    }
+    return json;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── Google yanıtı → Clinic ─────────────────────────────────────────────────
+
 const KNOWN_DISTRICTS = [
-  'Çankaya','Keçiören','Mamak','Etimesgut','Yenimahalle','Sincan','Altındağ',
-  'Pursaklar','Gölbaşı','Kahramankazan','Beypazarı','Nallıhan','Polatlı',
-  'Haymana','Bala','Şereflikoçhisar','Kızılcahamam','Çamlıdere','Ayaş',
-  'Güdül','Akyurt','Çubuk','Kazan',
+  'Çankaya', 'Keçiören', 'Mamak', 'Etimesgut', 'Yenimahalle', 'Sincan', 'Altındağ',
+  'Pursaklar', 'Gölbaşı', 'Kahramankazan', 'Beypazarı', 'Nallıhan', 'Polatlı',
+  'Haymana', 'Bala', 'Şereflikoçhisar', 'Kızılcahamam', 'Çamlıdere', 'Ayaş',
+  'Güdül', 'Akyurt', 'Çubuk', 'Elmadağ', 'Evren', 'Kalecik',
 ];
 
-function extractDistrict(vicinity: string): string | null {
-  const upper = vicinity.toUpperCase();
-  for (const d of KNOWN_DISTRICTS) {
-    if (upper.includes(d.toUpperCase())) return d;
+function component(p: any, type: string): string | null {
+  const c = (p.addressComponents ?? []).find((a: any) => (a.types ?? []).includes(type));
+  return c?.longText ?? null;
+}
+
+// Türkiye'de administrative_area_level_2 = ilçe, level_1 = il
+function districtOf(p: any, address: string): string | null {
+  const d = component(p, 'administrative_area_level_2');
+  if (d) return d;
+  const lower = trLower(address);
+  return KNOWN_DISTRICTS.find((k) => lower.includes(trLower(k))) ?? null;
+}
+
+function trLower(s: string): string {
+  return s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+}
+
+// proto3 JSON sıfır değerleri atlayabilir (ör. Pazar 00:00 → {}), varsayılan 0
+function normalizePeriods(raw: any[] | undefined): OpeningPeriod[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const point = (x: any) => ({ day: x?.day ?? 0, hour: x?.hour ?? 0, minute: x?.minute ?? 0 });
+  return raw.map((r) => ({ open: point(r.open), ...(r.close ? { close: point(r.close) } : {}) }));
+}
+
+const EMERGENCY_HINT = /acil|7\s*\/\s*24|24 saat|nöbetçi/;
+
+export function toPlaceClinic(p: any): Clinic | null {
+  if (!p?.id || !p.location) return null;
+  if (p.businessStatus && p.businessStatus !== 'OPERATIONAL') return null;
+
+  const name: string = p.displayName?.text ?? 'Veteriner Kliniği';
+  const address: string | null = p.shortFormattedAddress ?? p.formattedAddress ?? null;
+  const periods = normalizePeriods(p.regularOpeningHours?.periods);
+  const is247 = isAlwaysOpen(periods);
+
+  return {
+    id: 'gp-' + p.id,
+    name,
+    address,
+    district: districtOf(p, p.formattedAddress ?? address ?? ''),
+    city: component(p, 'administrative_area_level_1'),
+    lat: p.location.latitude,
+    lng: p.location.longitude,
+    phone: p.nationalPhoneNumber ?? p.internationalPhoneNumber ?? null,
+    is_24_7: is247,
+    accepts_emergency: is247 || EMERGENCY_HINT.test(trLower(name)),
+    is_verified: false,
+    verification_status: 'seed',
+    last_verified_at: null,
+    rating: p.rating ?? null,
+    rating_count: p.userRatingCount,
+    phone_active: true,
+    distance_km: 0,
+    is_open_now: false,
+    status: 'unknown',
+    emergency_score: 0,
+    source: 'google',
+    opening_periods: periods,
+    weekday_text: p.regularOpeningHours?.weekdayDescriptions,
+  };
+}
+
+/** Açık/kapalı durumunu (ve konum verildiyse mesafeyi) şu ana göre yeniler. */
+export function refreshPlaceStatus(c: Clinic, lat?: number, lng?: number): Clinic {
+  const status = c.is_24_7 ? 'open' : statusFromPeriods(c.opening_periods);
+  return {
+    ...c,
+    status,
+    is_open_now: status === 'open',
+    distance_km: lat != null && lng != null ? haversine(lat, lng, c.lat, c.lng) : c.distance_km,
+  };
+}
+
+// ─── Cihaz önbelleği ─────────────────────────────────────────────────────────
+
+interface CacheShape {
+  cells: Record<string, { ts: number; ids: string[] }>;
+  places: Record<string, Clinic>;
+}
+
+let mem: CacheShape | null = null;
+
+async function loadCache(): Promise<CacheShape> {
+  if (mem) return mem;
+  try {
+    const raw = await AsyncStorage.getItem(CACHE_KEY);
+    mem = raw ? (JSON.parse(raw) as CacheShape) : { cells: {}, places: {} };
+  } catch {
+    mem = { cells: {}, places: {} };
   }
-  // Fallback: parçalara ayır, son kısımları dene
-  const parts = vicinity.split(',').map(p => p.trim().replace('/Ankara','').trim());
-  for (let i = parts.length - 2; i >= 0; i--) {
-    if (parts[i] && !parts[i].match(/Cad\.|Sk\.|Blv\.|No:|Mah\.|^\d/i)) {
-      return parts[i];
+  return mem;
+}
+
+async function saveCache(c: CacheShape): Promise<void> {
+  // Süresi dolan hücreleri ve artık hiçbir hücrenin göstermediği klinikleri at
+  const now = Date.now();
+  for (const [k, cell] of Object.entries(c.cells)) {
+    if (now - cell.ts > CACHE_TTL) delete c.cells[k];
+  }
+  const used = new Set(Object.values(c.cells).flatMap((cell) => cell.ids));
+  for (const id of Object.keys(c.places)) {
+    if (!used.has(id)) delete c.places[id];
+  }
+  try {
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(c));
+  } catch {
+    // disk dolu vb. — bellek içi kopya yine kullanılır
+  }
+}
+
+function cellOf(lat: number, lng: number): { key: string; lat: number; lng: number } {
+  const cLat = Math.round(lat / CELL_DEG) * CELL_DEG;
+  const cLng = Math.round(lng / CELL_DEG) * CELL_DEG;
+  return { key: `${cLat.toFixed(2)},${cLng.toFixed(2)}`, lat: cLat, lng: cLng };
+}
+
+// ─── Arama ───────────────────────────────────────────────────────────────────
+
+const inflight = new Map<string, Promise<Clinic[]>>();
+
+async function searchCell(cell: { key: string; lat: number; lng: number }): Promise<Clinic[]> {
+  const center = { latitude: cell.lat, longitude: cell.lng };
+  const [nearby, emergency] = await Promise.allSettled([
+    request('places:searchNearby', SEARCH_MASK, {
+      includedTypes: ['veterinary_care'],
+      maxResultCount: 20,
+      rankPreference: 'DISTANCE',
+      locationRestriction: { circle: { center, radius: NEARBY_RADIUS_M } },
+      languageCode: 'tr',
+      regionCode: 'TR',
+    }),
+    request('places:searchText', SEARCH_MASK, {
+      textQuery: '7/24 acil veteriner',
+      includedType: 'veterinary_care',
+      pageSize: 20,
+      locationBias: { circle: { center, radius: EMERGENCY_RADIUS_M } },
+      languageCode: 'tr',
+      regionCode: 'TR',
+    }),
+  ]);
+  if (nearby.status === 'rejected' && emergency.status === 'rejected') throw nearby.reason;
+
+  const byId = new Map<string, Clinic>();
+  for (const r of [nearby, emergency]) {
+    if (r.status !== 'fulfilled') continue;
+    for (const p of r.value?.places ?? []) {
+      const c = toPlaceClinic(p);
+      if (c && !byId.has(c.id)) byId.set(c.id, c);
     }
   }
-  return null;
-}
+  const clinics = [...byId.values()];
 
-function is24_7(periods?: { open?: { day: number; time: string }; close?: { day: number; time: string } }[]): boolean {
-  if (!periods || periods.length === 0) return false;
-  return periods.some(p => p.open?.time === '0000' && !p.close);
-}
-
-function extractPlaceId(clinicId: string): string {
-  return clinicId.startsWith('gp-') ? clinicId.slice(3) : clinicId;
-}
-
-async function gFetch(endpoint: string, params: Record<string, string>): Promise<any> {
-  const qs = new URLSearchParams({ ...params, key: KEY, language: 'tr' });
-  const res = await fetch(`${BASE}/${endpoint}?${qs}`);
-  if (!res.ok) throw new Error(`Places API HTTP ${res.status}`);
-  const json = await res.json();
-  if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
-    throw new Error(`Places API status: ${json.status}`);
+  // Yalnız iki arama da başarılıysa sakla — yarım sonuç 3 gün kalmasın
+  if (nearby.status === 'fulfilled' && emergency.status === 'fulfilled') {
+    const cache = await loadCache();
+    cache.cells[cell.key] = { ts: Date.now(), ids: clinics.map((c) => c.id) };
+    for (const c of clinics) cache.places[c.id] = c;
+    await saveCache(cache);
   }
-  return json;
+  return clinics;
 }
 
-// ─── Yakın Arama — 6 saatlik global Firebase önbelleği ───────────────────────
-
-export async function fetchPlacesClinics(
-  userLat: number,
-  userLng: number
-): Promise<Clinic[]> {
+/** Konumun çevresindeki Google veteriner kayıtları (durum + mesafe güncel). */
+export async function fetchPlacesClinics(lat: number, lng: number): Promise<Clinic[]> {
   if (!isPlacesConfigured) return [];
 
-  const db = getDb();
+  const cell = cellOf(lat, lng);
+  const cache = await loadCache();
+  const hit = cache.cells[cell.key];
 
-  // 1) Firebase cache kontrolü
-  if (db) {
-    try {
-      const snap = await getDoc(doc(db, 'places_cache', 'ankara_vets'));
-      if (snap.exists()) {
-        const d = snap.data();
-        const ageMs = Date.now() - (d.updated_at?.toDate?.()?.getTime?.() ?? 0);
-        if (ageMs < NEARBY_TTL && Array.isArray(d.clinics) && d.clinics.length > 0) {
-          return enrichWithDistance(d.clinics as Clinic[], userLat, userLng);
-        }
-      }
-    } catch {
-      // cache okunamadı — API'ye düş
+  let base: Clinic[];
+  if (hit && Date.now() - hit.ts < CACHE_TTL) {
+    base = hit.ids.map((id) => cache.places[id]).filter(Boolean);
+  } else {
+    let pending = inflight.get(cell.key);
+    if (!pending) {
+      pending = searchCell(cell).finally(() => inflight.delete(cell.key));
+      inflight.set(cell.key, pending);
     }
+    base = await pending;
   }
-
-  // 2) Google Places Nearby Search (en fazla 3 sayfa = 60 klinik)
-  const raw: any[] = [];
-  let pageToken: string | undefined;
-
-  do {
-    if (pageToken) await new Promise(r => setTimeout(r, 2200)); // Google bekleme zorunluluğu
-    const params: Record<string, string> = {
-      location: `${ANKARA.lat},${ANKARA.lng}`,
-      radius: '25000',
-      type: 'veterinary_care',
-    };
-    if (pageToken) params.pagetoken = pageToken;
-
-    const data = await gFetch('nearbysearch/json', params);
-    raw.push(...(data.results ?? []));
-    pageToken = data.next_page_token;
-  } while (pageToken && raw.length < 60);
-
-  const clinics: Clinic[] = raw.map((p: any) => {
-    const openNow = p.opening_hours?.open_now ?? false;
-    const nameLower = (p.name as string).toLowerCase();
-    const acceptsEmergency =
-      nameLower.includes('acil') ||
-      nameLower.includes('24 saat') ||
-      nameLower.includes('24/7') ||
-      (p.types ?? []).includes('emergency_room');
-
-    return {
-      id: 'gp-' + p.place_id,
-      name: p.name,
-      address: p.vicinity ?? null,
-      district: extractDistrict(p.vicinity ?? ''),
-      lat: p.geometry.location.lat,
-      lng: p.geometry.location.lng,
-      phone: null,            // Place Details ile doldurulur
-      is_24_7: false,         // Place Details ile doldurulur
-      accepts_emergency: acceptsEmergency,
-      is_verified: false,
-      verification_status: 'claimed' as const,
-      last_verified_at: null,
-      rating: p.rating ?? null,
-      rating_count: p.user_ratings_total ?? undefined,
-      phone_active: true,
-      distance_km: 0,
-      is_open_now: openNow,
-      status: openNow ? 'open' as const : 'closed' as const,
-      emergency_score: 0,
-      source: 'community' as const, // Clinic tipini zorlamak için community kullan
-    };
-  });
-
-  // 3) Firebase'e kaydet (6 saat sakla)
-  if (db && clinics.length > 0) {
-    try {
-      await setDoc(doc(db, 'places_cache', 'ankara_vets'), {
-        clinics,
-        updated_at: serverTimestamp(),
-      });
-    } catch {
-      // kaydetme başarısız — yine de verileri döndür
-    }
-  }
-
-  return enrichWithDistance(clinics, userLat, userLng);
+  return base.map((c) => refreshPlaceStatus(c, lat, lng));
 }
 
-function enrichWithDistance(clinics: Clinic[], lat: number, lng: number): Clinic[] {
-  return clinics.map(c => ({
-    ...c,
-    distance_km: haversine(lat, lng, c.lat, c.lng),
-  }));
-}
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// ─── Klinik Detayı (telefon + saatler) — 7 günlük cache ─────────────────────
-
-export interface PlaceDetails {
-  phone: string | null;
-  is_24_7: boolean;
-  weekday_text: string[];   // ["Pazartesi: 09:00–19:00", ...]
-}
-
-export async function fetchPlaceDetails(clinicId: string): Promise<PlaceDetails | null> {
+/** Tek Google kliniği (detay ekranı): önce önbellek, yoksa Place Details. */
+export async function fetchPlaceClinic(clinicId: string): Promise<Clinic | null> {
+  if (!clinicId.startsWith('gp-')) return null;
+  const cache = await loadCache();
+  const cached = cache.places[clinicId];
+  if (cached) return refreshPlaceStatus(cached);
   if (!isPlacesConfigured) return null;
-  const placeId = extractPlaceId(clinicId);
 
-  const db = getDb();
-
-  // Cache kontrolü
-  if (db) {
-    try {
-      const snap = await getDoc(doc(db, 'places_cache', `det_${placeId}`));
-      if (snap.exists()) {
-        const d = snap.data();
-        const ageMs = Date.now() - (d.updated_at?.toDate?.()?.getTime?.() ?? 0);
-        if (ageMs < DETAILS_TTL) return d.details as PlaceDetails;
-      }
-    } catch {}
-  }
-
-  // Google Place Details
-  const data = await gFetch('details/json', {
-    place_id: placeId,
-    fields: 'formatted_phone_number,opening_hours',
-  });
-
-  const r = data.result ?? {};
-  const periods = r.opening_hours?.periods ?? [];
-
-  const details: PlaceDetails = {
-    phone: r.formatted_phone_number ?? null,
-    is_24_7: is24_7(periods),
-    weekday_text: r.opening_hours?.weekday_text ?? [],
-  };
-
-  if (db) {
-    try {
-      await setDoc(doc(db, 'places_cache', `det_${placeId}`), {
-        details,
-        updated_at: serverTimestamp(),
-      });
-    } catch {}
-  }
-
-  return details;
+  const placeId = encodeURIComponent(clinicId.slice(3));
+  const p = await request(`places/${placeId}?languageCode=tr&regionCode=TR`, DETAILS_MASK);
+  const c = toPlaceClinic(p);
+  return c ? refreshPlaceStatus(c) : null;
 }
-
-// ─── Fotoğraf URL'si (ücretsiz — sadece URL oluştur) ─────────────────────────
-export function getPlacePhotoUrl(photoReference: string, maxWidth = 600): string {
-  return `${BASE}/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${KEY}`;
-}
-
-export { extractPlaceId };
