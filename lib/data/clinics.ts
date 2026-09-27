@@ -1,7 +1,7 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yeniden üret: node scripts/gen-clinics-osm.js
 // Veri: © OpenStreetMap katkıcıları, ODbL 1.0 — https://www.openstreetmap.org/copyright
 // 562 veteriner kliniği (Türkiye, amenity=veterinary)
-// osm_base: 2026-09-27T14:34:51Z
+// osm_base: 2026-09-27T16:49:06Z
 import type { SeedClinic } from './types';
 
 export const CLINICS: SeedClinic[] = [
