@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
@@ -15,8 +15,14 @@ import {
   Button,
   LogoMark,
   Wordmark,
+  Carousel,
+  IconButton,
   type IconName,
 } from '@/components/ds';
+import { BannerCard } from '@/components/home/BannerCard';
+import { QuestionCard } from '@/components/community/QuestionCard';
+import { loadCachedRemoteBanners, fetchRemoteBanners, selectBanners } from '@/lib/content/banners';
+import { useLatestQuestions, useMyQuestions, useUnreadMessages } from '@/lib/hooks/useCommunity';
 import { useTheme, radius, shadow } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
 import { useFavorites } from '@/lib/hooks/useFavorites';
@@ -35,7 +41,7 @@ function greeting(): string {
 
 const QUICK: { icon: IconName; title: string; text: string; href: string }[] = [
   { icon: 'list', title: 'Yakın klinikler', text: 'Açık olanlar önce', href: '/(tabs)/nearby' },
-  { icon: 'map', title: 'Harita', text: 'Çevrendeki klinikler', href: '/(tabs)/map' },
+  { icon: 'map', title: 'Harita', text: 'Çevrendeki klinikler', href: '/map' },
   { icon: 'bandage-outline', title: 'İlk yardım', text: 'Veterinere kadar', href: '/first-aid' },
   { icon: 'id-card-outline', title: 'Acil kart', text: 'Dostunun bilgileri', href: '/(tabs)/pets' },
 ];
@@ -45,8 +51,29 @@ export default function HomeScreen() {
   const { pets, load: loadPets } = usePets();
   const { favorites, load: loadFavs } = useFavorites();
   const { source, label } = useLocation();
+  const { width } = useWindowDimensions();
+  const latest = useLatestQuestions(3);
+  const myQuestions = useMyQuestions();
+  const unreadMessages = useUnreadMessages();
+  const [remoteBanners, setRemoteBanners] = useState<Awaited<ReturnType<typeof loadCachedRemoteBanners>>>([]);
 
-  useFocusEffect(useCallback(() => { loadPets(); loadFavs(); }, [loadPets, loadFavs]));
+  useEffect(() => {
+    loadCachedRemoteBanners().then(setRemoteBanners);
+    fetchRemoteBanners().then((r) => r && setRemoteBanners(r));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPets();
+      loadFavs();
+      latest.reload();
+      myQuestions.reload();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadPets, loadFavs, latest.reload, myQuestions.reload])
+  );
+
+  const banners = useMemo(() => selectBanners(remoteBanners, pets.length > 0), [remoteBanners, pets.length]);
+  const myUpdates = myQuestions.mine.filter((q) => (myQuestions.unread[q.id] ?? 0) > 0);
 
   const primaryVet = favorites.find((f) => f.is_primary_vet);
   const primaryVetName = primaryVet
@@ -66,6 +93,7 @@ export default function HomeScreen() {
           <LogoMark size={34} />
           <Wordmark size={21} />
         </View>
+        <View style={{ flex: 1 }} />
         <Pressable
           onPress={() => router.push('/(tabs)/nearby')}
           accessibilityRole="button"
@@ -74,7 +102,8 @@ export default function HomeScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 6,
-            maxWidth: 170,
+            maxWidth: 150,
+            marginRight: 8,
             paddingHorizontal: 12,
             height: 36,
             borderRadius: radius.pill,
@@ -88,6 +117,16 @@ export default function HomeScreen() {
             {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Konumun' : 'Konum seç'}
           </Text>
         </Pressable>
+        <View>
+          <IconButton icon="chatbubbles-outline" onPress={() => router.push('/messages')} accessibilityLabel={unreadMessages > 0 ? `Mesajlar, ${unreadMessages} okunmamış` : 'Mesajlar'} size={36} />
+          {unreadMessages > 0 ? (
+            <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: t.sos, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderWidth: 2, borderColor: t.bg }}>
+              <Text variant="caption" color={t.onSos} style={{ fontSize: 10, lineHeight: 12 }}>
+                {unreadMessages > 9 ? '9+' : unreadMessages}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
@@ -163,6 +202,31 @@ export default function HomeScreen() {
         ))}
       </View>
 
+      {/* Bannerlar */}
+      {banners.length > 0 ? (
+        <View style={{ marginTop: 24 }}>
+          <Carousel data={banners} keyOf={(b) => b.id} itemWidth={Math.min(width - 40, 420)} renderItem={(b) => <BannerCard banner={b} />} />
+        </View>
+      ) : null}
+
+      {/* Sorularıma yeni yanıtlar */}
+      {myUpdates.length > 0 ? (
+        <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Card tone="primary" onPress={() => router.push(`/community/${myUpdates[0].id}`)} accessibilityLabel="Soruna yeni yanıt var">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <IconBadge name="chatbubble-ellipses" size={40} color={t.onPrimary} background={t.primary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyStrong">Soruna {myQuestions.total} yeni yanıt var</Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {myUpdates[0].title}
+                </Text>
+              </View>
+              <Icon name="chevron-forward" size={18} color={t.primary} />
+            </View>
+          </Card>
+        </View>
+      ) : null}
+
       {/* Dostlar */}
       <Section title="Dostların" action={pets.length > 0 ? 'Tümü' : undefined} onAction={() => router.push('/(tabs)/pets')}>
         {pets.length > 0 ? (
@@ -215,23 +279,28 @@ export default function HomeScreen() {
         </Section>
       )}
 
-      {/* İpucu */}
-      <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-        <Card tone="honey">
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Icon name="information-circle" size={22} color={t.honey} />
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong">Gitmeden önce mutlaka ara</Text>
-              <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
-                Klinik dolu ya da o an kapalı olabilir. Aramak, varınca zaman kazandırır.
-              </Text>
+      {/* Topluluk */}
+      <Section title="Topluluktan" action="Tümü" onAction={() => router.push('/community')}>
+        {latest.items.length > 0 ? (
+          latest.items.map((q) => <QuestionCard key={q.id} q={q} compact />)
+        ) : (
+          <Card>
+            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+              <IconBadge name="chatbubbles-outline" size={48} />
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyStrong">Veterinere sor</Text>
+                <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
+                  Beslenme, davranış, aşı… Acil olmayan soruların için topluluğa yaz.
+                </Text>
+              </View>
             </View>
-          </View>
-        </Card>
-      </View>
+          </Card>
+        )}
+        <Button title="Soru sor" variant="soft" icon="create-outline" onPress={() => router.push('/community/ask')} style={{ marginTop: 4 }} full />
+      </Section>
 
       {/* Veteriner hekimlere */}
-      <Pressable onPress={() => router.push('/vets')} style={{ paddingHorizontal: 20, marginTop: 20 }} accessibilityRole="button">
+      <Pressable onPress={() => router.push('/vets')} style={{ paddingHorizontal: 20, marginTop: 28 }} accessibilityRole="button">
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
           <Icon name="medical-outline" size={16} color={t.textMuted} />
           <Text variant="caption" tone="muted">

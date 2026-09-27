@@ -40,6 +40,14 @@ destekler. Ölçek `type` tokenlarındadır (display, title, headline, body, cal
 caption, overline, button). Büyük harf gerektiğinde `trUpper` kullanılır
 (`i → İ`, `ı → I`).
 
+## Çizimler
+
+`components/art` — logo diliyle aynı düz, yuvarlak çizimler (`emergency`, `petcard`,
+`community`, `vet`, `heat`, `vaccine`, `shield`, `chat`). Her çizim arkada yumuşak bir
+daire, tek ana nesne, bal rengi pırıltı ve pati izleri kullanır. Renkli zeminde
+`onColor`, koyu zeminde `dark` ile çağrılır. Yeni çizim eklerken aynı 200×160 tuvali,
+aynı paleti ve çizgisiz düz dolguyu koru; fotoğraf ya da stok illüstrasyon kullanma.
+
 ## İkonlar
 
 Yalnızca **Ionicons** (`components/ds/Icon.tsx`). Emoji kullanılmaz; ne arayüzde

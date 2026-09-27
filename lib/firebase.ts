@@ -1,4 +1,4 @@
-// Firebase (Firestore) — topluluk içeriği için: kullanıcı klinikleri + yorumlar.
+// Firebase (Firestore, Storage, Auth) — topluluk içeriği, yorumlar ve mesajlar.
 // Yapılandırma app.json > extra.firebase veya EXPO_PUBLIC_FIREBASE_* env'den okunur.
 // Yapılandırma yoksa uygulama yerel veriyle sorunsuz çalışmaya devam eder
 // (topluluk özellikleri sessizce devre dışı kalır).
@@ -37,7 +37,7 @@ export const isFirebaseConfigured = Boolean(config.apiKey && config.projectId &&
 let _db: Firestore | null = null;
 let _storage: FirebaseStorage | null = null;
 
-function getApp_(): FirebaseApp | null {
+export function getFirebaseApp(): FirebaseApp | null {
   if (!isFirebaseConfigured) return null;
   try {
     return getApps().length ? getApp() : initializeApp(config as Required<FirebaseConfig>);
@@ -48,7 +48,7 @@ function getApp_(): FirebaseApp | null {
 
 export function getDb(): Firestore | null {
   if (_db) return _db;
-  const app = getApp_();
+  const app = getFirebaseApp();
   if (!app) return null;
   try {
     // React Native'de güvenilir bağlantı için long-polling
@@ -65,7 +65,7 @@ export function getDb(): Firestore | null {
 
 export function getStorageInstance(): FirebaseStorage | null {
   if (_storage) return _storage;
-  const app = getApp_();
+  const app = getFirebaseApp();
   if (!app) return null;
   try {
     _storage = getStorage(app);

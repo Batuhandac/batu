@@ -66,10 +66,15 @@ export default function NearbyScreen() {
 
   const header = (
     <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-      <Text variant="title">Yakınındaki klinikler</Text>
-      <Text variant="callout" tone="muted" style={{ marginTop: 2, marginBottom: 14 }}>
-        {clinics.length > 0 ? `${openCount} açık · toplam ${clinics.length} klinik` : 'Açık ve yakın olanlar önce gösterilir'}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="title">Yakınındaki klinikler</Text>
+          <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+            {clinics.length > 0 ? `${openCount} açık · toplam ${clinics.length} klinik` : 'Açık ve yakın olanlar önce gösterilir'}
+          </Text>
+        </View>
+        <Button title="Harita" icon="map-outline" variant="secondary" size="sm" onPress={() => router.push('/map')} />
+      </View>
       <LocationBar />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 14 }}>
         <Chip label="Tümü" active={!anyFilter} onPress={() => setFilters(DEFAULT_FILTERS)} />

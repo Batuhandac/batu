@@ -105,8 +105,9 @@ export default function MapScreen() {
       </MapView>
 
       {/* Filtreler */}
-      <View style={{ position: 'absolute', top: insets.top + 8, left: 0, right: 0 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+      <View style={{ position: 'absolute', top: insets.top + 8, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingLeft: 16 }}>
+        <IconButton icon="chevron-back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} accessibilityLabel="Geri" size={40} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 10 }}>
           <Chip label="Şu an açık" icon="time-outline" active={filters.only_open} onPress={() => toggleFilter('only_open')} />
           <Chip label="7/24" icon="moon-outline" active={filters.only_24_7} onPress={() => toggleFilter('only_24_7')} />
           <Chip label="Acil kabul" icon="medkit-outline" active={filters.only_emergency} onPress={() => toggleFilter('only_emergency')} />
@@ -114,7 +115,7 @@ export default function MapScreen() {
       </View>
 
       {/* Sağ düğmeler */}
-      <View style={{ position: 'absolute', right: 16, bottom: 90, gap: 10 }}>
+      <View style={{ position: 'absolute', right: 16, bottom: insets.bottom + 90, gap: 10 }}>
         <IconButton icon="navigate" onPress={useGps} accessibilityLabel="Konumuma git" size={48} />
         <IconButton icon="add" variant="primary" onPress={() => router.push('/clinic/add')} accessibilityLabel="Klinik ekle" size={48} />
       </View>
@@ -126,7 +127,7 @@ export default function MapScreen() {
           position: 'absolute',
           left: 16,
           right: 16,
-          bottom: 20,
+          bottom: insets.bottom + 16,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,

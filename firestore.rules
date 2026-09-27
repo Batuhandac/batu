@@ -2,10 +2,10 @@ rules_version = '2';
 
 // Pati SOS — Firestore güvenlik kuralları
 // Firebase Console → Firestore Database → Rules sekmesine yapıştırıp Publish et.
-// Uygulamada giriş (auth) yok; bu yüzden herkes yalnızca doğrulanmış alanlarla
-// YENİ kayıt ekleyebilir, hiçbir kaydı değiştiremez/silemez. Kişisel veri içeren
-// koleksiyonlar (başvurular, bildirimler) uygulamadan okunamaz — yalnızca
-// Firebase Console'dan (yönetici) görülür.
+// Kullanıcılar görünmez anonim oturumla, veteriner hekimler yöneticinin açtığı
+// e-posta hesabıyla girer (Authentication → Anonymous + Email/Password açık olmalı).
+// Kişisel veri içeren koleksiyonlar (başvurular, bildirimler, şikayetler)
+// uygulamadan okunamaz — yalnızca Firebase Console'dan (yönetici) görülür.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -19,6 +19,13 @@ service cloud.firestore {
     }
     function stamped() { return data().created_at == request.time; }
     function device() { return str(data().device_id, 4, 80); }
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function onlyChanged(keys) { return data().diff(resource.data).affectedKeys().hasOnly(keys); }
+    // Veteriner hekim: vets/{uid} belgesini yalnızca yönetici oluşturur
+    function isVet() { return signedIn() && exists(/databases/$(database)/documents/vets/$(request.auth.uid)); }
+    function vetDoc() { return get(/databases/$(database)/documents/vets/$(request.auth.uid)).data; }
+    function isClinicVet(clinicId) { return isVet() && vetDoc().clinic_id == clinicId; }
 
     // ── Kullanıcıların eklediği klinikler: onaylanana kadar gizli ──────────
     // Yönetici Console'dan status alanını 'approved' yapınca görünür olur.
@@ -38,15 +45,24 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ── Yorumlar ────────────────────────────────────────────────────────────
+    // ── Yorumlar: sahibi siler, kliniğin hekimi yalnızca yanıt yazar ─────────
     match /reviews/{id} {
       allow read: if true;
-      allow create: if str(data().clinic_id, 3, 200)
+      allow create: if signedIn()
+                    && data().keys().hasOnly(['clinic_id', 'author_uid', 'author_name', 'rating', 'comment', 'created_at'])
+                    && data().author_uid == me()
+                    && str(data().clinic_id, 3, 200)
                     && data().rating is int && data().rating >= 1 && data().rating <= 5
                     && str(data().comment, 0, 1000)
                     && str(data().author_name, 1, 40)
                     && stamped();
-      allow update, delete: if false;
+      allow delete: if signedIn() && resource.data.author_uid == me();
+      allow update: if isClinicVet(resource.data.clinic_id)
+                    && onlyChanged(['vet_reply'])
+                    && (data().vet_reply == null
+                        || (str(data().vet_reply.text, 1, 1000)
+                            && str(data().vet_reply.name, 1, 160)
+                            && data().vet_reply.at == request.time));
     }
 
     // ── Klinik fotoğrafları (dosya Storage'da, burada kaydı) ────────────────
@@ -101,6 +117,172 @@ service cloud.firestore {
       allow create: if str(data().clinic_id, 3, 200)
                     && data().phone_answered is bool && optBool('accepted_emergency')
                     && device() && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Veteriner hekim hesapları: SADECE yönetici yazar ────────────────────
+    // Alanlar: clinic_id, clinic_name, name, title (başka kişisel veri koyma)
+    match /vets/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // ── Ana sayfa bannerları: SADECE yönetici yazar ─────────────────────────
+    match /app_banners/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Klinik gelen kutusu: yönetici oluşturur, hekim açıp kapatır ─────────
+    match /clinic_inboxes/{clinicId} {
+      allow read: if true;
+      allow create, delete: if false;
+      allow update: if isClinicVet(clinicId)
+                    && onlyChanged(['open', 'response_hint'])
+                    && data().open is bool
+                    && (data().response_hint == null || str(data().response_hint, 0, 60));
+
+      // Hekim cihazlarının bildirim jetonları: yalnızca hekim ve bu klinikle
+      // konuşması olan kullanıcı okuyabilir
+      match /private/{docId} {
+        allow read: if signedIn()
+                    && (isClinicVet(clinicId) || exists(/databases/$(database)/documents/conversations/$(clinicId + '__' + request.auth.uid)));
+        allow write: if isClinicVet(clinicId) && docId == 'push'
+                     && data().keys().hasOnly(['tokens'])
+                     && data().tokens is list && data().tokens.size() <= 20;
+      }
+    }
+
+    // ── Klinikle mesajlaşma ─────────────────────────────────────────────────
+    // Belge kimliği: {clinicId}__{kullanıcıUid}; yalnızca iki taraf görür.
+    function participant(c) {
+      return signedIn() && (c.user_uid == me() || isClinicVet(c.clinic_id));
+    }
+
+    match /conversations/{convId} {
+      allow get: if resource == null || participant(resource.data);
+      allow list: if signedIn()
+                  && (resource.data.user_uid == me() || isClinicVet(resource.data.clinic_id));
+      allow create: if signedIn()
+                    && data().user_uid == me()
+                    && str(data().clinic_id, 3, 200)
+                    && convId == data().clinic_id + '__' + me()
+                    && get(/databases/$(database)/documents/clinic_inboxes/$(data().clinic_id)).data.open == true
+                    && str(data().clinic_name, 1, 160)
+                    && str(data().user_name, 1, 40)
+                    && optStr('pet_summary', 300) && optStr('user_push', 200)
+                    && data().last_text == '' && data().last_sender == 'user'
+                    && data().user_unread == 0 && data().vet_unread == 0
+                    && stamped() && data().last_at == request.time;
+      allow update: if participant(resource.data)
+                    && onlyChanged(['last_text', 'last_at', 'last_sender', 'user_unread', 'vet_unread', 'user_push', 'user_name', 'pet_summary'])
+                    && data().last_sender in ['user', 'vet']
+                    && data().user_unread is int && data().vet_unread is int
+                    && str(data().last_text, 0, 140);
+      allow delete: if false;
+
+      match /messages/{mid} {
+        function conv() { return get(/databases/$(database)/documents/conversations/$(convId)).data; }
+        allow read: if participant(conv());
+        allow create: if participant(conv())
+                      && data().sender_uid == me()
+                      && data().sender_role == (isClinicVet(conv().clinic_id) ? 'vet' : 'user')
+                      && str(data().text, 1, 2000)
+                      && str(data().sender_name, 0, 160)
+                      && stamped();
+        allow update, delete: if false;
+      }
+    }
+
+    // ── Topluluk: soru-cevap ────────────────────────────────────────────────
+    match /questions/{qid} {
+      function answerPath(aid) { return /databases/$(database)/documents/questions/$(qid)/answers/$(aid); }
+
+      // Yeni yanıt: sayaç aynı toplu yazmada tam 1 artar
+      function answerAdded() {
+        return onlyChanged(['answer_count', 'last_activity_at', 'last_answer_id', 'has_vet_answer'])
+          && data().answer_count == resource.data.answer_count + 1
+          && data().last_activity_at == request.time
+          && !exists(answerPath(data().last_answer_id))
+          && existsAfter(answerPath(data().last_answer_id))
+          && getAfter(answerPath(data().last_answer_id)).data.author_uid == me()
+          && (data().has_vet_answer == resource.data.has_vet_answer
+              || (data().has_vet_answer == true
+                  && getAfter(answerPath(data().last_answer_id)).data.is_vet == true));
+      }
+
+      // Yanıt silme: sayaç aynı toplu yazmada tam 1 azalır
+      function answerRemoved() {
+        return onlyChanged(['answer_count', 'last_answer_id'])
+          && data().answer_count == resource.data.answer_count - 1
+          && exists(answerPath(data().last_answer_id))
+          && !existsAfter(answerPath(data().last_answer_id))
+          && get(answerPath(data().last_answer_id)).data.author_uid == me();
+      }
+
+      allow read: if true;
+      allow create: if signedIn()
+                    && data().author_uid == me()
+                    && str(data().author_name, 1, 160)
+                    && data().species in ['dog', 'cat', 'other']
+                    && data().topic in ['saglik', 'beslenme', 'davranis', 'asi', 'yavru', 'bakim', 'diger']
+                    && str(data().title, 10, 120)
+                    && str(data().body, 0, 2000)
+                    && (data().photo_url == null
+                        || (str(data().photo_url, 10, 1000)
+                            && data().photo_url.matches('https://firebasestorage\\.googleapis\\.com/.*')))
+                    && data().answer_count == 0 && data().has_vet_answer == false
+                    && data().last_answer_id == null
+                    && stamped() && data().last_activity_at == request.time;
+      allow delete: if signedIn() && resource.data.author_uid == me();
+      allow update: if signedIn() && (answerAdded() || answerRemoved());
+
+      match /answers/{aid} {
+        function questionPath() { return /databases/$(database)/documents/questions/$(qid); }
+        function votePath() { return /databases/$(database)/documents/questions/$(qid)/answers/$(aid)/helpful/$(request.auth.uid); }
+
+        allow read: if true;
+        allow create: if signedIn()
+                      && data().author_uid == me()
+                      && str(data().author_name, 1, 160)
+                      && str(data().body, 1, 2000)
+                      && data().helpful == 0
+                      && stamped()
+                      && getAfter(questionPath()).data.last_answer_id == aid
+                      && ((data().is_vet == false && data().vet_clinic_id == null && data().vet_clinic_name == null)
+                          || (data().is_vet == true && isVet()
+                              && data().vet_clinic_id == vetDoc().clinic_id
+                              && data().vet_clinic_name == vetDoc().clinic_name));
+        allow delete: if signedIn() && resource.data.author_uid == me()
+                      && getAfter(questionPath()).data.answer_count == get(questionPath()).data.answer_count - 1;
+        // "Faydalı" sayacı: yalnızca kişinin oy belgesiyle birlikte ±1
+        allow update: if signedIn() && onlyChanged(['helpful'])
+                      && ((data().helpful == resource.data.helpful + 1 && !exists(votePath()) && existsAfter(votePath()))
+                          || (data().helpful == resource.data.helpful - 1 && exists(votePath()) && !existsAfter(votePath())));
+
+        match /helpful/{voter} {
+          function answerDoc() { return /databases/$(database)/documents/questions/$(qid)/answers/$(aid); }
+          allow read: if signedIn() && voter == me();
+          allow create: if signedIn() && voter == me()
+                        && getAfter(answerDoc()).data.helpful == get(answerDoc()).data.helpful + 1;
+          allow delete: if signedIn() && voter == me()
+                        && getAfter(answerDoc()).data.helpful == get(answerDoc()).data.helpful - 1;
+          allow update: if false;
+        }
+      }
+    }
+
+    // ── İçerik şikayetleri (App Store 1.2): yalnızca yönetici okur ──────────
+    match /content_reports/{id} {
+      allow read: if false;
+      allow create: if signedIn()
+                    && data().reporter_uid == me()
+                    && data().kind in ['question', 'answer', 'review', 'message']
+                    && str(data().path, 3, 300)
+                    && data().reason in ['abuse', 'spam', 'misinfo', 'inappropriate', 'other']
+                    && (data().author_uid == null || str(data().author_uid, 1, 128))
+                    && data().status == 'open'
+                    && stamped();
       allow update, delete: if false;
     }
   }

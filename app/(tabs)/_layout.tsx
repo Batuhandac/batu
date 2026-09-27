@@ -33,7 +33,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Ana sayfa', tabBarIcon: tabIcon('home', 'home-outline') }} />
       <Tabs.Screen name="nearby/index" options={{ title: 'Klinikler', tabBarIcon: tabIcon('list', 'list-outline') }} />
-      <Tabs.Screen name="map" options={{ title: 'Harita', tabBarIcon: tabIcon('map', 'map-outline') }} />
+      <Tabs.Screen name="community" options={{ title: 'Topluluk', tabBarIcon: tabIcon('chatbubbles', 'chatbubbles-outline') }} />
       <Tabs.Screen name="pets/index" options={{ title: 'Dostlarım', tabBarIcon: tabIcon('paw', 'paw-outline') }} />
       <Tabs.Screen name="settings" options={{ title: 'Ayarlar', tabBarIcon: tabIcon('settings', 'settings-outline') }} />
     </Tabs>

@@ -16,24 +16,31 @@ import {
 } from '@expo-google-fonts/nunito';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOnboardingStore } from '@/stores/onboarding';
+import { useSession } from '@/stores/session';
 import { track } from '@/lib/analytics';
 import { useTheme } from '@/lib/theme';
 import { LogoMark } from '@/components/ds';
 
 const HANDLED_KEY = 'patisos:handled_notification';
 
-// "Kliniği aradın mı?" bildirimine dokununca o kliniğin geri bildirim sorusunu aç.
-// Son bildirim yanıtı her açılışta yeniden döndüğü için işlenenleri hatırla.
-async function openFeedback(response: Notifications.NotificationResponse | null) {
+// Bildirime dokununca ilgili ekranı aç: "Kliniği aradın mı?" → geri bildirim sorusu,
+// yeni mesaj → konuşma. Son bildirim yanıtı her açılışta yeniden döndüğü için
+// işlenenleri hatırla.
+async function openNotification(response: Notifications.NotificationResponse | null) {
   if (!response) return;
-  const data = response.notification.request.content.data as { type?: string; clinicId?: string } | undefined;
-  if (data?.type !== 'call_feedback' || !data.clinicId) return;
+  const data = response.notification.request.content.data as
+    | { type?: string; clinicId?: string; conversationId?: string }
+    | undefined;
   const key = response.notification.request.identifier;
   try {
     if ((await AsyncStorage.getItem(HANDLED_KEY)) === key) return;
     await AsyncStorage.setItem(HANDLED_KEY, key);
   } catch {}
-  router.push({ pathname: '/clinic/[id]', params: { id: data.clinicId, feedback: '1' } });
+  if (data?.type === 'call_feedback' && data.clinicId) {
+    router.push({ pathname: '/clinic/[id]', params: { id: data.clinicId, feedback: '1' } });
+  } else if (data?.type === 'message' && data.conversationId) {
+    router.push({ pathname: '/messages/[id]', params: { id: data.conversationId } });
+  }
 }
 
 export default function RootLayout() {
@@ -50,8 +57,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     load();
+    useSession.getState().init();
     track('app_open');
-    const sub = Notifications.addNotificationResponseReceivedListener(openFeedback);
+    const sub = Notifications.addNotificationResponseReceivedListener(openNotification);
     return () => sub.remove();
   }, []);
 
@@ -59,7 +67,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (!hydrated || !completed) return;
     Notifications.getLastNotificationResponseAsync()
-      .then((r) => setTimeout(() => openFeedback(r), 300))
+      .then((r) => setTimeout(() => openNotification(r), 300))
       .catch(() => {});
   }, [hydrated, completed]);
 
@@ -88,6 +96,12 @@ export default function RootLayout() {
         <Stack.Screen name="clinic/add" options={{ presentation: 'modal' }} />
         <Stack.Screen name="pets/create" options={{ presentation: 'modal' }} />
         <Stack.Screen name="pets/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="map" options={{ presentation: 'card' }} />
+        <Stack.Screen name="community/ask" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="community/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
+        <Stack.Screen name="messages/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="vet/index" options={{ presentation: 'card' }} />
       </Stack>
     </GestureHandlerRootView>
   );

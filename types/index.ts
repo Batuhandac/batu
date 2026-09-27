@@ -69,11 +69,12 @@ export interface CommunityClinicInput {
 export interface Review {
   id: string;
   clinic_id: string;
-  author_id: string;
+  author_id: string;     // yazanın oturum kimliği (Firebase Auth uid)
   author_name: string;
   rating: number;       // 1–5
   comment: string;
   created_at: string;    // ISO
+  vet_reply?: { text: string; name: string; at: string } | null;
 }
 
 export interface ClinicHours {

@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { Screen, Text, Group, ListRow, LogoMark, Wordmark } from '@/components/ds';
 import { Disclaimer } from '@/components/ui/Disclaimer';
+import { RulesSheet } from '@/components/community/Safety';
+import { unblockAll } from '@/lib/data/safety';
+import { useSession } from '@/stores/session';
+import { vetDisplayName } from '@/lib/auth';
 
 function GroupTitle({ children }: { children: string }) {
   return (
@@ -14,6 +18,8 @@ function GroupTitle({ children }: { children: string }) {
 }
 
 export default function SettingsScreen() {
+  const vet = useSession((s) => s.vet);
+  const [rules, setRules] = useState(false);
   return (
     <Screen scroll contentStyle={{ paddingHorizontal: 20 }}>
       <Text variant="title" style={{ marginTop: 12 }}>
@@ -33,9 +39,34 @@ export default function SettingsScreen() {
         <ListRow icon="notifications-outline" title="Bildirim izni" onPress={() => Linking.openSettings()} last />
       </Group>
 
+      <GroupTitle>Topluluk</GroupTitle>
+      <Group>
+        <ListRow icon="chatbubbles-outline" title="Mesajlar" subtitle="Kliniklerle yazışmaların" onPress={() => router.push('/messages')} />
+        <ListRow icon="shield-checkmark-outline" title="Topluluk kuralları" onPress={() => setRules(true)} />
+        <ListRow
+          icon="ban-outline"
+          title="Engellediğin kişiler"
+          subtitle="Engellemeleri kaldır"
+          onPress={() =>
+            Alert.alert('Engellemeler kaldırılsın mı?', 'Engellediğin kişilerin soru ve yorumlarını yeniden görürsün.', [
+              { text: 'Vazgeç', style: 'cancel' },
+              { text: 'Kaldır', onPress: () => unblockAll() },
+            ])
+          }
+          last
+        />
+      </Group>
+
       <GroupTitle>Veteriner hekimler</GroupTitle>
       <Group>
-        <ListRow icon="medical-outline" title="Kliniğinizi doğrulayın" subtitle="Ücretsiz, reklam değil" onPress={() => router.push('/vets')} last />
+        {vet ? (
+          <ListRow icon="medkit" title="Hekim paneli" subtitle={`${vetDisplayName(vet)} · ${vet.clinic_name}`} onPress={() => router.push('/vet')} last />
+        ) : (
+          <>
+            <ListRow icon="medical-outline" title="Kliniğinizi doğrulayın" subtitle="Ücretsiz, reklam değil" onPress={() => router.push('/vets')} />
+            <ListRow icon="log-in-outline" title="Hekim girişi" subtitle="Doğrulanmış klinik hesapları için" onPress={() => router.push('/vet')} last />
+          </>
+        )}
       </Group>
 
       <GroupTitle>Hakkında</GroupTitle>
@@ -58,7 +89,7 @@ export default function SettingsScreen() {
           onPress={() =>
             Alert.alert(
               'Verilerin',
-              'Acil kartların, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. Gönderdiğin yorum, fotoğraf ya da bildirimlerin silinmesi için support@patisos.app adresine yaz; KVKK kapsamında 30 gün içinde yanıtlanır.'
+              'Acil kartların, favorilerin ve konumun yalnızca bu telefonda saklanır; uygulamayı silmek hepsini siler. Topluluktaki soru ve yorumlarını kendin silebilirsin. Mesajların, fotoğrafların ya da diğer gönderilerinin silinmesi için support@patisos.app adresine yaz; KVKK kapsamında 30 gün içinde yanıtlanır.'
             )
           }
           last
@@ -76,6 +107,7 @@ export default function SettingsScreen() {
           Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · Türkiye'de sevgiyle yapıldı
         </Text>
       </View>
+      <RulesSheet visible={rules} onClose={() => setRules(false)} onAccept={() => setRules(false)} />
     </Screen>
   );
 }

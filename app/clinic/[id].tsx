@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Linking, ActivityIndicator, Pressable } from 'react-native';
+import { View, ScrollView, Linking, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
@@ -22,7 +22,18 @@ import { withLiveStatus, istanbulNow } from '@/lib/utils/openingHours';
 import { clinicStatus, formatDistance } from '@/lib/utils/status';
 import { callClinic } from '@/lib/utils/call';
 import { track } from '@/lib/analytics';
+import { fetchInbox, openConversation, type ClinicInbox } from '@/lib/data/messages';
+import { loadPets } from '@/lib/data/localStore';
 import type { Clinic } from '@/types';
+
+/** WhatsApp yalnızca cep numaralarında çalışır: +90 5xx xxx xx xx */
+function whatsappNumber(phone: string | null): string | null {
+  if (!phone) return null;
+  let d = phone.replace(/\D/g, '');
+  if (d.startsWith('0')) d = '90' + d.slice(1);
+  if (d.length === 10) d = '90' + d;
+  return /^905\d{9}$/.test(d) ? d : null;
+}
 
 function sourceNote(c: Clinic): string {
   if (c.is_verified) {
@@ -42,6 +53,8 @@ export default function ClinicDetailScreen() {
   const [showDirections, setShowDirections] = useState(false);
   const [showFeedback, setShowFeedback] = useState(feedback === '1');
   const { isFav, isPrimaryVet, toggle, setPrimaryVet, load: loadFavs } = useFavorites();
+  const [inbox, setInbox] = useState<ClinicInbox | null>(null);
+  const [opening, setOpening] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -52,6 +65,7 @@ export default function ClinicDetailScreen() {
       setLoading(false);
     });
     loadFavs();
+    fetchInbox(id).then((i) => alive && setInbox(i?.open ? i : null));
     track('clinic_detail_view', { clinic_id: id });
     return () => {
       alive = false;
@@ -63,13 +77,10 @@ export default function ClinicDetailScreen() {
   }, [feedback]);
 
   const handleWhatsApp = async () => {
-    if (!clinic?.phone) return;
-    // Telefonu uluslararası biçime çevir (yalnız rakam; TR için 0 → 90)
-    let digits = clinic.phone.replace(/\D/g, '');
-    if (digits.startsWith('0')) digits = '90' + digits.slice(1);
-    if (!digits.startsWith('90') && digits.length === 10) digits = '90' + digits;
-    const msg = encodeURIComponent(`Merhaba, Pati SOS üzerinden ulaşıyorum. Acil bir durum için bilgi alabilir miyim?`);
-    track('call_tap', { clinic_id: id, via: 'whatsapp' });
+    const digits = whatsappNumber(clinic?.phone ?? null);
+    if (!digits) return;
+    const msg = encodeURIComponent('Merhaba, Pati SOS üzerinden ulaşıyorum.');
+    track('whatsapp_tap', { clinic_id: id });
     const url = `whatsapp://send?phone=${digits}&text=${msg}`;
     try {
       const ok = await Linking.canOpenURL(url);
@@ -77,6 +88,26 @@ export default function ClinicDetailScreen() {
     } catch {
       await Linking.openURL(`https://wa.me/${digits}?text=${msg}`).catch(() => {});
     }
+  };
+
+  const handleMessage = async () => {
+    if (!clinic) return;
+    setOpening(true);
+    const pets = await loadPets();
+    const p = pets.find((x) => x.is_primary) ?? pets[0];
+    const summary = p
+      ? [p.name, p.breed ?? (p.species === 'cat' ? 'Kedi' : p.species === 'dog' ? 'Köpek' : null), p.age_years != null ? `${p.age_years} yaş` : null, p.weight_kg != null ? `${p.weight_kg} kg` : null]
+          .filter(Boolean)
+          .join(' · ')
+      : null;
+    const convId = await openConversation({ id: clinic.id, name: clinic.name }, summary);
+    setOpening(false);
+    if (!convId) {
+      Alert.alert('Mesajlaşma açılamadı', 'İnternet bağlantını kontrol edip tekrar dene.');
+      return;
+    }
+    track('conversation_started', { clinic_id: clinic.id });
+    router.push(`/messages/${convId}`);
   };
 
   const handleDirections = () => {
@@ -180,8 +211,19 @@ export default function ClinicDetailScreen() {
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button title="Yol tarifi" icon="navigate-outline" variant="secondary" onPress={handleDirections} style={{ flex: 1 }} />
-            {clinic.phone ? <Button title="WhatsApp" icon="logo-whatsapp" variant="secondary" onPress={handleWhatsApp} style={{ flex: 1 }} /> : null}
+            {whatsappNumber(clinic.phone) ? <Button title="WhatsApp" icon="logo-whatsapp" variant="secondary" onPress={handleWhatsApp} style={{ flex: 1 }} /> : null}
           </View>
+          {inbox ? (
+            <Button
+              title="Mesaj gönder"
+              subtitle={inbox.response_hint ?? 'Acil olmayan soruların için'}
+              icon="chatbubble-ellipses-outline"
+              variant="soft"
+              full
+              loading={opening}
+              onPress={handleMessage}
+            />
+          ) : null}
         </View>
 
         {/* Bilgiler */}

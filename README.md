@@ -10,7 +10,24 @@ Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü 
 - **Analytics:** PostHog
 - **Haritalar:** react-native-maps + expo-location
 - **Canlı klinik verisi:** Google Places API (New) — `lib/data/places.ts`
-- **Topluluk:** Firebase Firestore (klinik ekleme, yorum, fotoğraf)
+- **Topluluk ve mesajlaşma:** Firebase Firestore + Storage + Auth (anonim oturum, hekim e-posta girişi)
+- **Bildirimler:** expo-notifications + Expo Push (sunucusuz, cihazdan cihaza)
+
+## Topluluk, mesajlaşma ve içerik
+
+- **Veterinere sor** (`app/(tabs)/community.tsx`, `lib/data/qa.ts`) — acil olmayan
+  sorular; onaylı hekim yanıtları "Veteriner hekim · Klinik" rozetiyle üstte görünür,
+  "Faydalı" oyları, soru sahibine yeni yanıt göstergesi. Acil belirti yazılırsa
+  (`lib/utils/moderation.ts`) soru yerine hemen aramaya yönlendirilir.
+- **Klinikle mesajlaşma** (`app/messages`, `lib/data/messages.ts`) — yalnızca gelen
+  kutusu açık kliniklere; hekim paneli `app/vet`. Cep numarası olan kliniklerde WhatsApp.
+- **Güvenlik (App Store 1.2)** — küfür/bağlantı filtresi, bildir, engelle, topluluk
+  kuralları onayı (`lib/data/safety.ts`); şikayetler `content_reports`'a düşer.
+- **Karşılama slaytları ve ana sayfa bannerları** — çizimler `components/art`,
+  bannerlar `lib/content/banners.ts` (mevsime göre; Firestore `app_banners` ile
+  uygulama güncellemeden yönetilir).
+- Güvenlik kuralları `firestore.rules` Firestore emülatöründe 63 senaryoyla
+  (kötüye kullanım denemeleri dahil) test edildi. Yönetim: `YONETICI_REHBERI.md`.
 
 ## Klinik verisi nereden geliyor?
 

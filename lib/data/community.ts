@@ -5,6 +5,9 @@ import {
   collection,
   addDoc,
   getDocs,
+  doc,
+  deleteDoc,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -14,6 +17,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDb, getStorageInstance, isFirebaseConfigured } from '@/lib/firebase';
 import { getDeviceId, getAuthorName } from '@/lib/deviceId';
+import { useSession } from '@/stores/session';
 import { istanbulNow } from '@/lib/utils/openingHours';
 import type {
   Clinic,
@@ -149,24 +153,28 @@ export async function fetchCommunityClinics(): Promise<Clinic[]> {
 }
 
 // ─── Yorumlar ────────────────────────────────────────────────────────────────
+// Yorum, anonim oturum kimliğine bağlanır: sahibi silebilir, kliniğin hekimi
+// yalnızca vet_reply alanını yazabilir (firestore.rules).
 export async function addReview(
   clinicId: string,
   rating: number,
   comment: string
 ): Promise<boolean> {
   const db = getDb();
-  if (!db) return false;
+  const uid = await useSession.getState().ensureUser();
+  if (!db || !uid) return false;
   try {
-    const deviceId = await getDeviceId();
-    const authorName = await getAuthorName();
-    await addDoc(collection(db, 'reviews'), {
-      clinic_id: clinicId,
-      author_id: deviceId,
-      author_name: authorName,
-      rating: Math.max(1, Math.min(5, Math.round(rating))),
-      comment: comment.trim(),
-      created_at: serverTimestamp(),
-    });
+    await Promise.race([
+      addDoc(collection(db, 'reviews'), {
+        clinic_id: clinicId,
+        author_uid: uid,
+        author_name: await getAuthorName(),
+        rating: Math.max(1, Math.min(5, Math.round(rating))),
+        comment: comment.trim(),
+        created_at: serverTimestamp(),
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), WRITE_TIMEOUT_MS)),
+    ]);
     return true;
   } catch {
     return false;
@@ -190,15 +198,47 @@ export async function fetchReviews(clinicId: string): Promise<Review[]> {
       return {
         id: d.id,
         clinic_id: data.clinic_id,
-        author_id: data.author_id,
+        author_id: data.author_uid ?? data.author_id ?? '',
         author_name: data.author_name ?? 'Pati dostu',
         rating: data.rating ?? 0,
         comment: data.comment ?? '',
         created_at: data.created_at?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+        vet_reply: data.vet_reply?.text
+          ? {
+              text: data.vet_reply.text,
+              name: data.vet_reply.name ?? 'Klinik',
+              at: data.vet_reply.at?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+            }
+          : null,
       } as Review;
     });
   } catch {
     return [];
+  }
+}
+
+export async function deleteReview(id: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    await deleteDoc(doc(db, 'reviews', id));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Kliniğin hekimi yoruma yanıt yazar (boş metin yanıtı kaldırır). */
+export async function replyToReview(id: string, text: string, name: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    await updateDoc(doc(db, 'reviews', id), {
+      vet_reply: text.trim() ? { text: text.trim().slice(0, 1000), name, at: serverTimestamp() } : null,
+    });
+    return true;
+  } catch {
+    return false;
   }
 }
 

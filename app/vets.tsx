@@ -15,6 +15,8 @@ const POINTS: { icon: IconName; title: string; text: string }[] = [
   },
   { icon: 'call-outline', title: 'Doğru numara, doğru saat', text: 'Klinik telefonunuz, çalışma saatleriniz ve varsa mesai dışı hattınız hasta sahiplerine doğrudan gösterilir.' },
   { icon: 'shield-checkmark-outline', title: 'Klinik onaylı rozeti', text: 'Telefonla doğrulanan klinikler "Klinik onaylı" görünür; hasta sahipleri bilgilerin güncel olduğunu bilir.' },
+  { icon: 'chatbubbles-outline', title: 'Hasta sahipleriyle mesajlaşma', text: 'Randevu ve acil olmayan sorular uygulama içinden size gelir; yeni mesajda telefonunuza bildirim düşer. İstediğiniz an kapatabilirsiniz.' },
+  { icon: 'school-outline', title: 'Bilginizle görünür olun', text: 'Topluluktaki sorulara "Veteriner hekim" rozeti ve klinik adınızla yanıt verin. Reklam değil, meslektaşça bilgi paylaşımı.' },
 ];
 
 // Veteriner hekimler Türkiye'de reklam veremiyor. Bu ekran onlara reklam değil,

@@ -1,87 +1,119 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, Pressable, useWindowDimensions, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Screen, Text, Button, Checkbox, IconBadge, LogoMark, Wordmark, type IconName } from '@/components/ds';
+import { Text, Button, Checkbox, LogoMark, Wordmark, Dots } from '@/components/ds';
+import { Art, type ArtName } from '@/components/art';
 import { useTheme, radius } from '@/lib/theme';
 
-const POINTS: { icon: IconName; title: string; text: string }[] = [
+const SLIDES: { art: ArtName; title: string; text: string }[] = [
   {
-    icon: 'navigate',
-    title: 'Açık ve yakın olan önce',
-    text: 'Çalışma saatlerinden anlık hesaplanır. Bilmediğimiz bir şeyi açık göstermeyiz.',
+    art: 'emergency',
+    title: 'Acil anında en yakın açık veteriner',
+    text: 'Gece yarısı ya da bayram günü fark etmez. Açık klinikleri bulur, tek dokunuşla aramanı sağlarız.',
   },
   {
-    icon: 'call',
-    title: 'Tek dokunuşla ara',
-    text: 'Panik anında menüler arasında kaybolmadan doğrudan kliniğe ulaş.',
+    art: 'petcard',
+    title: 'Dostunun acil kartı hep cebinde',
+    text: 'Kilo, alerji ve ilaç bilgisi kliniği ararken ekranında. Bilgiler yalnızca telefonunda saklanır.',
   },
   {
-    icon: 'id-card-outline',
-    title: 'Dostunun acil kartı',
-    text: 'Kilo, alerji ve ilaç bilgisi aradığın anda ekranında.',
+    art: 'community',
+    title: 'Aklına takılanı veterinere sor',
+    text: 'Acil olmayan soruların için topluluğa yaz. Onaylı veteriner hekimler yanıtlasın, klinikle mesajlaş.',
   },
 ];
 
 export default function WelcomeScreen() {
   const t = useTheme();
+  const { width, height } = useWindowDimensions();
+  const ref = useRef<ScrollView>(null);
+  const [index, setIndex] = useState(0);
   const [accepted, setAccepted] = useState(false);
+  const [pagerHeight, setPagerHeight] = useState(0);
+  const last = index === SLIDES.length - 1;
+  const artWidth = Math.min(width - 56, height < 720 ? 250 : 340);
+
+  const goTo = (i: number) => {
+    setIndex(i);
+    ref.current?.scrollTo({ x: i * width, animated: true });
+  };
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const i = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (i !== index && i >= 0 && i < SLIDES.length) setIndex(i);
+  };
 
   return (
-    <Screen scroll edges={['top', 'bottom']} contentStyle={{ paddingHorizontal: 24, paddingTop: 24 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <LogoMark size={44} />
-        <Wordmark size={26} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, height: 52 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LogoMark size={32} />
+          <Wordmark size={20} />
+        </View>
+        {!last ? (
+          <Pressable onPress={() => goTo(SLIDES.length - 1)} hitSlop={12} accessibilityRole="button">
+            <Text variant="callout" tone="muted">
+              Geç
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
-      <Text variant="display" style={{ marginTop: 36 }}>
-        Acil anında en yakın açık veteriner, bir dokunuş uzağında.
-      </Text>
-      <Text variant="body" tone="muted" style={{ marginTop: 12 }}>
-        Gece yarısı ya da bayram günü fark etmez. Açık klinikleri bulur, aramanı ve yolda ne
-        yapman gerektiğini kolaylaştırırız.
-      </Text>
-
-      <View style={{ marginTop: 28, gap: 18 }}>
-        {POINTS.map((p) => (
-          <View key={p.title} style={{ flexDirection: 'row', gap: 14 }}>
-            <IconBadge name={p.icon} size={44} />
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong">{p.title}</Text>
-              <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
-                {p.text}
-              </Text>
+      <ScrollView
+        ref={ref}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={32}
+        style={{ flex: 1 }}
+        onLayout={(e) => setPagerHeight(e.nativeEvent.layout.height)}
+      >
+        {SLIDES.map((s) => (
+          <View key={s.art} style={{ width, height: pagerHeight || undefined, paddingHorizontal: 28, justifyContent: 'center' }}>
+            <View style={{ alignItems: 'center' }}>
+              <Art name={s.art} width={artWidth} />
             </View>
+            <Text variant="display" center style={{ marginTop: 20 }}>
+              {s.title}
+            </Text>
+            <Text variant="body" tone="muted" center style={{ marginTop: 12 }}>
+              {s.text}
+            </Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
 
-      <View
-        style={{
-          marginTop: 28,
-          padding: 16,
-          borderRadius: radius.lg,
-          backgroundColor: t.surfaceAlt,
-        }}
-      >
-        <Checkbox checked={accepted} onPress={() => setAccepted(!accepted)}>
-          <Text variant="callout" tone="muted">
-            Pati SOS'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve
-            gitmeden önce kliniği aramam gerektiğini anlıyorum.
-          </Text>
-        </Checkbox>
-      </View>
+      <View style={{ paddingHorizontal: 24, paddingBottom: 12 }}>
+        <Dots count={SLIDES.length} index={index} />
 
-      <Button
-        title="Başla"
-        size="lg"
-        full
-        disabled={!accepted}
-        onPress={() => router.push('/(onboarding)/location')}
-        style={{ marginTop: 20 }}
-      />
-      <Text variant="caption" tone="subtle" center style={{ marginTop: 14 }}>
-        Ücretsiz · Üyelik gerekmez · Reklamsız
-      </Text>
-    </Screen>
+        {last ? (
+          <>
+            <View style={{ marginTop: 20, padding: 14, borderRadius: radius.lg, backgroundColor: t.surfaceAlt }}>
+              <Checkbox checked={accepted} onPress={() => setAccepted(!accepted)}>
+                <Text variant="caption" tone="muted" style={{ lineHeight: 19 }}>
+                  Pati SOS'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve
+                  gitmeden önce kliniği aramam gerektiğini anlıyorum.
+                </Text>
+              </Checkbox>
+            </View>
+            <Button
+              title="Başlayalım"
+              size="lg"
+              full
+              disabled={!accepted}
+              onPress={() => router.push('/(onboarding)/location')}
+              style={{ marginTop: 14 }}
+            />
+          </>
+        ) : (
+          <Button title="Devam" size="lg" full onPress={() => goTo(index + 1)} style={{ marginTop: 20 }} />
+        )}
+        <Text variant="caption" tone="subtle" center style={{ marginTop: 12 }}>
+          Ücretsiz · Üyelik gerekmez · Reklamsız
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
