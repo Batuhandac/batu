@@ -45,6 +45,21 @@ export function isOpenAt(periods: OpeningPeriod[], date = new Date()): boolean {
   });
 }
 
+/** Şu an açıksa kapanmasına kaç dakika kaldığı; 7/24 ya da kapalıysa null. */
+export function minutesUntilClose(periods: OpeningPeriod[], date = new Date()): number | null {
+  const { dow, minutes } = istanbulNow(date);
+  const now = dow * DAY + minutes;
+  let best: number | null = null;
+  for (const p of periods) {
+    if (!p.close) return null;
+    const [o, c] = span(p);
+    for (const t of [now, now + WEEK]) {
+      if (t >= o && t < c) best = Math.max(best ?? 0, c - t);
+    }
+  }
+  return best;
+}
+
 // Periyot yoksa "bilinmiyor" — saatini bilmediğimiz kliniği kapalı gösterme.
 export function statusFromPeriods(
   periods: OpeningPeriod[] | undefined,
@@ -66,6 +81,7 @@ export function withLiveStatus(c: Clinic, lat?: number, lng?: number): Clinic {
     ...c,
     status,
     is_open_now: status === 'open',
+    closes_in_min: status === 'open' && !c.is_24_7 && hasPeriods ? minutesUntilClose(c.opening_periods!) : null,
     distance_km: lat != null && lng != null ? haversine(lat, lng, c.lat, c.lng) : c.distance_km,
   };
 }

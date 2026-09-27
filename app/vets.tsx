@@ -61,10 +61,10 @@ export default function VetsScreen() {
           <Point
             emoji="⚖️"
             title="Reklam değil, bilgi"
-            text="Sıralama satın alınamaz. Sıra yalnızca şu an açık olma, mesafe, acil kabul ve 7/24 hizmete göre belirlenir. Tanıtım metni, kampanya ya da övgü yayımlanmaz."
+            text="Sıralama satın alınamaz. Sıra yalnızca şu an açık olmaya, mesafeye ve bilgilerin eksiksiz olmasına (telefon, saat) göre belirlenir. Tanıtım metni, kampanya ya da övgü yayımlanmaz."
           />
           <Point emoji="📞" title="Doğru numara, doğru saat" text="Klinik telefonunuz, çalışma saatleriniz ve varsa mesai dışı acil hattınız hasta sahiplerine doğrudan gösterilir." />
-          <Point emoji="✓" title="Klinik onaylı rozet" text="Telefonla doğrulanan klinikler 'Klinik onaylı' görünür; hasta sahipleri bilgilerin güncel olduğunu bilir." />
+          <Point emoji="✅" title="Klinik onaylı rozet" text="Telefonla doğrulanan klinikler 'Klinik onaylı' görünür; hasta sahipleri bilgilerin güncel olduğunu bilir." />
           <Point emoji="✏️" title="Her zaman güncel" text="Saatleriniz ya da numaranız değişirse yeni başvuruyla güncelleyebilirsiniz." />
         </View>
 

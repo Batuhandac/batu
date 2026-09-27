@@ -27,6 +27,8 @@ export interface Clinic {
   distance_km: number;
   is_open_now: boolean;
   status: ClinicStatus;
+  // Açıksa kapanmasına kalan dakika (7/24 / bilinmiyorsa null)
+  closes_in_min?: number | null;
   emergency_score: number;
   source?: ClinicSource;
   rating_count?: number;

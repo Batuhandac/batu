@@ -65,6 +65,9 @@ export function ClinicCard({ clinic }: Props) {
               <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
               <Text style={{ color: statusColor, fontSize: 12, fontWeight: '700' }}>{statusLabel}</Text>
             </View>
+            {open && clinic.closes_in_min != null && clinic.closes_in_min < 60 && (
+              <Tag label={`${clinic.closes_in_min} dk sonra kapanıyor`} orange />
+            )}
             {clinic.is_24_7 && <Tag label="7/24" />}
             {clinic.accepts_emergency && !clinic.is_24_7 && <Tag label="Acil kabul" orange />}
             {clinic.source === 'community' && <Tag label="🐾 Topluluk" />}

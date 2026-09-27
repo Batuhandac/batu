@@ -89,17 +89,22 @@ export function rankClinics(
     if (filters.only_open && !open) continue;
     const distanceKm = haversine(lat, lng, c.lat, c.lng);
     if (distanceKm > radiusKm) continue;
-    const fOpen = open ? 1.0 : c.status === 'unknown' ? 0.3 : 0.0;
-    const fDistance = Math.max(0, Math.min(1, 1 - distanceKm / 15));
+    // Birazdan kapanacak klinik, yola çıkan biri için yarı yarıya "açık" sayılır
+    const closingSoon = open && !c.is_24_7 && c.closes_in_min != null && c.closes_in_min < 45;
+    const fOpen = open ? (closingSoon ? 0.5 : 1.0) : c.status === 'unknown' ? 0.3 : 0.0;
+    // Mesafe yumuşak azalır: 3 km'de yarıya iner, 20 km'de hâlâ küçük bir değeri var.
+    // Gündüz en yakın açık klinik, "7/24" etiketli uzak bir hastaneden önce gelmeli;
+    // gece zaten yalnızca 7/24'ler açık olduğu için onlar öne çıkar.
+    const fDistance = 1 / (1 + distanceKm / 3);
     const fRating = (c.rating ?? 3.5) / 5;
     let s =
-      0.2 * fOpen +
-      0.16 * (c.accepts_emergency ? 1 : 0) +
-      0.13 * (c.is_24_7 ? 1 : 0) +
-      0.11 * (c.is_verified ? 1 : 0) + // klinik bilgilerini onayladı (ücretsiz)
-      0.11 * fDistance +
-      0.08 * (c.phone ? 1 : 0) + // acilde aranabilir olmak önemli
-      0.05 * fRating;
+      0.3 * fOpen +
+      0.4 * fDistance +
+      0.1 * (c.is_verified ? 1 : 0) + // klinik bilgilerini onayladı (ücretsiz)
+      0.1 * (c.phone || c.emergency_phone ? 1 : 0) + // acilde aranabilir olmak önemli
+      0.05 * (c.accepts_emergency ? 1 : 0) +
+      0.03 * (c.is_24_7 ? 1 : 0) +
+      0.02 * fRating;
     if (c.status === 'closed' && !c.is_24_7) s *= 0.2;
     out.push({ ...c, distance_km: distanceKm, emergency_score: s });
   }

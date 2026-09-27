@@ -175,7 +175,11 @@ export default function ClinicDetailScreen() {
           </View>
 
           <View className="flex-row mt-5 bg-black/20 rounded-2xl py-3">
-            <Stat label="Şu an" value={statusLabel} valueColor={statusColor} />
+            <Stat
+              label={open && clinic.closes_in_min != null && clinic.closes_in_min < 60 ? `${clinic.closes_in_min} dk sonra kapanıyor` : 'Şu an'}
+              value={statusLabel}
+              valueColor={statusColor}
+            />
             <View className="w-px bg-white/10" />
             <Stat label="Çalışma" value={clinic.is_24_7 ? '7/24' : weekdayText.length ? 'Saatli' : '—'} />
             <View className="w-px bg-white/10" />

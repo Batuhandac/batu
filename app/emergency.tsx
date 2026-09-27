@@ -7,7 +7,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { useKeepAwake } from 'expo-keep-awake';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { usePets } from '@/lib/hooks/usePets';
@@ -23,13 +23,20 @@ import { formatDistance } from '@/components/clinic/ClinicCard';
 import type { Clinic, Pet } from '@/types';
 
 const GREEN = '#38A169';
+const KEEP_AWAKE_TAG = 'pati-sos-emergency';
 const ORANGE = '#ff7f1c';
 
 const isOpen = (c: Clinic) => c.status === 'open' || c.is_24_7;
 const canCall = (c: Clinic) => !!(c.phone || c.emergency_phone);
 
 export default function EmergencyScreen() {
-  useKeepAwake();
+  // Arama metnini okurken ekran kararmasın (izin verilmezse sessizce geç)
+  useEffect(() => {
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
+    return () => {
+      Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
+    };
+  }, []);
   const { clinics, loading, fetch } = useClinics();
   const { lat, lng, source, label, granted, loading: locating, request, refresh, setManual } = useLocation();
   const { pets, load: loadPets } = usePets();
@@ -58,7 +65,12 @@ export default function EmergencyScreen() {
   }, [lat, lng, fetch]);
 
   const { best, others } = useMemo(() => {
-    const bestClinic = clinics.find((c) => isOpen(c) && canCall(c)) ?? null;
+    // Yarım saat içinde kapanacak kliniği ancak başka seçenek yoksa öne çıkar
+    const good = (c: Clinic) => isOpen(c) && canCall(c);
+    const bestClinic =
+      clinics.find((c) => good(c) && !(c.closes_in_min != null && c.closes_in_min < 30)) ??
+      clinics.find(good) ??
+      null;
     const rest = clinics.filter((c) => c !== bestClinic && (isOpen(c) || (c.status === 'unknown' && canCall(c))));
     return { best: bestClinic, others: rest.slice(0, 4) };
   }, [clinics]);
@@ -246,8 +258,9 @@ function phoneOf(c: Clinic): Clinic {
 }
 
 function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections: () => void }) {
+  const closingSoon = clinic.closes_in_min != null && clinic.closes_in_min < 60;
   const why = [
-    clinic.is_24_7 ? '7/24 açık' : 'Şu an açık',
+    clinic.is_24_7 ? '7/24 açık' : closingSoon ? `${clinic.closes_in_min} dk sonra kapanıyor` : 'Şu an açık',
     clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null,
     clinic.accepts_emergency && !clinic.is_24_7 ? 'acil kabul' : null,
     clinic.is_verified ? 'klinik onaylı' : null,
@@ -258,6 +271,11 @@ function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections
       <Text style={{ color: '#68D391', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>EN UYGUN SEÇENEK</Text>
       <Text className="text-white text-2xl font-extrabold mt-1" numberOfLines={2}>{clinic.name}</Text>
       <Text className="text-gray-label text-sm mt-1">{why.join(' · ')}</Text>
+      {closingSoon && (
+        <Text style={{ color: ORANGE, fontSize: 13, fontWeight: '600', marginTop: 4 }}>
+          Kapanmak üzere — gelmekte olduğunu haber vermek için hemen ara.
+        </Text>
+      )}
       {clinic.address ? <Text className="text-gray-muted text-xs mt-1" numberOfLines={1}>{clinic.address}</Text> : null}
 
       <TouchableOpacity
@@ -290,7 +308,16 @@ function AltRow({ clinic, onDirections }: { clinic: Clinic; onDirections: () => 
       <TouchableOpacity className="flex-1" onPress={() => router.push(`/clinic/${clinic.id}`)} activeOpacity={0.8}>
         <Text className="text-white font-semibold text-base" numberOfLines={1}>{clinic.name}</Text>
         <Text className="text-gray-muted text-xs mt-0.5">
-          {[open ? (clinic.is_24_7 ? '7/24' : 'Açık') : 'Saat bilinmiyor', clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null]
+          {[
+            open
+              ? clinic.is_24_7
+                ? '7/24'
+                : clinic.closes_in_min != null && clinic.closes_in_min < 60
+                ? `${clinic.closes_in_min} dk sonra kapanıyor`
+                : 'Açık'
+              : 'Saat bilinmiyor',
+            clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </Text>

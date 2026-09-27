@@ -70,7 +70,7 @@ function toSeed(el) {
   if (t.disused === 'yes' || t['disused:amenity'] || t.abandoned === 'yes' || t.end_date) return null;
 
   const street = clean(t['addr:street']);
-  const no = clean(t['addr:housenumber']);
+  const no = clean(t['addr:housenumber'])?.replace(/\s*;\s*/g, ', ') ?? null;
   const address =
     clean(t['addr:full']) ||
     [clean(t['addr:neighbourhood']) || clean(t['addr:suburb']), street && (no ? `${street} No:${no}` : street)]

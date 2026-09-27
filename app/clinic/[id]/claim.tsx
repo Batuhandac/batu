@@ -126,7 +126,7 @@ export default function ClaimScreen() {
 
         <Text className="text-white text-2xl font-bold">Klinik bilgilerinizi doğrulayın</Text>
         <Text className="text-gray-text text-sm mt-2 leading-relaxed">
-          Ücretsizdir. Reklam değildir: sıralama satın alınamaz; açık olma, mesafe ve acil kabul belirler.
+          Ücretsizdir. Reklam değildir: sıralama satın alınamaz; açık olma, mesafe ve bilgilerin eksiksizliği belirler.
           Doğrulanan klinikler "Klinik onaylı" görünür ve hasta sahipleri size doğru numaradan ulaşır.
         </Text>
 
