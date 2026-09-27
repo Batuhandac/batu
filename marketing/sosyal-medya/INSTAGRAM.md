@@ -8,7 +8,7 @@ metnin sonunda, 3–5 tane.
 
 ## Hesap kurulumu
 
-1. Kullanıcı adını al; sırayla dene: `patisos`, `patisosapp`, `pati.sos`.
+1. Kullanıcı adı: [@patisos.app](https://www.instagram.com/patisos.app/) (alındı).
 2. Profesyonel hesaba geç (Ayarlar → Hesap türü ve araçlar → Profesyonel hesaba geç → İşletme).
    Kategori olarak uygulamaya en yakın kategoriyi seç.
 3. Profil fotoğrafı: `gorseller/profil.png` (logo) ya da `gorseller/profil-maskot.png`.
