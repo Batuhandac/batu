@@ -11,3 +11,7 @@ export function registerClinics(clinics: Clinic[]): void {
 export function getRegisteredClinic(id: string): Clinic | null {
   return registry.get(id) ?? null;
 }
+
+export function allRegisteredClinics(): Clinic[] {
+  return [...registry.values()];
+}

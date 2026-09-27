@@ -31,9 +31,15 @@ export interface Clinic {
   source?: ClinicSource;
   rating_count?: number;
   city?: string | null;
-  // Google kliniklerinde: açık/kapalı durumu bu periyotlardan cihazda hesaplanır
+  // Açık/kapalı durumu bu periyotlardan cihazda hesaplanır (Google, OSM, onaylı profil)
   opening_periods?: OpeningPeriod[];
   weekday_text?: string[]; // ["Pazartesi: 09:00–19:00", ...]
+  // Birleştirilen kayıtta bilgisi kullanılan diğer kaynaklar (atıf için)
+  merged_sources?: ClinicSource[];
+  // Klinik onaylı profilden (lib/data/profiles.ts)
+  emergency_phone?: string | null;
+  services?: string[];
+  note?: string | null;
 }
 
 // Bir günün çalışma penceresi (0=Pazar … 6=Cumartesi)

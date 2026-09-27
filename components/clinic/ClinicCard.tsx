@@ -2,11 +2,15 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Stars } from '@/components/ui/Stars';
+import { callClinic } from '@/lib/utils/call';
 import type { Clinic } from '@/types';
 
 interface Props {
   clinic: Clinic;
+}
+
+export function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`;
 }
 
 export function ClinicCard({ clinic }: Props) {
@@ -31,102 +35,76 @@ export function ClinicCard({ clinic }: Props) {
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
       }}
+      accessibilityRole="button"
+      accessibilityLabel={`${clinic.name}, ${statusLabel}${clinic.distance_km > 0 ? ', ' + formatDistance(clinic.distance_km) : ''}`}
     >
       {/* Sol durum şeridi */}
-      <View style={{ width: 4, backgroundColor: accentColor, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }} />
+      <View style={{ width: 4, backgroundColor: accentColor }} />
 
-      <View className="flex-1 p-4">
-        {/* Başlık + puan */}
-        <View className="flex-row items-start justify-between mb-2">
-          <View className="flex-1 mr-2">
-            <Text className="text-white font-bold text-base" numberOfLines={1} style={{ letterSpacing: -0.2 }}>
+      <View className="flex-1 p-4 flex-row items-center gap-3">
+        <View className="flex-1">
+          <View className="flex-row items-center gap-1.5">
+            <Text className="text-white font-bold text-base flex-shrink" numberOfLines={1} style={{ letterSpacing: -0.2 }}>
               {clinic.name}
             </Text>
-            <View className="flex-row items-center gap-1 mt-0.5">
-              {clinic.district ? (
-                <Text className="text-gray-text text-sm">{clinic.district}</Text>
-              ) : null}
-              {clinic.distance_km > 0 && clinic.district ? (
-                <Text className="text-gray-muted text-sm"> · </Text>
-              ) : null}
-              {clinic.distance_km > 0 ? (
-                <Text className="text-gray-text text-sm">
-                  {clinic.distance_km < 1
-                    ? `${Math.round(clinic.distance_km * 1000)} m`
-                    : `${clinic.distance_km.toFixed(1)} km`}
-                </Text>
-              ) : null}
-            </View>
+            {clinic.is_verified && <Text style={{ color: '#68D391', fontSize: 13 }}>✓</Text>}
           </View>
-          {/* Puan pill */}
-          {clinic.rating != null && clinic.rating > 0 ? (
-            <View
-              className="flex-row items-center gap-1 rounded-lg px-2 py-1"
-              style={{ backgroundColor: 'rgba(52,53,54,0.9)' }}
-            >
-              <Text style={{ fontSize: 12, color: '#bac8dc' }}>★</Text>
-              <Text className="text-white text-xs font-bold">{clinic.rating.toFixed(1)}</Text>
-            </View>
-          ) : null}
-        </View>
 
-        {/* Puan satırı (yıldız görseli) */}
-        {clinic.rating != null && clinic.rating > 0 ? (
-          <View className="flex-row items-center gap-1.5 mb-2">
-            <Stars value={clinic.rating} size={11} />
-          </View>
-        ) : null}
+          <Text className="text-gray-text text-sm mt-0.5" numberOfLines={1}>
+            {[clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null, clinic.district]
+              .filter(Boolean)
+              .join(' · ')}
+            {clinic.rating != null && clinic.rating > 0 ? `  ★ ${clinic.rating.toFixed(1)}` : ''}
+          </Text>
 
-        {/* Alt satır: status + ok */}
-        <View className="flex-row items-center justify-between mt-1">
-          <View className="flex-1 flex-row flex-wrap items-center gap-2 mr-2">
-            {/* Durum badge */}
+          <View className="flex-row flex-wrap items-center gap-2 mt-2">
             <View
-              className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
-              style={{
-                backgroundColor: `${statusColor}18`,
-                borderWidth: 1,
-                borderColor: `${statusColor}30`,
-              }}
+              className="flex-row items-center gap-1.5 rounded-full px-3 py-1"
+              style={{ backgroundColor: `${statusColor}18`, borderWidth: 1, borderColor: `${statusColor}30` }}
             >
               <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
               <Text style={{ color: statusColor, fontSize: 12, fontWeight: '700' }}>{statusLabel}</Text>
             </View>
-            {/* Etiketler */}
-            {clinic.is_24_7 && (
-              <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: 'rgba(68,71,76,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
-              >
-                <Text className="text-gray-label text-xs font-semibold">7/24</Text>
-              </View>
-            )}
-            {clinic.accepts_emergency && !clinic.is_24_7 && (
-              <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: 'rgba(255,127,28,0.12)', borderWidth: 1, borderColor: 'rgba(255,127,28,0.3)' }}
-              >
-                <Text style={{ color: '#ff7f1c', fontSize: 12, fontWeight: '600' }}>Acil kabul</Text>
-              </View>
-            )}
-            {clinic.source === 'community' && (
-              <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: 'rgba(68,71,76,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
-              >
-                <Text className="text-gray-text text-xs">🐾 Topluluk</Text>
-              </View>
-            )}
-          </View>
-          {/* Ok butonu */}
-          <View
-            className="w-8 h-8 rounded-full items-center justify-center"
-            style={{ backgroundColor: 'rgba(68,71,76,0.7)' }}
-          >
-            <Text className="text-gray-label text-base">›</Text>
+            {clinic.is_24_7 && <Tag label="7/24" />}
+            {clinic.accepts_emergency && !clinic.is_24_7 && <Tag label="Acil kabul" orange />}
+            {clinic.source === 'community' && <Tag label="🐾 Topluluk" />}
           </View>
         </View>
+
+        {/* Doğrudan ara — acilde detay sayfasına girmeye gerek kalmasın */}
+        {clinic.phone ? (
+          <TouchableOpacity
+            onPress={() => callClinic(clinic, 'list')}
+            activeOpacity={0.85}
+            hitSlop={8}
+            className="w-12 h-12 rounded-full items-center justify-center"
+            style={{ backgroundColor: open ? '#38A169' : 'rgba(68,71,76,0.9)' }}
+            accessibilityRole="button"
+            accessibilityLabel={`${clinic.name} ara`}
+          >
+            <Text style={{ fontSize: 20 }}>📞</Text>
+          </TouchableOpacity>
+        ) : (
+          <View className="w-8 h-8 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(68,71,76,0.7)' }}>
+            <Text className="text-gray-label text-base">›</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
+  );
+}
+
+function Tag({ label, orange }: { label: string; orange?: boolean }) {
+  return (
+    <View
+      className="rounded-full px-2.5 py-1"
+      style={
+        orange
+          ? { backgroundColor: 'rgba(255,127,28,0.12)', borderWidth: 1, borderColor: 'rgba(255,127,28,0.3)' }
+          : { backgroundColor: 'rgba(68,71,76,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }
+      }
+    >
+      <Text style={{ color: orange ? '#ff7f1c' : '#e4e2e3', fontSize: 12, fontWeight: '600' }}>{label}</Text>
+    </View>
   );
 }

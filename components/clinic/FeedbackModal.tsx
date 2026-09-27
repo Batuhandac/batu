@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity } from 'react-native';
-import { supabase } from '@/lib/supabase';
+import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { submitCallFeedback } from '@/lib/data/community';
 import { track } from '@/lib/analytics';
 
 interface Props {
@@ -10,25 +10,25 @@ interface Props {
   clinicName: string;
 }
 
-type Step = 'phone' | 'emergency' | 'done';
+type Step = 'phone' | 'emergency' | 'sending' | 'done' | 'failed';
 
+// Aramadan ~10 dk sonra gelen bildirime dokununca açılır: "Telefonu açtı mı?"
 export function FeedbackModal({ visible, onClose, clinicId, clinicName }: Props) {
   const [step, setStep] = useState<Step>('phone');
   const [phoneAnswered, setPhoneAnswered] = useState<boolean | null>(null);
 
-  const submitFeedback = async (acceptedEmergency: boolean) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('clinic_feedback').insert({
-      clinic_id: clinicId,
-      user_id: user?.id ?? null,
-      phone_answered: phoneAnswered,
-      accepted_emergency: acceptedEmergency,
-    });
-    await track('feedback_submitted', { clinic_id: clinicId });
-    setStep('done');
+  const send = async (answered: boolean, acceptedEmergency: boolean | null) => {
+    setStep('sending');
+    const ok = await submitCallFeedback({ clinic_id: clinicId, phone_answered: answered, accepted_emergency: acceptedEmergency });
+    track('feedback_submitted', { clinic_id: clinicId, saved: ok });
+    setStep(ok ? 'done' : 'failed');
   };
 
-  const reset = () => { setStep('phone'); setPhoneAnswered(null); onClose(); };
+  const reset = () => {
+    setStep('phone');
+    setPhoneAnswered(null);
+    onClose();
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={reset}>
@@ -36,46 +36,57 @@ export function FeedbackModal({ visible, onClose, clinicId, clinicName }: Props)
         <View className="bg-surface rounded-t-3xl p-6 pb-10">
           {step === 'phone' && (
             <>
-              <Text className="text-white text-lg font-bold text-center mb-2">{clinicName}</Text>
-              <Text className="text-gray-text text-sm text-center mb-6">Telefonu açtı mı?</Text>
+              <Text className="text-white text-lg font-bold text-center mb-1">{clinicName}</Text>
+              <Text className="text-gray-text text-sm text-center mb-6">Aradığında telefonu açtılar mı?</Text>
               <View className="flex-row gap-3">
-                <TouchableOpacity onPress={() => { setPhoneAnswered(true); setStep('emergency'); }} className="flex-1 bg-green-open/20 border border-green-open rounded-2xl py-4 items-center">
-                  <Text className="text-green-light text-2xl">👍</Text>
-                  <Text className="text-green-light text-xs mt-1">Açtı</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setPhoneAnswered(false); setStep('emergency'); }} className="flex-1 bg-red-sos/20 border border-red-sos rounded-2xl py-4 items-center">
-                  <Text className="text-red-400 text-2xl">👎</Text>
-                  <Text className="text-red-400 text-xs mt-1">Açmadı</Text>
-                </TouchableOpacity>
+                <Choice label="Açtı" good onPress={() => { setPhoneAnswered(true); setStep('emergency'); }} />
+                <Choice label="Açmadı" onPress={() => send(false, null)} />
               </View>
             </>
           )}
           {step === 'emergency' && (
             <>
-              <Text className="text-white text-lg font-bold text-center mb-2">Acil kabul etti mi?</Text>
-              <View className="flex-row gap-3 mt-4">
-                <TouchableOpacity onPress={() => submitFeedback(true)} className="flex-1 bg-green-open/20 border border-green-open rounded-2xl py-4 items-center">
-                  <Text className="text-green-light text-2xl">👍</Text>
-                  <Text className="text-green-light text-xs mt-1">Evet</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => submitFeedback(false)} className="flex-1 bg-red-sos/20 border border-red-sos rounded-2xl py-4 items-center">
-                  <Text className="text-red-400 text-2xl">👎</Text>
-                  <Text className="text-red-400 text-xs mt-1">Hayır</Text>
-                </TouchableOpacity>
+              <Text className="text-white text-lg font-bold text-center mb-6">Acil hastayı kabul ettiler mi?</Text>
+              <View className="flex-row gap-3">
+                <Choice label="Evet" good onPress={() => send(phoneAnswered ?? true, true)} />
+                <Choice label="Hayır" onPress={() => send(phoneAnswered ?? true, false)} />
               </View>
             </>
           )}
-          {step === 'done' && (
+          {step === 'sending' && <ActivityIndicator color="#ff7f1c" className="my-8" />}
+          {(step === 'done' || step === 'failed') && (
             <>
-              <Text className="text-green-light text-xl font-bold text-center mb-2">Teşekkürler!</Text>
-              <Text className="text-gray-text text-sm text-center mb-6">Geribildiriminiz diğer evcil hayvan sahiplerine yardımcı olacak.</Text>
+              <Text className={`text-xl font-bold text-center mb-2 ${step === 'done' ? 'text-green-light' : 'text-red-400'}`}>
+                {step === 'done' ? 'Teşekkürler!' : 'Gönderilemedi'}
+              </Text>
+              <Text className="text-gray-text text-sm text-center mb-6">
+                {step === 'done'
+                  ? 'Cevabın, bir sonraki acilde başka bir pati sahibinin doğru kliniği bulmasına yardım edecek. Umarız dostun iyidir. 🐾'
+                  : 'İnternet bağlantını kontrol edip daha sonra tekrar deneyebilirsin.'}
+              </Text>
               <TouchableOpacity onPress={reset} className="bg-card border border-border rounded-2xl py-4 items-center">
                 <Text className="text-white font-semibold">Kapat</Text>
               </TouchableOpacity>
             </>
           )}
+          {(step === 'phone' || step === 'emergency') && (
+            <TouchableOpacity onPress={reset} className="py-3 items-center mt-2">
+              <Text className="text-gray-muted text-sm">Şimdi değil</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
+  );
+}
+
+function Choice({ label, good, onPress }: { label: string; good?: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`flex-1 rounded-2xl py-4 items-center border ${good ? 'bg-green-open/20 border-green-open' : 'bg-red-sos/20 border-red-sos'}`}
+    >
+      <Text className={`text-base font-semibold ${good ? 'text-green-light' : 'text-red-400'}`}>{label}</Text>
+    </TouchableOpacity>
   );
 }

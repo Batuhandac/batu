@@ -5,7 +5,7 @@ import { track } from '@/lib/analytics';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onCallFirst: () => void;
+  onCallFirst?: () => void; // telefon yoksa gösterilmez
   lat: number;
   lng: number;
   clinicId: string;
@@ -13,7 +13,7 @@ interface Props {
 
 export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clinicId }: Props) {
   const openMaps = async () => {
-    await track('directions_confirmed', { clinic_id: clinicId });
+    track('directions_confirmed', { clinic_id: clinicId });
     // Gerçek YOL TARİFİ aç (varış noktası = klinik koordinatı).
     // Önceki sürüm koordinatı "arama metni" olarak gönderiyordu (q=),
     // bu yüzden yanlış yere atıyordu. daddr/destination doğru olanı.
@@ -39,22 +39,31 @@ export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clini
       <View className="flex-1 justify-end bg-black/60">
         <View className="bg-surface rounded-t-3xl p-6 pb-10">
           <Text className="text-white text-xl font-bold text-center mb-2">
-            Gitmeden önce aradın mı?
+            {onCallFirst ? 'Gitmeden önce aradın mı?' : 'Yol tarifi'}
           </Text>
           <Text className="text-gray-text text-sm text-center mb-6 leading-relaxed">
-            Acil kabul durumu değişebilir. Önce aramanı öneririz.
+            {onCallFirst
+              ? 'Klinik dolu ya da kapalı olabilir. Arayıp geldiğini haber vermek, varınca zaman kazandırır.'
+              : 'Bu kliniğin telefonu kayıtlı değil. Açık olduğundan emin olamıyoruz; mümkünse telefonu olan bir kliniği tercih et.'}
           </Text>
-          <TouchableOpacity
-            onPress={() => { onCallFirst(); onClose(); }}
-            className="bg-green-open rounded-2xl py-4 items-center mb-3"
-          >
-            <Text className="text-white font-bold text-base">Önce arayayım</Text>
-          </TouchableOpacity>
+          {onCallFirst && (
+            <TouchableOpacity
+              onPress={() => { onCallFirst(); onClose(); }}
+              className="bg-green-open rounded-2xl py-4 items-center mb-3"
+            >
+              <Text className="text-white font-bold text-base">📞 Önce arayayım</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={openMaps}
             className="bg-card border border-border rounded-2xl py-4 items-center"
           >
-            <Text className="text-gray-label font-semibold text-base">Aradım, devam et</Text>
+            <Text className="text-gray-label font-semibold text-base">
+              {onCallFirst ? 'Aradım, yol tarifini aç' : 'Yol tarifini aç'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onClose} className="py-3 items-center mt-1">
+            <Text className="text-gray-muted text-sm">Vazgeç</Text>
           </TouchableOpacity>
         </View>
       </View>

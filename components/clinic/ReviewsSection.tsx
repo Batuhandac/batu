@@ -151,6 +151,7 @@ function AddReviewModal({
             onChangeText={setName}
             placeholder="Adın (opsiyonel)"
             placeholderTextColor="#718096"
+            maxLength={40}
             className="bg-card border border-border rounded-2xl px-4 py-3 text-white mb-3"
           />
           <TextInput
@@ -158,6 +159,7 @@ function AddReviewModal({
             onChangeText={setComment}
             placeholder="Deneyimini yaz: ulaşılabilir miydi, acil kabul etti mi, ilgi nasıldı?"
             placeholderTextColor="#718096"
+            maxLength={1000}
             multiline
             numberOfLines={4}
             className="bg-card border border-border rounded-2xl px-4 py-3 text-white mb-5"

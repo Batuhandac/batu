@@ -26,12 +26,12 @@ export default function WelcomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Gradient hero */}
         <LinearGradient
-          colors={['#1A2E45', '#0D1B2A']}
+          colors={['#2a2a2b', '#131315']}
           style={{ paddingTop: 40, paddingBottom: 36, paddingHorizontal: 24, alignItems: 'center' }}
         >
           <View
             className="w-24 h-24 rounded-3xl items-center justify-center mb-5"
-            style={{ backgroundColor: 'rgba(229,62,62,0.15)', borderWidth: 1, borderColor: 'rgba(229,62,62,0.3)' }}
+            style={{ backgroundColor: 'rgba(255,127,28,0.15)', borderWidth: 1, borderColor: 'rgba(255,127,28,0.35)' }}
           >
             <Text style={{ fontSize: 52 }}>🐾</Text>
           </View>
@@ -44,10 +44,10 @@ export default function WelcomeScreen() {
         </LinearGradient>
 
         <View className="px-6 pt-8">
-          <Feature emoji="🆘" title="Tek tuşla acil" desc="En yakın açık klinik anında karşında" />
-          <Feature emoji="🟢" title="Açık/kapalı canlı" desc="Boşuna yola çıkma, durumu gör" />
-          <Feature emoji="🐾" title="Pet acil kartı" desc="Alerji, ilaç bilgisi cebinde, paylaş" />
-          <Feature emoji="📶" title="Offline çalışır" desc="İnternet yokken bile klinik bulur" />
+          <Feature emoji="🆘" title="Tek tuşla acil" desc="En yakın açık klinik ve büyük bir 'Ara' butonu" />
+          <Feature emoji="🟢" title="Açık mı, kapalı mı?" desc="Çalışma saatlerinden anlık hesaplanır; bilmiyorsak söyleriz" />
+          <Feature emoji="📋" title="Ne söyleyeceğin hazır" desc="Pet kartındaki bilgiler aramada karşında" />
+          <Feature emoji="🩹" title="Yolda ne yapmalı" desc="Veterinere ulaşana kadar temel adımlar" />
 
           {/* Bilgilendirme */}
           <View className="bg-surface border border-border rounded-2xl p-4 mt-4 mb-5">
@@ -65,7 +65,7 @@ export default function WelcomeScreen() {
             className="flex-row items-start gap-3 mb-6"
             activeOpacity={0.7}
           >
-            <View className={`w-6 h-6 rounded-md border-2 items-center justify-center mt-0.5 ${accepted ? 'bg-green-open border-green-open' : 'border-border bg-surface'}`}>
+            <View className={`w-6 h-6 rounded-md border-2 items-center justify-center mt-0.5 ${accepted ? 'bg-orange-accent border-orange-accent' : 'border-border bg-surface'}`}>
               {accepted && <Text className="text-white text-sm font-bold">✓</Text>}
             </View>
             <Text className="text-gray-text text-sm flex-1 leading-relaxed">
@@ -77,14 +77,14 @@ export default function WelcomeScreen() {
             onPress={() => accepted && router.push('/(onboarding)/location')}
             activeOpacity={0.85}
             disabled={!accepted}
-            className={`rounded-2xl py-4 items-center ${accepted ? 'bg-red-sos' : 'bg-surface border border-border opacity-50'}`}
-            style={accepted ? { shadowColor: '#E53E3E', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 } : undefined}
+            className={`rounded-2xl py-4 items-center ${accepted ? 'bg-orange-accent' : 'bg-surface border border-border opacity-50'}`}
+            style={accepted ? { shadowColor: '#ff7f1c', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 } : undefined}
           >
             <Text className="text-white font-bold text-lg">Başla</Text>
           </TouchableOpacity>
 
           <Text className="text-gray-muted text-xs text-center mt-4">
-            Ücretsiz · Hesap gerekmez · Ankara
+            Ücretsiz · Hesap gerekmez · Reklamsız
           </Text>
         </View>
       </ScrollView>

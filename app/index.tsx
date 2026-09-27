@@ -8,8 +8,8 @@ export default function Entry() {
   // AsyncStorage okunana kadar bekle — yoksa her açılışta onboarding'e atar
   if (!hydrated) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0D1B2A', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#E53E3E" size="large" />
+      <View style={{ flex: 1, backgroundColor: '#131315', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#ff7f1c" size="large" />
       </View>
     );
   }

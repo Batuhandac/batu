@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Pati SOS — Firebase Storage kuralları (klinik fotoğrafları)
+// Firebase Console → Storage → Rules sekmesine yapıştırıp Publish et.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /clinic_photos/{clinicId}/{file} {
+      allow read: if true;
+      allow create: if request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow update, delete: if false;
+    }
+  }
+}

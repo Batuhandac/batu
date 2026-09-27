@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Share } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getPet, removePet } from '@/lib/data/localStore';
+import { getPet, removePet, setPrimaryPet } from '@/lib/data/localStore';
+import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
 import { sharePetCard, shareViaWhatsApp, buildPetCardText } from '@/lib/utils/share';
 import { track } from '@/lib/analytics';
 import type { Pet } from '@/types';
@@ -21,7 +22,8 @@ export default function PetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [pet, setPet] = useState<Pet | null>(null);
 
-  useEffect(() => { loadPet(); }, [id]);
+  // Düzenleme ekranından dönünce güncel hâli göster
+  useFocusEffect(React.useCallback(() => { loadPet(); }, [id]));
 
   const loadPet = async () => {
     const data = await getPet(id);
@@ -55,7 +57,12 @@ export default function PetDetailScreen() {
 
   if (!pet) return null;
 
-  const emoji = pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐶' : '🐾';
+  const emoji = speciesEmoji(pet.species);
+
+  const makePrimary = async () => {
+    await setPrimaryPet(pet.id);
+    await loadPet();
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-bg">
@@ -65,16 +72,26 @@ export default function PetDetailScreen() {
             <TouchableOpacity onPress={() => router.back()}>
               <Text className="text-gray-text text-base">‹ Geri</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete}>
-              <Text className="text-red-400 text-sm">Sil</Text>
-            </TouchableOpacity>
+            <View className="flex-row gap-5">
+              <TouchableOpacity onPress={() => router.push(`/pets/create?id=${pet.id}`)}>
+                <Text className="text-orange-accent text-sm font-semibold">Düzenle</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDelete}>
+                <Text className="text-red-400 text-sm">Sil</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View className="items-center mb-6">
             <Text className="text-6xl mb-3">{emoji}</Text>
             <Text className="text-white text-2xl font-bold">{pet.name}</Text>
-            {(pet.species || pet.breed) && (
-              <Text className="text-gray-text mt-1">{[pet.species, pet.breed].filter(Boolean).join(' · ')}</Text>
+            <Text className="text-gray-text mt-1">{[speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ')}</Text>
+            {pet.is_primary ? (
+              <Text className="text-gray-muted text-xs mt-2">⭐ Acil Mod'da bu kart gösterilir</Text>
+            ) : (
+              <TouchableOpacity onPress={makePrimary} className="mt-2">
+                <Text className="text-orange-accent text-xs font-semibold">Acil Mod'da bu kartı göster</Text>
+              </TouchableOpacity>
             )}
           </View>
 

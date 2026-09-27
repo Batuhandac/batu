@@ -79,7 +79,9 @@ export function weekdayText(periods: OpeningPeriod[]): string[] {
   if (isAlwaysOpen(periods)) return ['Her gün: 24 saat açık'];
   const byDay: string[][] = Array.from({ length: 7 }, () => []);
   for (const p of periods) {
-    if (p.close) byDay[p.open.day].push(`${hm(p.open)}–${hm(p.close)}`);
+    if (!p.close) continue;
+    const midnight = p.close.hour === 0 && p.close.minute === 0 && p.close.day !== p.open.day;
+    byDay[p.open.day].push(`${hm(p.open)}–${midnight ? '24:00' : hm(p.close)}`);
   }
   return [1, 2, 3, 4, 5, 6, 0].map(
     (d) => `${TR_DAYS[d]}: ${byDay[d].length ? byDay[d].join(', ') : 'Kapalı'}`

@@ -1,11 +1,20 @@
 import { useState, useCallback, useRef } from 'react';
 import { cacheClinics } from '@/lib/cache';
-import { queryNearbyClinics, rankClinics } from '@/lib/data/query';
+import { nearbySeedClinics, rankClinics, trFold } from '@/lib/data/query';
 import { fetchCommunityClinics } from '@/lib/data/community';
 import { fetchPlacesClinics, PLACES_RADIUS_KM } from '@/lib/data/places';
+import { applyProfile, cachedProfiles, loadClinicProfiles, type ProfileMap } from '@/lib/data/profiles';
 import { registerClinics } from '@/lib/data/registry';
 import { haversine } from '@/lib/utils/geo';
+import { withLiveStatus } from '@/lib/utils/openingHours';
 import type { Clinic, NearbyFilters } from '@/types';
+
+const LOCAL_RADIUS_KM = 20;
+const SOURCE_TIMEOUT_MS = 7000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+}
 
 interface UseClinicsResult {
   clinics: Clinic[];
@@ -13,9 +22,33 @@ interface UseClinicsResult {
   error: string | null;
   offline: boolean;
   cacheTimestamp: string | null;
-  // Liste Google'dan gelen canlı veriyle mi gösteriliyor (atıf için)
+  // Listede Google'dan gelen canlı veri var mı
   live: boolean;
   fetch: (lat: number, lng: number, filters?: NearbyFilters) => Promise<void>;
+}
+
+/**
+ * Tüm kaynakları birleştirir: Google Places (canlı) + OpenStreetMap (gömülü,
+ * çevrimdışı) + topluluk. Aynı klinik birden çok kaynakta varsa en iyi kayıt
+ * tutulur, eksik telefon/saat diğerinden tamamlanır; klinik onaylı profiller
+ * en üste uygulanır. Sonra tek skorla sıralanır.
+ */
+export function buildClinicList(
+  lat: number,
+  lng: number,
+  filters: NearbyFilters,
+  sources: { places: Clinic[]; local: Clinic[]; community: Clinic[] },
+  profiles: ProfileMap
+): Clinic[] {
+  const withProfile = (cs: Clinic[]) => cs.map((c) => applyProfile(c, profiles[c.id]));
+  const merged = deduplicateClinics([
+    ...withProfile(sources.places),
+    ...withProfile(sources.local),
+    ...withProfile(sources.community),
+  ]);
+  return rankClinics(merged, lat, lng, filters, PLACES_RADIUS_KM).sort(
+    (a, b) => b.emergency_score - a.emergency_score
+  );
 }
 
 export function useClinics(): UseClinicsResult {
@@ -35,36 +68,39 @@ export function useClinics(): UseClinicsResult {
       setLoading(true);
       setError(null);
       try {
-        // 1) Gömülü klinikler — anında, offline (her zaman çalışır)
-        const local = queryNearbyClinics(lat, lng, filters, 20);
-        setClinics(local);
+        // 1) Gömülü (OpenStreetMap) klinikler — anında, çevrimdışı çalışır
+        const local = nearbySeedClinics(lat, lng, LOCAL_RADIUS_KM);
+        const first = buildClinicList(lat, lng, filters, { places: [], local, community: [] }, cachedProfiles());
+        setClinics(first);
         setLive(false);
-        registerClinics(local);
-        cacheClinics(local).catch(() => {});
+        registerClinics(first);
+        cacheClinics(first).catch(() => {});
 
-        // 2) Google Places (yapılandırılmışsa) + Topluluk klinikleri — paralel
-        const [places, community] = await Promise.allSettled([
+        // 2) Google Places + topluluk + onaylı profiller — paralel
+        // Zayıf bağlantıda hiçbir kaynak listeyi sonsuza dek "yükleniyor"da tutmasın
+        const [places, community, profiles] = await Promise.allSettled([
           fetchPlacesClinics(lat, lng),
-          fetchCommunityClinics(),
+          withTimeout(fetchCommunityClinics(), SOURCE_TIMEOUT_MS),
+          withTimeout(loadClinicProfiles(), SOURCE_TIMEOUT_MS),
         ]);
         // Bu sırada filtre/konum değiştiyse eski sonucu yazma
         if (requestId !== latestRequest.current) return;
 
-        const hasLive = places.status === 'fulfilled' && places.value.length > 0;
-        const communityData =
-          community.status === 'fulfilled' ? rankClinics(community.value, lat, lng, filters, 20) : [];
-
-        if (hasLive || communityData.length > 0) {
-          // Canlı Google verisi geldiyse gömülü listenin yerine geçer; gömülü liste
-          // yalnızca anahtar yokken / çevrimdışıyken yedek olarak kalır.
-          const base = hasLive ? rankClinics(places.value, lat, lng, filters, PLACES_RADIUS_KM) : local;
-          const merged = deduplicateClinics([...base, ...communityData]).sort(
-            (a, b) => b.emergency_score - a.emergency_score
-          );
-          registerClinics(merged);
-          setClinics(merged);
-          setLive(hasLive);
-        }
+        const placesData = places.status === 'fulfilled' ? places.value : [];
+        const full = buildClinicList(
+          lat,
+          lng,
+          filters,
+          {
+            places: placesData,
+            local,
+            community: community.status === 'fulfilled' ? community.value : [],
+          },
+          profiles.status === 'fulfilled' ? profiles.value : cachedProfiles()
+        );
+        registerClinics(full);
+        setClinics(full);
+        setLive(placesData.length > 0);
       } catch {
         if (requestId === latestRequest.current) setError('Klinikler yüklenemedi. Tekrar dene.');
       } finally {
@@ -77,27 +113,64 @@ export function useClinics(): UseClinicsResult {
   return { clinics, loading, error, offline: false, cacheTimestamp: null, live, fetch };
 }
 
-// ─── Yardımcılar ─────────────────────────────────────────────────────────────
+// ─── Tekrarları birleştirme ─────────────────────────────────────────────────
 
-// 200m içindeki aynı adlı klinikleri tek tut (listede önce geleni tercih et)
-function deduplicateClinics(clinics: Clinic[]): Clinic[] {
-  const seen = new Set<string>();
+const GENERIC = /\b(veteriner|veterinary|veterinerlik|vet|klinigi|klinik|poliklinigi|poliklinik|hayvan|hayvanlar|hastanesi|hastane|saglik|merkezi|pet|ve|dr|hekim|hekimi)\b/g;
+
+function nameKey(name: string): string {
+  return trFold(name).replace(/[^a-z0-9 ]/g, ' ').replace(GENERIC, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export function sameClinic(a: Clinic, b: Clinic): boolean {
+  const d = haversine(a.lat, a.lng, b.lat, b.lng);
+  if (d < 0.04) return true; // aynı bina
+  if (d > 0.3) return false;
+  const ka = nameKey(a.name);
+  const kb = nameKey(b.name);
+  if (!ka || !kb) return false;
+  return ka === kb || ka.startsWith(kb) || kb.startsWith(ka);
+}
+
+// Düşük sayı = tercih edilir: onaylı > Google > OpenStreetMap > topluluk
+function rank(c: Clinic): number {
+  const src = c.source === 'google' ? 0 : c.source === 'builtin' ? 1 : 2;
+  return (c.is_verified ? 0 : 10) + src;
+}
+
+function mergeInto(best: Clinic, other: Clinic): Clinic {
+  const out: Clinic = { ...best };
+  let used = false;
+  if (!out.phone && other.phone) {
+    out.phone = other.phone;
+    used = true;
+  }
+  if (!out.opening_periods?.length && other.opening_periods?.length) {
+    out.opening_periods = other.opening_periods;
+    out.weekday_text = other.weekday_text;
+    out.is_24_7 = out.is_24_7 || other.is_24_7;
+    used = true;
+  }
+  out.accepts_emergency = out.accepts_emergency || other.accepts_emergency;
+  if (used && other.source && other.source !== out.source) {
+    out.merged_sources = [...new Set([...(out.merged_sources ?? []), other.source])];
+  }
+  return used ? withLiveStatus(out) : out;
+}
+
+export function deduplicateClinics(clinics: Clinic[]): Clinic[] {
   const result: Clinic[] = [];
-
+  const seen = new Set<string>();
   for (const c of clinics) {
-    // Aynı id varsa atla
     if (seen.has(c.id)) continue;
     seen.add(c.id);
-
-    // Çok yakın konumda, benzer isimli klinik var mı?
-    const isDuplicate = result.some(r => {
-      const dist = haversine(c.lat, c.lng, r.lat, r.lng);
-      const nameSim = c.name.toLowerCase().slice(0, 10) === r.name.toLowerCase().slice(0, 10);
-      return dist < 0.2 && nameSim;
-    });
-
-    if (!isDuplicate) result.push(c);
+    const i = result.findIndex((r) => sameClinic(r, c));
+    if (i === -1) {
+      result.push(c);
+    } else if (rank(c) < rank(result[i])) {
+      result[i] = mergeInto(c, result[i]);
+    } else {
+      result[i] = mergeInto(result[i], c);
+    }
   }
-
   return result;
 }

@@ -14,13 +14,23 @@ Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü 
 
 ## Klinik verisi nereden geliyor?
 
-1. **Google Places (canlı)** — `EXPO_PUBLIC_GOOGLE_PLACES_KEY` tanımlıysa, konumun
-   çevresindeki en yakın veterinerler + 7/24/acil veterinerler çekilir. Açık/kapalı
-   durumu çalışma saatlerinden cihazda hesaplanır; sonuç cihazda 3 gün saklanır.
-   Anahtar kurulumu: `.github/SECRETS_SETUP.md`.
-2. **Gömülü liste (yedek)** — `lib/data/clinics.ts`. Anahtar yokken ya da Google'a
-   ulaşılamadığında gösterilir. Canlı veri gelince listenin yerine geçer.
-3. **Topluluk** — kullanıcıların eklediği klinikler (Firestore), her iki durumda da eklenir.
+1. **OpenStreetMap (gömülü, çevrimdışı)** — `lib/data/clinics.ts`. Türkiye'deki
+   `amenity=veterinary` kayıtları; `update-clinic-data` workflow'u ayda bir
+   (`scripts/gen-clinics-osm.js`) yeniler. © OpenStreetMap katkıcıları, ODbL.
+2. **Google Places (canlı)** — `EXPO_PUBLIC_GOOGLE_PLACES_KEY` tanımlıysa konumun
+   çevresindeki en yakın veterinerler + 7/24/acil veterinerler. Telefon ve saat
+   bilgisi OSM'den çok daha dolu. Kurulum: `.github/SECRETS_SETUP.md`.
+3. **Topluluk** — kullanıcıların eklediği klinikler (Firestore); yönetici onayından sonra görünür.
+4. **Klinik onaylı profiller** — veteriner hekimlerin "Bu klinik benim" başvurusu
+   telefonla doğrulanınca yönetici `clinic_profiles` belgesini oluşturur; bu bilgiler
+   diğer kaynakların üzerine yazılır. Süreç: `YONETICI_REHBERI.md`.
+
+Aynı klinik birden çok kaynakta varsa tek kayıt gösterilir (onaylı > Google > OSM >
+topluluk), eksik telefon/saat diğer kaynaktan tamamlanır. Açık/kapalı durumu her
+zaman çalışma saatlerinden cihazda hesaplanır; saat bilinmiyorsa "bilinmiyor" yazar.
+
+Sıralama satın alınamaz: yalnızca şu an açık olma, acil kabul, 7/24, doğrulanmış
+bilgi, telefonun olması, mesafe ve puan (`rankClinics`, `lib/data/query.ts`).
 
 ## Kurulum
 

@@ -79,7 +79,7 @@ export default function AddClinicScreen() {
     setSaving(false);
     if (ok) {
       await track('community_clinic_added');
-      Alert.alert('Teşekkürler! 🎉', 'Klinik eklendi ve haritada görünmeye başlayacak.', [
+      Alert.alert('Teşekkürler! 🐾', 'Klinik bize ulaştı. Bilgileri kontrol ettikten sonra haritada görünecek — acil anında yanlış numara gösterilmesin diye her kaydı kontrol ediyoruz.', [
         { text: 'Harika', onPress: () => router.back() },
       ]);
     } else {
@@ -108,7 +108,7 @@ export default function AddClinicScreen() {
           <Field label="Klinik Adı *">
             <TextInput
               value={name} onChangeText={setName}
-              placeholder="Örn. Çankaya Acil Veteriner"
+              placeholder="Örn. Pati Veteriner Kliniği"
               placeholderTextColor="#718096"
               className="bg-card border border-border rounded-2xl px-4 py-3 text-white"
             />
@@ -141,7 +141,7 @@ export default function AddClinicScreen() {
                 <TouchableOpacity
                   key={d.name}
                   onPress={() => { setDistrict(d.name); setCoord({ lat: d.lat, lng: d.lng }); }}
-                  className={`rounded-full px-3.5 py-1.5 border ${district === d.name ? 'bg-red-sos border-red-sos' : 'bg-card border-border'}`}
+                  className={`rounded-full px-3.5 py-1.5 border ${district === d.name ? 'bg-orange-accent border-orange-accent' : 'bg-card border-border'}`}
                 >
                   <Text className={`text-sm ${district === d.name ? 'text-white font-semibold' : 'text-gray-text'}`}>
                     {d.name}
@@ -174,7 +174,7 @@ export default function AddClinicScreen() {
                       lng: e.nativeEvent.coordinate.longitude,
                     })
                   }
-                  pinColor="#E53E3E"
+                  pinColor="#ff7f1c"
                 />
               </MapView>
             </View>
@@ -218,7 +218,7 @@ export default function AddClinicScreen() {
           <TouchableOpacity
             onPress={save}
             disabled={saving}
-            className={`bg-red-sos rounded-2xl py-4 items-center mt-4 ${saving ? 'opacity-50' : ''}`}
+            className={`bg-orange-accent rounded-2xl py-4 items-center mt-4 ${saving ? 'opacity-50' : ''}`}
             activeOpacity={0.85}
           >
             {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-lg">Kliniği Ekle</Text>}
@@ -245,7 +245,7 @@ function ToggleRow({ label, value, onChange }: { label: string; value: boolean; 
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: '#243B55', true: '#E53E3E' }}
+        trackColor={{ false: '#44474c', true: '#ff7f1c' }}
         thumbColor="#fff"
       />
     </View>

@@ -25,22 +25,75 @@ import type {
 
 export { isFirebaseConfigured };
 
-// ─── Klinik gönderimi ────────────────────────────────────────────────────────
-export async function submitCommunityClinic(input: CommunityClinicInput): Promise<boolean> {
+// ─── Güvenli yazma ───────────────────────────────────────────────────────────
+// Firestore çevrimdışıyken addDoc yerelde kuyruğa alıp sonsuza dek bekleyebilir;
+// kullanıcıya "gönderildi" diyebilmek için sunucu onayını en fazla 10 sn bekle.
+const WRITE_TIMEOUT_MS = 10000;
+
+async function addSafe(col: string, data: Record<string, unknown>): Promise<boolean> {
   const db = getDb();
   if (!db) return false;
   try {
     const deviceId = await getDeviceId();
-    await addDoc(collection(db, 'community_clinics'), {
-      ...input,
-      submitted_by: deviceId,
-      status: 'approved', // lansman için otomatik onay; sonra moderasyon eklenebilir
-      created_at: serverTimestamp(),
-    });
+    await Promise.race([
+      addDoc(collection(db, col), { ...data, device_id: deviceId, created_at: serverTimestamp() }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), WRITE_TIMEOUT_MS)),
+    ]);
     return true;
   } catch {
     return false;
   }
+}
+
+// ─── Klinik gönderimi ────────────────────────────────────────────────────────
+// Kullanıcı eklediği klinik, yönetici onaylayana kadar ('pending') görünmez:
+// acil anında panikteki birine sahte bir telefon numarası gösterilmesin.
+export async function submitCommunityClinic(input: CommunityClinicInput): Promise<boolean> {
+  return addSafe('community_clinics', { ...input, status: 'pending' });
+}
+
+// ─── Hatalı bilgi bildirimi / açık-kapalı teyidi / arama geri bildirimi ──────
+export async function submitClinicReport(input: {
+  clinic_id: string;
+  clinic_name: string | null;
+  report_type: string;
+  detail: string | null;
+}): Promise<boolean> {
+  return addSafe('clinic_reports', input);
+}
+
+export async function submitOpenPing(clinicId: string, isOpen: boolean): Promise<boolean> {
+  return addSafe('clinic_pings', { clinic_id: clinicId, is_open_now: isOpen });
+}
+
+export async function submitCallFeedback(input: {
+  clinic_id: string;
+  phone_answered: boolean;
+  accepted_emergency: boolean | null;
+}): Promise<boolean> {
+  return addSafe('clinic_feedback', input);
+}
+
+// ─── Veteriner hekim başvurusu ("Bu klinik benim") ───────────────────────────
+export interface ClinicClaimInput {
+  clinic_id: string | null; // listede yoksa null
+  clinic_name: string;
+  claimant_name: string;
+  claimant_role: 'vet' | 'owner' | 'staff';
+  claimant_phone: string;
+  claimant_email: string | null;
+  clinic_phone: string | null;
+  emergency_phone: string | null;
+  hours_text: string | null;
+  is_24_7: boolean;
+  accepts_emergency: boolean;
+  services: string[];
+  note: string | null;
+  consent: true;
+}
+
+export async function submitClinicClaim(input: ClinicClaimInput): Promise<boolean> {
+  return addSafe('clinic_claims', { ...input, status: 'pending' });
 }
 
 // ─── Topluluk kliniklerini çek ───────────────────────────────────────────────
@@ -180,7 +233,9 @@ export async function addClinicPhoto(clinicId: string, localUri: string): Promis
     const blob = await res.blob();
     const path = `clinic_photos/${clinicId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
     const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, blob);
+    // Tür boş gelirse Storage kuralı (image/*) yüklemeyi reddeder
+    const contentType = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+    await uploadBytes(storageRef, blob, { contentType });
     const url = await getDownloadURL(storageRef);
     await addDoc(collection(db, 'clinic_photos'), {
       clinic_id: clinicId,

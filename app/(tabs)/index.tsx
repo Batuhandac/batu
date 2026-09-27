@@ -6,7 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { usePets } from '@/lib/hooks/usePets';
 import { useFavorites } from '@/lib/hooks/useFavorites';
-import { track } from '@/lib/analytics';
+import { useLocation } from '@/lib/hooks/useLocation';
+import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -19,16 +20,16 @@ function greeting(): string {
 export default function HomeScreen() {
   const { pets, load: loadPets } = usePets();
   const { favorites, load: loadFavs } = useFavorites();
+  const { source, label } = useLocation();
 
   useFocusEffect(useCallback(() => { loadPets(); loadFavs(); }, [loadPets, loadFavs]));
 
   const primaryPet = pets.find((p) => p.is_primary) ?? pets[0];
   const primaryVetFav = favorites.find((f) => f.is_primary_vet);
 
-  const handleEmergency = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-    await track('emergency_cta_tap');
-    router.push('/(tabs)/nearby');
+  const handleEmergency = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+    router.push('/emergency');
   };
 
   return (
@@ -43,14 +44,26 @@ export default function HomeScreen() {
               Pati SOS
             </Text>
           </View>
-          <View className="flex-row items-center gap-1.5 bg-card border border-border rounded-full px-3 py-1.5 mt-1">
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/nearby')}
+            className="flex-row items-center gap-1.5 bg-card border border-border rounded-full px-3 py-1.5 mt-1"
+            style={{ maxWidth: 170 }}
+          >
             <Text className="text-sm">📍</Text>
-            <Text className="text-gray-label text-sm font-semibold">Ankara</Text>
-          </View>
+            <Text className="text-gray-label text-sm font-semibold" numberOfLines={1}>
+              {source === 'manual' ? label ?? 'Seçilen bölge' : source === 'gps' ? 'Konumun' : 'Konum seç'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* ACİL hero */}
-        <TouchableOpacity onPress={handleEmergency} activeOpacity={0.9} className="mx-5 mt-5">
+        <TouchableOpacity
+          onPress={handleEmergency}
+          activeOpacity={0.9}
+          className="mx-5 mt-5"
+          accessibilityRole="button"
+          accessibilityLabel="Acil veteriner bul"
+        >
           <LinearGradient
             colors={['rgba(255,127,28,0.95)', 'rgba(220,80,0,0.85)', 'rgba(19,19,21,0.92)']}
             start={{ x: 0, y: 0 }}
@@ -81,7 +94,7 @@ export default function HomeScreen() {
                   ACİL VETERİNER BUL
                 </Text>
                 <Text className="text-white/80 text-sm text-center mt-1">
-                  Şu an açık klinikler önce listelenir
+                  En yakın açık klinik · tek dokunuşla arama · ilk yardım
                 </Text>
               </View>
               {/* CTA */}
@@ -118,14 +131,12 @@ export default function HomeScreen() {
                 className="w-14 h-14 rounded-full items-center justify-center"
                 style={{ backgroundColor: 'rgba(68,71,76,0.8)' }}
               >
-                <Text className="text-3xl">
-                  {primaryPet.species === 'cat' ? '🐱' : primaryPet.species === 'dog' ? '🐶' : '🐾'}
-                </Text>
+                <Text className="text-3xl">{speciesEmoji(primaryPet.species)}</Text>
               </View>
               <View className="flex-1">
                 <Text className="text-white font-bold text-base">{primaryPet.name}</Text>
                 <Text className="text-gray-text text-sm mt-0.5">
-                  {primaryPet.breed ?? (primaryPet.species === 'cat' ? 'Kedi' : primaryPet.species === 'dog' ? 'Köpek' : 'Hayvan')}
+                  {primaryPet.breed ?? speciesLabel(primaryPet.species)}
                 </Text>
               </View>
               <TouchableOpacity
@@ -150,17 +161,22 @@ export default function HomeScreen() {
                 <Text className="text-3xl">➕</Text>
               </View>
               <View className="flex-1">
-                <Text className="text-white font-bold text-base">Pet ekle</Text>
-                <Text className="text-gray-text text-sm mt-0.5">Alerji, ilaç, bilgileri kaydet</Text>
+                <Text className="text-white font-bold text-base">Acil kart oluştur</Text>
+                <Text className="text-gray-text text-sm mt-0.5">Acilde veterinere ne söyleyeceğin hazır olsun</Text>
               </View>
             </TouchableOpacity>
           )}
 
           {primaryVetFav && (
-            <View className="bg-surface border border-border rounded-2xl px-4 py-3 flex-row items-center gap-3 mt-3">
+            <TouchableOpacity
+              onPress={() => router.push(`/clinic/${primaryVetFav.clinic_id}`)}
+              className="bg-surface border border-border rounded-2xl px-4 py-3 flex-row items-center gap-3 mt-3"
+              activeOpacity={0.85}
+            >
               <Text className="text-xl">⭐</Text>
-              <Text className="text-gray-label text-sm font-medium flex-1">Düzenli veterinerin kayıtlı</Text>
-            </View>
+              <Text className="text-gray-label text-sm font-medium flex-1">Düzenli veterinerin</Text>
+              <Text className="text-gray-muted">›</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -209,6 +225,13 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Veteriner hekimlere */}
+        <TouchableOpacity onPress={() => router.push('/vets')} className="mx-5 mt-4 py-3 items-center" activeOpacity={0.7}>
+          <Text className="text-gray-muted text-sm">
+            🩺 Veteriner hekim misiniz? <Text style={{ color: '#bac8dc', fontWeight: '600' }}>Kliniğinizi ücretsiz doğrulayın</Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

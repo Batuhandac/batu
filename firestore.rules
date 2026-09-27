@@ -1,0 +1,107 @@
+rules_version = '2';
+
+// Pati SOS — Firestore güvenlik kuralları
+// Firebase Console → Firestore Database → Rules sekmesine yapıştırıp Publish et.
+// Uygulamada giriş (auth) yok; bu yüzden herkes yalnızca doğrulanmış alanlarla
+// YENİ kayıt ekleyebilir, hiçbir kaydı değiştiremez/silemez. Kişisel veri içeren
+// koleksiyonlar (başvurular, bildirimler) uygulamadan okunamaz — yalnızca
+// Firebase Console'dan (yönetici) görülür.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function data() { return request.resource.data; }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function optStr(field, max) {
+      return !(field in data()) || data()[field] == null || str(data()[field], 0, max);
+    }
+    function optBool(field) {
+      return !(field in data()) || data()[field] == null || data()[field] is bool;
+    }
+    function stamped() { return data().created_at == request.time; }
+    function device() { return str(data().device_id, 4, 80); }
+
+    // ── Kullanıcıların eklediği klinikler: onaylanana kadar gizli ──────────
+    // Yönetici Console'dan status alanını 'approved' yapınca görünür olur.
+    match /community_clinics/{id} {
+      allow read: if resource.data.status == 'approved';
+      allow create: if str(data().name, 2, 120)
+                    && data().lat is number && data().lng is number
+                    && data().status == 'pending'
+                    && optStr('phone', 30) && optStr('address', 200) && optStr('district', 60)
+                    && device() && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Klinik onaylı profiller: SADECE yönetici yazar (Console) ────────────
+    match /clinic_profiles/{clinicId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Yorumlar ────────────────────────────────────────────────────────────
+    match /reviews/{id} {
+      allow read: if true;
+      allow create: if str(data().clinic_id, 3, 200)
+                    && data().rating is int && data().rating >= 1 && data().rating <= 5
+                    && str(data().comment, 0, 1000)
+                    && str(data().author_name, 1, 40)
+                    && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Klinik fotoğrafları (dosya Storage'da, burada kaydı) ────────────────
+    match /clinic_photos/{id} {
+      allow read: if true;
+      allow create: if str(data().clinic_id, 3, 200)
+                    && str(data().url, 10, 1000)
+                    && data().url.matches('https://firebasestorage\\.googleapis\\.com/.*')
+                    && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Veteriner hekim başvuruları ("Bu klinik benim") — kişisel veri ──────
+    match /clinic_claims/{id} {
+      allow read: if false;
+      allow create: if str(data().clinic_name, 2, 120)
+                    && str(data().claimant_name, 2, 100)
+                    && str(data().claimant_phone, 7, 30)
+                    && data().claimant_role in ['vet', 'owner', 'staff']
+                    && data().consent == true
+                    && data().status == 'pending'
+                    && optStr('clinic_id', 200) && optStr('claimant_email', 120)
+                    && optStr('clinic_phone', 30) && optStr('emergency_phone', 30)
+                    && optStr('hours_text', 200) && optStr('note', 500)
+                    && data().is_24_7 is bool && data().accepts_emergency is bool
+                    && data().services is list && data().services.size() <= 20
+                    && device() && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Hatalı bilgi bildirimleri ───────────────────────────────────────────
+    match /clinic_reports/{id} {
+      allow read: if false;
+      allow create: if str(data().clinic_id, 3, 200)
+                    && str(data().report_type, 2, 40)
+                    && optStr('detail', 500) && optStr('clinic_name', 120)
+                    && device() && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── "Şu an açık mı?" teyitleri ──────────────────────────────────────────
+    match /clinic_pings/{id} {
+      allow read: if false;
+      allow create: if str(data().clinic_id, 3, 200) && data().is_open_now is bool
+                    && device() && stamped();
+      allow update, delete: if false;
+    }
+
+    // ── Arama sonrası geri bildirim ─────────────────────────────────────────
+    match /clinic_feedback/{id} {
+      allow read: if false;
+      allow create: if str(data().clinic_id, 3, 200)
+                    && data().phone_answered is bool && optBool('accepted_emergency')
+                    && device() && stamped();
+      allow update, delete: if false;
+    }
+  }
+}

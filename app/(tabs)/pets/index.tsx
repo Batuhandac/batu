@@ -3,10 +3,11 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react
 import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { usePets } from '@/lib/hooks/usePets';
+import { speciesEmoji, speciesLabel } from '@/lib/utils/pets';
 import type { Pet } from '@/types';
 
 function PetRow({ pet, onPress }: { pet: Pet; onPress: () => void }) {
-  const emoji = pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐶' : '🐾';
+  const emoji = speciesEmoji(pet.species);
   return (
     <TouchableOpacity onPress={onPress} className="bg-card border border-border rounded-2xl px-5 py-4 mb-3 mx-4 flex-row items-center gap-4" activeOpacity={0.85}>
       <Text className="text-3xl">{emoji}</Text>
@@ -14,16 +15,14 @@ function PetRow({ pet, onPress }: { pet: Pet; onPress: () => void }) {
         <View className="flex-row items-center gap-2">
           <Text className="text-white font-bold text-base">{pet.name}</Text>
           {pet.is_primary && (
-            <View className="bg-red-sos/20 border border-red-sos/40 rounded-full px-2 py-0.5">
-              <Text className="text-red-400 text-xs">Ana</Text>
+            <View className="bg-orange-accent/20 border border-orange-accent/40 rounded-full px-2 py-0.5">
+              <Text className="text-orange-accent text-xs">Acil kart</Text>
             </View>
           )}
         </View>
-        {(pet.species || pet.breed) && (
-          <Text className="text-gray-text text-sm mt-0.5">
-            {[pet.species, pet.breed].filter(Boolean).join(' · ')}
-          </Text>
-        )}
+        <Text className="text-gray-text text-sm mt-0.5">
+          {[speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ')}
+        </Text>
         {pet.emergency_note && (
           <Text className="text-yellow-400 text-xs mt-1" numberOfLines={1}>⚠️ {pet.emergency_note}</Text>
         )}
@@ -48,7 +47,7 @@ export default function PetsScreen() {
         </View>
         <TouchableOpacity
           onPress={() => router.push('/pets/create')}
-          className="bg-red-sos rounded-full px-4 py-2.5 flex-row items-center gap-1"
+          className="bg-orange-accent rounded-full px-4 py-2.5 flex-row items-center gap-1"
           activeOpacity={0.85}
         >
           <Text className="text-white font-bold text-sm">+ Ekle</Text>
@@ -57,7 +56,7 @@ export default function PetsScreen() {
 
       {loading && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#E53E3E" />
+          <ActivityIndicator color="#ff7f1c" />
         </View>
       )}
 
@@ -68,7 +67,7 @@ export default function PetsScreen() {
           <Text className="text-gray-text text-sm text-center mb-6">
             Petinin acil kartını oluştur. 30 saniye yeterli.
           </Text>
-          <TouchableOpacity onPress={() => router.push('/pets/create')} className="bg-red-sos rounded-2xl py-4 px-8">
+          <TouchableOpacity onPress={() => router.push('/pets/create')} className="bg-orange-accent rounded-2xl py-4 px-8">
             <Text className="text-white font-bold">Acil Kart Oluştur</Text>
           </TouchableOpacity>
         </View>

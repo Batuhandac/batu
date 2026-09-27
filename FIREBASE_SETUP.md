@@ -1,6 +1,6 @@
 # Firebase Kurulumu (5 dakika, ücretsiz) 🔥
 
-Topluluk özellikleri — **kullanıcıların klinik eklemesi ve yorum yazması** —
+Topluluk özellikleri — **klinik ekleme, yorum/fotoğraf, hatalı bilgi bildirimi ve veteriner hekim başvuruları** —
 için ücretsiz bir Firebase (Firestore) projesi gerekiyor. Kurulum yapılmazsa
 uygulama yine çalışır; sadece bu iki özellik gizli kalır (yerel veri tam çalışır).
 
@@ -43,40 +43,29 @@ uygulama yine çalışır; sadece bu iki özellik gizli kalır (yerel veri tam �
 > Not: Bu değerler gizli değildir (istemci tarafı anahtarlar). Güvenlik
 > Firestore kurallarıyla sağlanır (aşağıda).
 
-## 5. Firestore güvenlik kuralları
-Firestore → **Rules** sekmesine yapıştır → **Publish**:
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
+## 5. Güvenlik kuralları (ZORUNLU)
+Kurallar repoda hazır; yapıştırman yeterli:
 
-    // Klinikler: herkes okuyabilir, herkes ekleyebilir (alan doğrulamalı)
-    match /community_clinics/{id} {
-      allow read: if true;
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.name.size() > 1
-                    && request.resource.data.lat is number
-                    && request.resource.data.lng is number;
-      allow update, delete: if false;
-    }
+1. **Firestore → Rules** sekmesi → `firestore.rules` dosyasının **tamamını** yapıştır → **Publish**
+2. **Storage → Rules** sekmesi → `storage.rules` dosyasının tamamını yapıştır → **Publish**
+   (Storage açık değilse önce **Build → Storage → Get started**.)
 
-    // Yorumlar: herkes okuyabilir, herkes ekleyebilir (1–5 puan)
-    match /reviews/{id} {
-      allow read: if true;
-      allow create: if request.resource.data.rating is number
-                    && request.resource.data.rating >= 1
-                    && request.resource.data.rating <= 5
-                    && request.resource.data.clinic_id is string;
-      allow update, delete: if false;
-    }
-  }
-}
-```
+Kurallar olmadan: klinik başvuruları, hatalı bilgi bildirimleri, "açık mı?"
+teyitleri, fotoğraflar ve onaylı klinik profilleri **çalışmaz** (Firebase
+varsayılan olarak her şeyi reddeder).
 
-## 6. (Yorumlar için) bileşik index
-İlk yorum sorgusunda Firebase konsolu bir index linki verebilir — tıkla,
-**Create index** de. Ya da elle: `reviews` koleksiyonu →
-`clinic_id` (Ascending) + `created_at` (Descending).
+Kısaca ne sağlar:
+- Kullanıcı eklediği klinik `pending` olarak kaydedilir, sen onaylayana kadar görünmez.
+- `clinic_profiles` (klinik onaylı bilgiler) yalnızca Console'dan yazılabilir.
+- Başvurular ve bildirimler kişisel veri içerir; uygulamadan okunamaz, sadece Console'da görürsün.
+
+## 6. (Yorumlar ve fotoğraflar için) bileşik index
+İlk sorguda Firebase konsolu bir index linki verebilir — tıkla, **Create index** de.
+Ya da elle:
+- `reviews`: `clinic_id` (Ascending) + `created_at` (Descending)
+- `clinic_photos`: `clinic_id` (Ascending) + `created_at` (Descending)
+
+Başvuru/onay süreci için: `YONETICI_REHBERI.md`.
 
 ## 7. Bitti ✅
 Değişikliği push et — yeni build'de "Klinik Ekle" ve "Yorumlar" otomatik aktif olur.

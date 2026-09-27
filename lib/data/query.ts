@@ -49,6 +49,13 @@ export function seedToClinic(c: SeedClinic, lat?: number, lng?: number): Clinic 
   );
 }
 
+/** Gömülü veriden yarıçap içindeki klinikler (filtresiz, sırasız). */
+export function nearbySeedClinics(lat: number, lng: number, radiusKm = 20): Clinic[] {
+  return CLINICS.filter((c) => haversine(lat, lng, c.lat, c.lng) <= radiusKm).map((c) =>
+    seedToClinic(c, lat, lng)
+  );
+}
+
 /** Gömülü veriden yakın klinikler (skorlu, sıralı). */
 export function queryNearbyClinics(
   lat: number,
@@ -56,10 +63,7 @@ export function queryNearbyClinics(
   filters: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false },
   radiusKm = 15
 ): Clinic[] {
-  const near = CLINICS.filter((c) => haversine(lat, lng, c.lat, c.lng) <= radiusKm).map((c) =>
-    seedToClinic(c)
-  );
-  return rankClinics(near, lat, lng, filters, radiusKm).sort(
+  return rankClinics(nearbySeedClinics(lat, lng, radiusKm), lat, lng, filters, radiusKm).sort(
     (a, b) => b.emergency_score - a.emergency_score
   );
 }

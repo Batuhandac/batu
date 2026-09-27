@@ -1,10 +1,11 @@
 import { Share, Linking } from 'react-native';
 import type { Pet } from '@/types';
+import { speciesLabel } from '@/lib/utils/pets';
 
 export function buildPetCardText(pet: Pet): string {
   const lines: string[] = [`🐾 ${pet.name}`];
   const meta: string[] = [];
-  if (pet.species) meta.push(pet.species);
+  if (pet.species) meta.push(speciesLabel(pet.species));
   if (pet.breed) meta.push(pet.breed);
   if (pet.age_years) meta.push(`${pet.age_years} yaş`);
   if (pet.weight_kg) meta.push(`${pet.weight_kg} kg`);
