@@ -70,7 +70,7 @@ export function CareRow({
         }}
       >
         <View style={{ flex: 1 }}>
-          <Text variant="body" numberOfLines={1}>
+          <Text variant="body" numberOfLines={1} style={{ fontWeight: '600' }}>
             {item.title}
           </Text>
           <Text variant="caption" tone="muted" numberOfLines={1} style={{ marginTop: 1 }}>

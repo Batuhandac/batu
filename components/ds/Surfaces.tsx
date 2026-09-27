@@ -5,7 +5,9 @@ import { useTheme, radius, hairline } from '@/lib/theme';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 import { IconButton } from './Button';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { PetFace, type FaceMood } from '@/components/art';
+import { PASTELS, PASTEL_INK, pastelOf, type PastelKey } from '@/lib/art/faces';
 
 export function Screen({
   children,
@@ -157,6 +159,13 @@ export function Section({
   );
 }
 
+/** Çizgi ikonun dolu hâli varsa onu kullan: pastel kutucukta daha tombul durur. */
+function filledIcon(name: IconName): IconName {
+  if (!name.endsWith('-outline')) return name;
+  const base = name.slice(0, -'-outline'.length);
+  return (base in Ionicons.glyphMap ? base : name) as IconName;
+}
+
 export function ListRow({
   icon,
   title,
@@ -164,6 +173,7 @@ export function ListRow({
   onPress,
   right,
   iconColor,
+  tint,
   last,
   danger,
 }: {
@@ -173,10 +183,14 @@ export function ListRow({
   onPress?: () => void;
   right?: React.ReactNode;
   iconColor?: string;
+  /** İkon kutucuğunun pastel rengi; verilmezse ikondan kararlı biçimde seçilir */
+  tint?: PastelKey;
   last?: boolean;
   danger?: boolean;
 }) {
   const t = useTheme();
+  const mode = t.dark ? 'dark' : 'light';
+  const key: PastelKey = danger ? 'rose' : tint ?? pastelOf(icon ?? title);
   return (
     <Pressable
       onPress={onPress}
@@ -185,13 +199,13 @@ export function ListRow({
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
-        paddingLeft: 16,
+        paddingLeft: 14,
         backgroundColor: pressed ? t.surfaceAlt : 'transparent',
       })}
     >
       {icon ? (
-        <View style={{ width: 28, marginRight: 12, alignItems: 'center' }}>
-          <Icon name={icon} size={22} color={iconColor ?? (danger ? t.danger : t.primary)} />
+        <View style={{ width: 34, height: 34, borderRadius: 11, marginRight: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: PASTELS[mode][key] }}>
+          <Icon name={filledIcon(icon)} size={18} color={iconColor ?? (danger ? t.danger : PASTEL_INK[mode][key])} />
         </View>
       ) : null}
       {/* Ayırıcı çizgi ikondan sonra başlar (iOS listeleri gibi) */}
@@ -201,7 +215,7 @@ export function ListRow({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-          minHeight: 52,
+          minHeight: 56,
           paddingVertical: 11,
           paddingRight: 16,
           borderBottomWidth: last ? 0 : hairline,
@@ -209,7 +223,7 @@ export function ListRow({
         }}
       >
         <View style={{ flex: 1 }}>
-          <Text variant="body" tone={danger ? 'danger' : 'default'}>
+          <Text variant="body" tone={danger ? 'danger' : 'default'} style={{ fontWeight: '600' }}>
             {title}
           </Text>
           {subtitle ? (

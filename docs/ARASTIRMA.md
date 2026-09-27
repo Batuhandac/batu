@@ -59,7 +59,7 @@ uygulamalarına benzemek güven veriyor ve öğrenme yükünü azaltıyor.
 
 | Konu | Önce | Sonra |
 | --- | --- | --- |
-| Yazı tipi | Nunito (yüklenen font) | Sistem yazı tipi (iOS'ta SF Pro, Android'de Roboto). |
+| Yazı tipi | Her yerde Nunito | Önce sistem yazı tipi denendi, fazla ciddi bulundu. Son hâl: başlıkta Baloo 2, metinde Nunito. |
 | Renk | Turkuaz, mercan, bal, krem | Sıcak açık zemin, beyaz yüzey. Tek marka rengi (çam yeşili); pasteller yalnızca dost kartları ve duyurularda. Kırmızı yalnızca acil durum ve silme için. Turuncu yalnızca "zamanı geçti / bugün" uyarısı için. |
 | Kartlar | Çerçeve, gölge, 20–28 px köşe | Gölgesiz, çerçevesiz beyaz gruplar, 18 px yumuşak köşe, ince ayırıcılar (iOS "inset grouped" düzeni). |
 | İkonlar | Renkli daire içinde ikon | Daire yok. Satır başında sade ikon, yalnızca gerektiği yerde. |
@@ -81,6 +81,10 @@ sevimliliği olmalı." Sadelikten vazgeçmeden sıcaklık geri getirildi:
   Listeler ve formlar sade kalır.
 - Acil ekranında maskot yoktur. Panik anındaki kullanıcı için sakinlik önce gelir.
 - Küçük ödüller: bakım yapıldığında pati damgası ve "Aferin" mesajı.
+- İkinci geri bildirim: "Çok ciddi, yazılar falan; friendly olmalı." Sistem yazı tipi yerine
+  başlıklarda Baloo 2, metinde Nunito kullanıldı. Düğmeler ve seçim düğmeleri hap biçimine
+  geçti, liste ikonları pastel kutucuklara alındı, yeşil biraz aydınlatıldı, selamlar
+  ünlemle yazıldı. Ciddi yapay zekâ işaretleri (parıltı, gradyan, genel slogan) yine yok.
 
 ## 4. Sonraki adımlar (bu PR'ın dışında)
 

@@ -36,12 +36,12 @@ Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zama
 
 - Renkler uygulamayla aynı: pastel zeminler (şeftali `#FFE4D6`, tereyağı `#FFF0C7`, nane `#D9F2E3`,
   gökyüzü `#D9EAFB`, lila `#E9E1FA`, gül `#FBE0E8`) ya da beyaz, yazı `#111214`, marka yeşili
-  `#1F6B52`. Kırmızı (`#D92D20`) yalnızca uyarı gönderilerinde.
+  `#23845E`. Kırmızı (`#D92D20`) yalnızca uyarı gönderilerinde.
 - **Maskotlar:** tombul kedi, köpek ve tavşan (`lib/art/faces.ts`). Telefonun ya da kartın
   kenarından bakarlar ya da köşede dururlar. Bilgi sayfalarında (5 durum dizisinin iç sayfaları)
   maskot kullanılmaz; ciddi bilgi sade kalır.
-- Yazı tipi: **Inter** (Canva'da var). iPhone'daki SF Pro'ya en yakın açık yazı tipi.
-  Başlık kalın, açıklama orta kalınlıkta. Bir görselde en fazla iki yazı boyutu.
+- Yazı tipleri uygulamayla aynı: başlıkta **Baloo 2** (kalın), metinde **Nunito**. İkisi de
+  Google Fonts'ta ücretsiz; Canva'da yoksa yüklenebilir. Bir görselde en fazla iki yazı boyutu.
 - Görselde tek fikir: bir başlık, en fazla iki satır açıklama, gerekiyorsa bir uygulama ekranı.
 - Gradyan, parıltı, gölge ve emoji yok. Sevimlilik maskotlardan gelir.
 - Yapay zekâyla üretilmiş hayvan fotoğrafı ya da stok fotoğraf yok. Fotoğraf gerekirse

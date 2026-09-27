@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Icon, type IconName } from '@/components/ds';
-import { useTheme, hairline } from '@/lib/theme';
+import { useTheme, hairline, fonts } from '@/lib/theme';
 
 function tabIcon(active: IconName, idle: IconName) {
   return ({ focused, color }: { focused: boolean; color: string }) => (
@@ -17,7 +17,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: t.primary,
         tabBarInactiveTintColor: t.textSubtle,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
+        tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11, lineHeight: 14 },
         tabBarStyle: { backgroundColor: t.dark ? '#121212' : '#F9F9F9', borderTopColor: t.border, borderTopWidth: hairline },
         sceneStyle: { backgroundColor: t.bg },
       }}

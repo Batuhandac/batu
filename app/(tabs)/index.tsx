@@ -24,10 +24,10 @@ import type { Clinic, Pet } from '@/types';
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 6) return 'İyi geceler';
-  if (h < 12) return 'Günaydın';
-  if (h < 18) return 'İyi günler';
-  return 'İyi akşamlar';
+  if (h < 6) return 'İyi geceler!';
+  if (h < 12) return 'Günaydın!';
+  if (h < 18) return 'İyi günler!';
+  return 'İyi akşamlar!';
 }
 
 const REFRESH_MS = 2 * 60 * 1000;
@@ -105,7 +105,7 @@ export default function HomeScreen() {
             {today}
           </Text>
           <Text variant="display" numberOfLines={1}>
-            {firstName ? `Merhaba ${firstName}` : greeting()}
+            {firstName ? `Merhaba ${firstName}!` : greeting()}
           </Text>
           <Text variant="callout" tone="muted" style={{ marginTop: 2 }} numberOfLines={1}>
             {petLine(pets)}
@@ -258,12 +258,13 @@ export default function HomeScreen() {
         <Group>
           <ListRow
             icon="medkit-outline"
+            tint="rose"
             iconColor={t.sos}
             title="Acil veteriner bul"
             subtitle="En yakın açık klinik, tek dokunuşla ara"
             onPress={() => router.push('/emergency')}
           />
-          <ListRow icon="bandage-outline" title="İlk yardım rehberi" subtitle="Veterinere ulaşana kadar" onPress={() => router.push('/first-aid')} last />
+          <ListRow icon="bandage-outline" tint="peach" title="İlk yardım rehberi" subtitle="Veterinere ulaşana kadar" onPress={() => router.push('/first-aid')} last />
         </Group>
       </Section>
     </Screen>

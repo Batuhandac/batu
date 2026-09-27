@@ -39,6 +39,12 @@ export const PASTELS: Record<'light' | 'dark', Record<PastelKey, string>> = {
   dark: { peach: '#3A2A22', butter: '#37311D', mint: '#1D3226', sky: '#1C2A3A', lilac: '#2B2540', rose: '#3A2430' },
 };
 
+/** Pastel zemin üstündeki ikonların rengi (aynı tonun koyusu). */
+export const PASTEL_INK: Record<'light' | 'dark', Record<PastelKey, string>> = {
+  light: { peach: '#C05A2E', butter: '#94670A', mint: '#1F7552', sky: '#2D6BAE', lilac: '#6A4FB0', rose: '#C0344F' },
+  dark: { peach: '#FFB48F', butter: '#F5CF6B', mint: '#7FD6AE', sky: '#8CBDF2', lilac: '#BBA7F0', rose: '#F59AAE' },
+};
+
 const INK = '#2A211D';
 const PINK = '#F4A3A3';
 const NOSE = '#EE8E8E';

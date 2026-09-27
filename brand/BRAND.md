@@ -8,7 +8,7 @@ renkler sevimlilik katar, acil ekranları sakin ve ciddi kalır. Gerekçeler ve 
 ## İlkeler
 
 1. **Az renk.** Sıcak açık zemin, beyaz gruplar, tek marka rengi. Pasteller yalnızca dostlar ve duyurular için.
-2. **Sistem yazı tipi.** iOS'ta SF Pro, Android'de Roboto. Kullanıcının büyük yazı ayarına uyar.
+2. **Samimi yazı.** Başlıklarda tombul Baloo 2, metinde yumuşak ve okunaklı Nunito.
 3. **Süs yok, sevimlilik var.** Gölge, çerçeve, gradyan, ikon dairesi, hap etiket ve parıltı
    kullanılmaz. Sevimlilik maskotlardan, pastel zeminlerden ve yumuşak köşelerden gelir.
 4. **Her ekranda tek ana iş.** Dolgulu düğme ekranda bir tane olur; diğerleri gri ya da yazı.
@@ -50,7 +50,7 @@ Konum iğnesinin içinde pati: *yakınındaki veteriner*. Tek renk.
 
 | Rol | Açık tema | Koyu tema | Ne zaman |
 | --- | --- | --- | --- |
-| Marka (çam yeşili) | `#1F6B52` | `#52B891` | Bağlantılar, ana düğme, seçili sekme, "açık" durumu |
+| Marka (yeşil) | `#23845E` | `#5CC79C` | Bağlantılar, ana düğme, seçili sekme, "açık" durumu |
 | Acil (kırmızı) | `#D92D20` | `#E5483B` | Yalnızca acil eylem, alerji/ilaç uyarısı ve silme |
 | Uyarı (kehribar) | `#A15C07` | `#F5A524` | "Bugün", "yarın", "saat bilinmiyor" |
 | Zemin | `#F5F3EF` | `#000000` | Ekran arka planı (sıcak açık gri) |
@@ -67,15 +67,24 @@ Tüm değerler `lib/theme/index.ts` ve `lib/art/faces.ts` içindedir; ekranlarda
 
 ## Tipografi
 
-Sistem yazı tipi; ölçüler iOS metin stillerinden alınır:
-`display` 34, `title` 28, `headline` 20, `body` 17, `callout` 16, `caption` 13.
-Grup başlıkları (`overline`) küçük harfle yazılır, Text bileşeni Türkçe kurala göre
-büyütür (`trUpper`: `i → İ`, `ı → I`).
+- **Baloo 2** (600, 700): ekran başlıkları, bölüm başlıkları, dost adları, düğmeler. Tombul ve
+  samimi; maskotlarla aynı dili konuşur.
+- **Nunito** (500, 600, 700, 800): metin, açıklama, liste satırları. Yuvarlak uçlu ama küçük
+  boyda da okunaklı.
+- İkisi de Türkçe karakterleri doğru çizer (denendi: ş, ğ, ı, İ). Fredoka denendi ve
+  elendi; "ş" harfinin çengeli kayıyor.
+- Ölçek: `display` 34, `title` 28, `headline` 21, `body` 17, `callout` 16, `caption` 13.
+- Kalın metin için `fontWeight` yazılır; Text bileşeni aynı ailenin doğru kesimini seçer
+  (`fontFor`).
+- Grup başlıkları (`overline`) küçük harfle yazılır; Text bileşeni Türkçe kurala göre büyütür
+  (`trUpper`: `i → İ`, `ı → I`).
 
 ## Bileşenler
 
-- **Liste grupları** (`Group`, `ListRow`): beyaz, 18 px köşe, ince ayırıcı ikondan sonra başlar.
-- **Düğmeler**: dolgulu (ana iş), gri (ikincil), yazı (üçüncül). Çerçeveli düğme yok.
+- **Liste grupları** (`Group`, `ListRow`): beyaz, 20 px köşe, ince ayırıcı ikondan sonra başlar.
+  Satır ikonları pastel yuvarlak kare içinde dolu ikon (iOS Ayarlar düzeninin sıcak hâli).
+- **Düğmeler**: hap biçimli; dolgulu (ana iş), gri (ikincil), yazı (üçüncül). Çerçeveli düğme yok.
+- **Seçim düğmeleri** (`Chip`, `Segmented`): hap biçimli.
 - **Durum**: renkli kısa metin, gerekiyorsa önünde nokta (`Badge`). Arka planlı hap yok.
 - **Bakım satırı**: solda yuvarlak "yapıldı" düğmesi; basınca pati damgası ve "Aferin" mesajı.
 - **Dost kartı**: dostun pastel renginde, büyük yüz ya da fotoğraf, adı ve sıradaki bakım.
@@ -85,12 +94,14 @@ büyütür (`trUpper`: `i → İ`, `ı → I`).
 
 ## İkonlar
 
-Yalnızca **Ionicons** (`components/ds/Icon.tsx`), çoğunlukla çizgi (`-outline`) sürümü.
+Yalnızca **Ionicons** (`components/ds/Icon.tsx`). Pastel kutucuk içinde dolu sürüm, tek başına
+kullanıldığında çizgi (`-outline`) sürüm.
 Emoji kullanılmaz; ne arayüzde ne bildirimlerde ne paylaşılan metinlerde.
 
 ## Dil ve ses
 
-- "Sen" diliyle, kısa ve sakin cümleler. Suçlamayan, korkutmayan.
+- "Sen" diliyle, kısa, sıcak cümleler. Selamlaşır ("Merhaba Deniz!"), küçük başarıları kutlar
+  ("Aferin, yapıldı."). Suçlamayan, korkutmayan. Acil ekranında sakin ve net.
 - Önce eylem: "Şimdi ara", "Yol tarifi", "Takvime ekle".
 - Bilmediğimizi söyleriz: saati bilinmeyen klinik asla "açık" gösterilmez.
 - İlk yardım içeriği tedavi değildir; her zaman "veterinerin söyledikleri önce gelir".

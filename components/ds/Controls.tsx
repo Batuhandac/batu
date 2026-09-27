@@ -25,15 +25,15 @@ export function Chip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 12,
-        height: 34,
-        borderRadius: radius.sm,
+        paddingHorizontal: 14,
+        height: 36,
+        borderRadius: radius.pill,
         backgroundColor: active ? t.primary : t.surface,
         opacity: pressed ? 0.6 : 1,
       })}
     >
       {icon ? <Icon name={icon} size={15} color={active ? t.onPrimary : t.textMuted} /> : null}
-      <Text variant="callout" color={active ? t.onPrimary : t.text} style={{ fontSize: 15 }}>
+      <Text variant="callout" color={active ? t.onPrimary : t.text} style={{ fontSize: 15, fontWeight: '600' }}>
         {label}
       </Text>
     </Pressable>
@@ -220,7 +220,7 @@ export function Segmented<T extends string>({
 }) {
   const t = useTheme();
   return (
-    <View style={{ flexDirection: 'row', padding: 2, borderRadius: radius.md, backgroundColor: t.surfaceAlt, marginBottom: 16 }}>
+    <View style={{ flexDirection: 'row', padding: 3, borderRadius: radius.pill, backgroundColor: t.surfaceAlt, marginBottom: 16 }}>
       {options.map((o, i) => {
         const on = o.key === value;
         const prevOn = i > 0 && options[i - 1].key === value;
@@ -235,7 +235,7 @@ export function Segmented<T extends string>({
               minHeight: o.icon ? 52 : 36,
               paddingVertical: 6,
               paddingHorizontal: 4,
-              borderRadius: radius.sm,
+              borderRadius: radius.pill,
               backgroundColor: on ? (t.dark ? t.borderStrong : t.surface) : 'transparent',
               borderLeftWidth: i === 0 || on || prevOn ? 0 : hairline,
               borderLeftColor: t.borderStrong,
@@ -246,7 +246,7 @@ export function Segmented<T extends string>({
             }}
           >
             {o.icon ? <Icon name={o.icon} size={18} color={on ? t.text : t.textMuted} /> : null}
-            <Text variant="caption" color={t.text} style={{ fontSize: 14, fontWeight: on ? '600' : '400' }} numberOfLines={1}>
+            <Text variant="caption" color={t.text} style={{ fontSize: 14.5, fontWeight: on ? '700' : '500' }} numberOfLines={1}>
               {o.label}
             </Text>
           </Pressable>

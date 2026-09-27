@@ -25,7 +25,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1F6B52"
+        "backgroundColor": "#23845E"
       },
       "package": "com.patisos.app",
       "permissions": [
@@ -53,7 +53,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#1F6B52",
+          "color": "#23845E",
           "sounds": []
         }
       ],

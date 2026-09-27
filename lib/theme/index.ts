@@ -6,7 +6,7 @@
 import { useColorScheme, StyleSheet, type TextStyle } from 'react-native';
 
 export const palette = {
-  pine: { 800: '#154C3A', 700: '#1F6B52', 600: '#2A7F62', 400: '#52B891', 100: '#E3EFEA' },
+  pine: { 800: '#1A6649', 700: '#23845E', 600: '#2E9A6E', 400: '#5CC79C', 100: '#E0F2E9' },
   red: { 700: '#B42318', 600: '#D92D20', 400: '#FF6B5E' },
   amber: { 700: '#A15C07', 400: '#F5A524' },
   gray: { 50: '#F2F2F7', 100: '#E8E8ED', 200: '#D1D1D6', 300: '#AEAEB2', 500: '#8E8E93', 600: '#636366', 700: '#48484A', 800: '#2C2C2E', 850: '#1C1C1E', 900: '#111214' },
@@ -87,8 +87,8 @@ export const darkTheme: Theme = {
   textMuted: palette.gray[300],
   textSubtle: palette.gray[500],
   primary: palette.pine[400],
-  primaryPressed: '#43A07C',
-  primarySoft: 'rgba(82,184,145,0.16)',
+  primaryPressed: '#4AB388',
+  primarySoft: 'rgba(92,199,156,0.16)',
   onPrimary: '#06201A',
   sos: '#E5483B',
   sosPressed: palette.red[600],
@@ -97,7 +97,7 @@ export const darkTheme: Theme = {
   honey: palette.amber[400],
   honeySoft: 'rgba(245,165,36,0.16)',
   open: palette.pine[400],
-  openSoft: 'rgba(82,184,145,0.16)',
+  openSoft: 'rgba(92,199,156,0.16)',
   closed: palette.gray[500],
   closedSoft: palette.gray[800],
   unknown: palette.amber[400],
@@ -112,24 +112,43 @@ export function useTheme(): Theme {
   return useColorScheme() === 'dark' ? darkTheme : lightTheme;
 }
 
-// Sistem yazı tipi (iOS'ta SF Pro, Android'de Roboto): okunaklı, Türkçe karakterleri
-// tam destekler, kullanıcının "büyük yazı" ayarına uyar. Ölçüler iOS metin stillerinden.
+// Yazı tipleri: başlıklarda tombul ve samimi Baloo 2, metinde yumuşak ve okunaklı Nunito.
+// İkisi de Türkçe karakterleri tam destekler. Kalınlık (fontWeight) verilen metinlerde
+// Text bileşeni aynı ailenin doğru kesimini seçer (bkz. fontFor).
+export const fonts = {
+  head: 'Baloo2_600SemiBold',
+  headBold: 'Baloo2_700Bold',
+  body: 'Nunito_500Medium',
+  bodySemi: 'Nunito_600SemiBold',
+  bodyBold: 'Nunito_700Bold',
+  bodyHeavy: 'Nunito_800ExtraBold',
+} as const;
+
 export const type = {
-  display: { fontSize: 34, lineHeight: 41, fontWeight: '700' },
-  title: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
-  headline: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
-  body: { fontSize: 17, lineHeight: 23 },
-  bodyStrong: { fontSize: 17, lineHeight: 23, fontWeight: '600' },
-  callout: { fontSize: 16, lineHeight: 21 },
-  caption: { fontSize: 13, lineHeight: 18 },
+  display: { fontFamily: fonts.headBold, fontSize: 34, lineHeight: 42 },
+  title: { fontFamily: fonts.headBold, fontSize: 28, lineHeight: 36 },
+  headline: { fontFamily: fonts.head, fontSize: 21, lineHeight: 28 },
+  body: { fontFamily: fonts.body, fontSize: 17, lineHeight: 24 },
+  bodyStrong: { fontFamily: fonts.bodyHeavy, fontSize: 17, lineHeight: 24 },
+  callout: { fontFamily: fonts.body, fontSize: 16, lineHeight: 22 },
+  caption: { fontFamily: fonts.bodySemi, fontSize: 13, lineHeight: 18 },
   // Büyük harfe Text bileşeni Türkçe kurallarla çevirir (i → İ); textTransform 'I' üretir
-  overline: { fontSize: 13, lineHeight: 18, letterSpacing: 0.2 },
-  button: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  overline: { fontFamily: fonts.bodyHeavy, fontSize: 12.5, lineHeight: 18, letterSpacing: 0.4 },
+  button: { fontFamily: fonts.head, fontSize: 18, lineHeight: 24 },
 } as const satisfies Record<string, TextStyle>;
+
+/** Satır içi kalınlığı (fontWeight) aynı ailenin kesimine çevirir; özel yazı tipinde fontWeight güvenilir değildir. */
+export function fontFor(family: string | undefined, weight: TextStyle['fontWeight']): string | undefined {
+  if (!family || weight == null) return family;
+  const w = weight === 'bold' ? 700 : weight === 'normal' ? 400 : Number(weight);
+  if (family.startsWith('Baloo2')) return w >= 700 ? fonts.headBold : fonts.head;
+  if (family.startsWith('Nunito')) return w >= 700 ? fonts.bodyHeavy : w >= 600 ? fonts.bodyBold : w >= 500 ? fonts.bodySemi : fonts.body;
+  return family;
+}
 
 export type TypeVariant = keyof typeof type;
 
-export const radius = { sm: 10, md: 12, lg: 18, xl: 24, pill: 999 } as const;
+export const radius = { sm: 12, md: 14, lg: 20, xl: 28, pill: 999 } as const;
 
 /** Yalnızca zeminden ayrılması gereken yüzen öğeler için (bildirim, harita kartı). */
 export function shadow(t: Theme, level: 1 | 2 = 1) {

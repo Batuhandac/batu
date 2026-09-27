@@ -6,6 +6,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
+// Yalnızca kullanılan kesimler (paket kökünden almak bütün kalınlıkları uygulamaya ekler)
+import { Baloo2_600SemiBold } from '@expo-google-fonts/baloo-2/600SemiBold';
+import { Baloo2_700Bold } from '@expo-google-fonts/baloo-2/700Bold';
+import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
+import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
+import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOnboardingStore } from '@/stores/onboarding';
 import { useSession } from '@/stores/session';
@@ -40,8 +47,15 @@ async function openNotification(response: Notifications.NotificationResponse | n
 export default function RootLayout() {
   const t = useTheme();
   const { load, hydrated, completed } = useOnboardingStore();
-  // Metinler sistem yazı tipinde; yalnızca ikon fontu önceden yüklenir
-  const [fontsLoaded, fontError] = useFonts({ ...Ionicons.font });
+  const [fontsLoaded, fontError] = useFonts({
+    Baloo2_600SemiBold,
+    Baloo2_700Bold,
+    Nunito_500Medium,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    ...Ionicons.font,
+  });
 
   useEffect(() => {
     load();
@@ -59,7 +73,7 @@ export default function RootLayout() {
       .catch(() => {});
   }, [hydrated, completed]);
 
-  // İkon fontu yüklenene kadar markalı bekleme (hata olursa yine devam)
+  // Yazı tipleri yüklenene kadar markalı bekleme (hata olursa sistem fontuyla devam)
   if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>

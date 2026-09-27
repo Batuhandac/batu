@@ -26,9 +26,9 @@ function colors(t: Theme, v: Variant, pressed: boolean) {
 }
 
 const SIZES: Record<Size, { h: number; px: number; icon: number; font: number }> = {
-  lg: { h: 54, px: 20, icon: 21, font: 17 },
-  md: { h: 46, px: 16, icon: 19, font: 16 },
-  sm: { h: 34, px: 12, icon: 16, font: 15 },
+  lg: { h: 56, px: 24, icon: 21, font: 19 },
+  md: { h: 48, px: 20, icon: 19, font: 17 },
+  sm: { h: 36, px: 14, icon: 16, font: 15.5 },
 };
 
 export interface ButtonProps {
@@ -73,7 +73,7 @@ export function Button({
           {
             minHeight: subtitle ? s.h + 18 : s.h,
             paddingHorizontal: s.px,
-            borderRadius: size === 'sm' ? radius.sm : radius.lg,
+            borderRadius: radius.pill,
             backgroundColor: c.bg,
             alignItems: 'center',
             justifyContent: 'center',

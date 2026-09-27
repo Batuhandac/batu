@@ -6,9 +6,11 @@ import { Text, Icon, IconButton, type IconName } from '@/components/ds';
 import { useTheme, radius, hairline } from '@/lib/theme';
 import { useAuthFlow } from '@/lib/hooks/useAuthFlow';
 import { Peek, peekOffset } from '@/components/art';
+import { PASTELS, PASTEL_INK, type PastelKey } from '@/lib/art/faces';
 
-function RoleRow({ icon, title, text, onPress, last }: { icon: IconName; title: string; text: string; onPress: () => void; last?: boolean }) {
+function RoleRow({ icon, tint, title, text, onPress, last }: { icon: IconName; tint: PastelKey; title: string; text: string; onPress: () => void; last?: boolean }) {
   const t = useTheme();
+  const mode = t.dark ? 'dark' : 'light';
   return (
     <Pressable
       onPress={onPress}
@@ -16,7 +18,9 @@ function RoleRow({ icon, title, text, onPress, last }: { icon: IconName; title: 
       accessibilityLabel={title}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingLeft: 16, backgroundColor: pressed ? t.surfaceAlt : 'transparent' })}
     >
-      <Icon name={icon} size={26} color={t.primary} />
+      <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: PASTELS[mode][tint] }}>
+        <Icon name={icon} size={22} color={PASTEL_INK[mode][tint]} />
+      </View>
       <View
         style={{
           flex: 1,
@@ -64,13 +68,15 @@ export default function AuthRoleScreen() {
         <View style={{ marginTop: 72 }}>
           <View style={{ borderRadius: radius.lg, backgroundColor: t.surface, overflow: 'hidden' }}>
             <RoleRow
-              icon="paw-outline"
+              icon="paw"
+              tint="peach"
               title="Evcil hayvan sahibiyim"
               text="Acil kart, bakım takvimi, veterinere soru"
               onPress={() => router.push(`/auth/owner${q}` as never)}
             />
             <RoleRow
-              icon="medkit-outline"
+              icon="medkit"
+              tint="mint"
               title="Veteriner hekimim"
               text="Kliniğini doğrula, sorulara yanıt ver, mesajları yönet"
               onPress={() => router.push(`/auth/vet${q}` as never)}
