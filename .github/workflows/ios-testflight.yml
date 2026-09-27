@@ -23,7 +23,7 @@ jobs:
       - name: Node kur
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: EAS CLI kur + Expo girişi
         uses: expo/expo-github-action@v8
