@@ -87,6 +87,8 @@ service cloud.firestore {
                     && optStr('clinic_id', 200) && optStr('claimant_email', 120)
                     && optStr('clinic_phone', 30) && optStr('emergency_phone', 30)
                     && optStr('hours_text', 200) && optStr('note', 500)
+                    && (!('claimant_uid' in data()) || data().claimant_uid == null
+                        || (signedIn() && data().claimant_uid == me()))
                     && data().is_24_7 is bool && data().accepts_emergency is bool
                     && data().services is list && data().services.size() <= 20
                     && device() && stamped();
@@ -118,6 +120,18 @@ service cloud.firestore {
                     && data().phone_answered is bool && optBool('accepted_emergency')
                     && device() && stamped();
       allow update, delete: if false;
+    }
+
+    // ── Kullanıcı profili: kişi yalnızca kendi belgesini okur/yazar ─────────
+    // Rol yalnızca 'owner' ya da 'vet_pending' olabilir; hekimliği yönetici
+    // vets/{uid} belgesiyle onaylar.
+    match /users/{uid} {
+      allow read, delete: if signedIn() && me() == uid;
+      allow create, update: if signedIn() && me() == uid
+                            && data().keys().hasOnly(['name', 'role', 'title', 'created_at'])
+                            && str(data().name, 1, 60)
+                            && data().role in ['owner', 'vet_pending']
+                            && (data().title == null || str(data().title, 1, 30));
     }
 
     // ── Veteriner hekim hesapları: SADECE yönetici yazar ────────────────────

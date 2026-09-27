@@ -9,7 +9,9 @@ Console** üzerinden yönetilir. Günde bir kez bakman yeterli; **şikayetlere
 
 1. **Authentication → Başlayın (Get started)** → *Sign-in method* sekmesinde
    **Anonymous** ve **Email/Password** yöntemlerini etkinleştir. Bu yapılmadan
-   topluluk, yorum ve mesajlaşma "şu anda kullanılamıyor" der.
+   hesap oluşturma, topluluk, yorum ve mesajlaşma "şu anda kullanılamıyor" der.
+   Kayıtlı kullanıcı sayısı: Authentication → Users (e-postalı olanlar) ve
+   Firestore → `users` koleksiyonu (rol: `owner` / `vet_pending`).
 2. **Firestore Database → Rules**: depodaki `firestore.rules` içeriğini yapıştır → Publish.
 3. **Storage → Rules**: depodaki `storage.rules` içeriğini yapıştır → Publish.
 4. Ek dizin (index) gerekmez; sorgular varsayılan dizinlerle çalışacak şekilde yazıldı.
@@ -83,11 +85,15 @@ OpenStreetMap'e eklemektir (openstreetmap.org → Düzenle) — herkes faydalan�
 
 Doğrulanmış bir klinik; hasta sahiplerinin mesajlarını yanıtlayabilir, topluluktaki
 sorulara **"Veteriner hekim · Klinik adı"** rozetiyle cevap verebilir ve yorumlara
-klinik yanıtı yazabilir. Hesap açmak:
+klinik yanıtı yazabilir.
 
-1. **Authentication → Users → Add user**: hekimin e-postası, rastgele uzun bir şifre.
-   Oluşan kullanıcının **User UID** değerini kopyala.
-2. **Firestore → `vets`** koleksiyonunda **belge kimliği = User UID** olan belge oluştur:
+Hekimler hesabı **kendileri açar** (uygulamada "Veteriner hekimim" → Hesap oluştur) ve
+kliniklerini seçip başvurur. Başvuru `clinic_claims` koleksiyonuna **`claimant_uid`**
+alanıyla düşer; hekim, onaylanana kadar "Doğrulama" ekranını görür. Onaylamak için:
+
+1. 1. bölümdeki gibi kliniği telefonla doğrula ve `clinic_profiles` belgesini oluştur.
+2. **Firestore → `vets`** koleksiyonunda **belge kimliği = başvurudaki `claimant_uid`**
+   olan belge oluştur:
 
 | Alan | Tür | Örnek |
 |---|---|---|
@@ -101,9 +107,10 @@ klinik yanıtı yazabilir. Hesap açmak:
    `clinic_name` (string), `open` (boolean, `true`), `response_hint` (null ya da
    `"Genelde 1 saat içinde yanıtlarız"`). Bu belge varsa ve `open: true` ise klinik
    sayfasında **"Mesaj gönder"** düğmesi çıkar.
-4. Hekime e-postayı bildir: uygulamada **Ayarlar → Hekim girişi → "Şifremi unuttum /
-   şifre oluştur"** ile kendi şifresini belirlesin. Giriş yapınca hekim paneli açılır;
-   mesaj almayı oradan açıp kapatabilir.
+4. Hekim uygulamada "Durumu yenile"ye bastığında (ya da yeniden açtığında) hekim paneli açılır.
+
+Başvuruda `claimant_uid` yoksa (hesapsız başvuru), hekimden uygulamada hesap açmasını
+iste; ya da Authentication → Users → Add user ile hesabı sen aç ve oluşan UID'yi kullan.
 
 Yeni mesajlar hekimin telefonuna bildirim olarak gider (Expo Push; sunucu gerekmez).
 Hekim ayrılırsa: Authentication'da kullanıcıyı **Disable** et, `vets` belgesini sil.

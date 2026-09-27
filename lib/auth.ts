@@ -63,21 +63,55 @@ export function vetDisplayName(v: Pick<VetProfile, 'name' | 'title'>): string {
   return v.title ? `${v.title} ${v.name}` : v.name;
 }
 
+export type Role = 'guest' | 'owner' | 'vet' | 'vet_pending';
+
+export interface UserDoc {
+  name: string;
+  role: 'owner' | 'vet_pending';
+  title: string | null;
+}
+
+/** users/{uid}: kişinin kendi profili (ad, rol). Yalnızca kendisi okur/yazar. */
+export async function fetchUserDoc(uid: string): Promise<UserDoc | null> {
+  const db = getDb();
+  if (!db) return null;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return null;
+    const d = snap.data() as Partial<UserDoc>;
+    return { name: d.name ?? '', role: d.role === 'vet_pending' ? 'vet_pending' : 'owner', title: d.title ?? null };
+  } catch {
+    return null;
+  }
+}
+
 export function authErrorMessage(e: unknown): string {
   const code = (e as { code?: string })?.code ?? '';
   switch (code) {
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
     case 'auth/user-not-found':
-    case 'auth/invalid-email':
       return 'E-posta ya da şifre hatalı.';
+    case 'auth/invalid-email':
+      return 'E-posta adresini kontrol et.';
+    case 'auth/email-already-in-use':
+    case 'auth/credential-already-in-use':
+      return 'Bu e-posta ile bir hesap zaten var. Giriş yapmayı dene.';
+    case 'auth/weak-password':
+      return 'Şifre en az 6 karakter olmalı.';
     case 'auth/too-many-requests':
       return 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar dene.';
     case 'auth/network-request-failed':
       return 'İnternet bağlantını kontrol edip tekrar dene.';
     case 'auth/user-disabled':
-      return 'Bu hesap devre dışı bırakılmış. Bizimle iletişime geç.';
+      return 'Bu hesap devre dışı bırakılmış. support@patisos.app adresine yaz.';
+    case 'auth/requires-recent-login':
+      return 'Güvenlik için çıkış yapıp yeniden giriş yaptıktan sonra tekrar dene.';
+    case 'auth/operation-not-allowed':
+    case 'auth/configuration-not-found':
+    case 'auth/admin-restricted-operation':
+      return 'Hesap sistemi şu anda kapalı. Biraz sonra tekrar dene; acil özellikler hesapsız çalışır.';
     default:
-      return 'Giriş yapılamadı. Biraz sonra tekrar dene.';
+      return 'İşlem tamamlanamadı. Biraz sonra tekrar dene.';
   }
 }

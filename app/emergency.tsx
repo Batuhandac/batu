@@ -15,7 +15,7 @@ import { usePets } from '@/lib/hooks/usePets';
 import { useLocationStore } from '@/stores/location';
 import { callClinic } from '@/lib/utils/call';
 import { speciesLabel } from '@/lib/utils/pets';
-import { clinicStatus, formatDistance, isOpenNow } from '@/lib/utils/status';
+import { clinicStatus, formatDistance, isOpenNow, canCall, pickBestClinic } from '@/lib/utils/status';
 import { track } from '@/lib/analytics';
 import { BEFORE_YOU_GO } from '@/lib/content/firstAid';
 import { FirstAidList } from '@/components/clinic/FirstAidList';
@@ -25,7 +25,6 @@ import { DataAttribution } from '@/components/ui/DataAttribution';
 import type { Clinic, Pet } from '@/types';
 
 const KEEP_AWAKE_TAG = 'pati-sos-emergency';
-const canCall = (c: Clinic) => !!(c.phone || c.emergency_phone);
 
 // Açıksa klinik hattı; kapalı saatte mesai dışı hattı varsa onu ara
 function phoneOf(c: Clinic): Clinic {
@@ -70,10 +69,7 @@ export default function EmergencyScreen() {
   }, [lat, lng, fetch]);
 
   const { best, others } = useMemo(() => {
-    // Yarım saat içinde kapanacak kliniği ancak başka seçenek yoksa öne çıkar
-    const good = (c: Clinic) => isOpenNow(c) && canCall(c);
-    const bestClinic =
-      clinics.find((c) => good(c) && !(c.closes_in_min != null && c.closes_in_min < 30)) ?? clinics.find(good) ?? null;
+    const bestClinic = pickBestClinic(clinics);
     const rest = clinics.filter((c) => c !== bestClinic && (isOpenNow(c) || (c.status === 'unknown' && canCall(c))));
     return { best: bestClinic, others: rest.slice(0, 4) };
   }, [clinics]);

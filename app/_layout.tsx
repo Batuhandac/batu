@@ -1,4 +1,3 @@
-import '../global.css';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Stack, router } from 'expo-router';
@@ -102,6 +101,10 @@ export default function RootLayout() {
         <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
         <Stack.Screen name="messages/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="vet/index" options={{ presentation: 'card' }} />
+        <Stack.Screen name="auth/index" options={{ presentation: 'card', gestureEnabled: false }} />
+        <Stack.Screen name="auth/owner" options={{ presentation: 'card' }} />
+        <Stack.Screen name="auth/vet" options={{ presentation: 'card' }} />
+        <Stack.Screen name="account/index" options={{ presentation: 'card' }} />
       </Stack>
     </GestureHandlerRootView>
   );

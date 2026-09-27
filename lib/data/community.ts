@@ -94,6 +94,7 @@ export interface ClinicClaimInput {
   services: string[];
   note: string | null;
   consent: true;
+  claimant_uid: string | null;
 }
 
 export async function submitClinicClaim(input: ClinicClaimInput): Promise<boolean> {

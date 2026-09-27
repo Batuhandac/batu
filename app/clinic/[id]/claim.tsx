@@ -3,6 +3,7 @@ import { View, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Screen, Header, Text, Field, Button, Card, Segmented, SwitchRow, Checkbox, Chip, Divider } from '@/components/ds';
 import { submitClinicClaim, isFirebaseConfigured } from '@/lib/data/community';
+import { useSession } from '@/stores/session';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { getClinicById } from '@/lib/data/query';
 import { track } from '@/lib/analytics';
@@ -27,10 +28,12 @@ export default function ClaimScreen() {
   const known = useMemo(() => (isNew ? null : getRegisteredClinic(id) ?? getClinicById(id)), [id, isNew]);
 
   const [clinicName, setClinicName] = useState(known?.name ?? '');
-  const [name, setName] = useState('');
+  const account = useSession();
+  const signedIn = !account.isAnonymous && !!account.uid;
+  const [name, setName] = useState(signedIn ? account.name ?? '' : '');
   const [role, setRole] = useState<Role | null>(null);
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(signedIn ? account.email ?? '' : '');
   const [clinicPhone, setClinicPhone] = useState(known?.phone ?? '');
   const [emergencyPhone, setEmergencyPhone] = useState('');
   const [hours, setHours] = useState('');
@@ -68,6 +71,8 @@ export default function ClaimScreen() {
       services,
       note: note.trim() || null,
       consent: true,
+      // Hekim hesabıyla başvurduysa yönetici bu kimliği vets/{uid} olarak onaylar
+      claimant_uid: signedIn ? account.uid : null,
     });
     setSubmitting(false);
     if (!ok) {
@@ -77,7 +82,9 @@ export default function ClaimScreen() {
     track('claim_submitted', { clinic_id: isNew ? undefined : id, new_clinic: isNew });
     Alert.alert(
       'Başvurunuz alındı',
-      'Verdiğiniz numarayı arayarak kliniği doğrulayacağız. Onaylandığında bilgileriniz uygulamada "Klinik onaylı" olarak görünecek. Teşekkür ederiz.',
+      signedIn
+        ? 'Verdiğiniz numarayı arayarak kliniği doğrulayacağız. Onaylandığında hekim paneliniz açılır ve kliniğiniz "Klinik onaylı" görünür.'
+        : 'Verdiğiniz numarayı arayarak kliniği doğrulayacağız. Onaylandığında bilgileriniz uygulamada "Klinik onaylı" olarak görünecek. Teşekkür ederiz.',
       [{ text: 'Tamam', onPress: () => router.back() }]
     );
   };

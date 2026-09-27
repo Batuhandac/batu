@@ -103,7 +103,7 @@ export default function WelcomeScreen() {
               size="lg"
               full
               disabled={!accepted}
-              onPress={() => router.push('/(onboarding)/location')}
+              onPress={() => router.push('/auth?from=onboarding')}
               style={{ marginTop: 14 }}
             />
           </>

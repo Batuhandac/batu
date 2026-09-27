@@ -1,98 +1,121 @@
 import React, { useEffect, useState } from 'react';
-import { View, Alert, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, IconBadge } from '@/components/ds';
+import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, IconBadge, Icon } from '@/components/ds';
 import { Art } from '@/components/art';
 import { useTheme } from '@/lib/theme';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
 import { fetchInbox, setInboxOpen, registerVetDevice, unregisterVetDevice, type ClinicInbox } from '@/lib/data/messages';
 import { useUnreadMessages } from '@/lib/hooks/useCommunity';
-import { track } from '@/lib/analytics';
 
 export default function VetPanelScreen() {
+  const role = useSession((s) => s.role);
   const vet = useSession((s) => s.vet);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/settings'));
+  const title = role === 'vet' ? 'Hekim paneli' : role === 'vet_pending' ? 'Doğrulama' : 'Veteriner hekimler';
+  const subtitle = vet ? vet.clinic_name : role === 'vet_pending' ? 'Hesabınız oluşturuldu' : 'Ücretsiz, reklamsız klinik hesabı';
   return (
     <Screen scroll edges={['top', 'bottom']}>
-      <Header title={vet ? 'Hekim paneli' : 'Hekim girişi'} subtitle={vet ? vet.clinic_name : 'Doğrulanmış klinik hesapları için'} onBack={back} />
-      {vet ? <Panel /> : <Login />}
+      <Header title={title} subtitle={subtitle} onBack={back} />
+      {role === 'vet' ? <Panel /> : role === 'vet_pending' ? <Pending /> : <Intro />}
     </Screen>
   );
 }
 
-function Login() {
+function Intro() {
   const t = useTheme();
-  const { vetSignIn, resetPassword } = useSession();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async () => {
-    setBusy(true);
-    setError(null);
-    const res = await vetSignIn(email, password);
-    setBusy(false);
-    if (!res.ok) setError(res.message ?? 'Giriş yapılamadı.');
-    else track('vet_login');
-  };
-
-  const forgot = async () => {
-    if (!email.includes('@')) {
-      setError('Önce kayıtlı e-posta adresinizi yazın.');
-      return;
-    }
-    const ok = await resetPassword(email);
-    Alert.alert(
-      ok ? 'E-posta gönderildi' : 'Gönderilemedi',
-      ok ? 'Şifre oluşturma bağlantısını e-posta adresinize gönderdik. Gelen kutunuzu ve istenmeyen klasörünü kontrol edin.' : 'Adresi kontrol edip tekrar deneyin.'
-    );
-  };
-
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ paddingHorizontal: 20 }}>
+    <View style={{ paddingHorizontal: 20 }}>
       <View style={{ alignItems: 'center', marginBottom: 8 }}>
-        <Art name="vet" width={200} />
+        <Art name="vet" width={220} />
       </View>
-      <Text variant="callout" tone="muted" style={{ marginBottom: 18 }}>
-        Kliniğiniz doğrulandıktan sonra size bir hesap tanımlıyoruz. Giriş yaptığınızda hasta sahiplerinin mesajlarını
-        yanıtlayabilir, topluluktaki sorulara kliniğinizin adıyla ve "Veteriner hekim" rozetiyle cevap verebilirsiniz.
+      <Text variant="body" tone="muted" style={{ marginBottom: 20 }}>
+        Doğrulanan klinikler hasta sahiplerinin mesajlarını yanıtlar, topluluktaki sorulara kliniğinin adıyla ve
+        "Veteriner hekim" rozetiyle cevap verir. Ücretsizdir; sıralama satın alınamaz.
       </Text>
-      <Field label="E-posta" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="ornek@klinik.com" />
-      <Field label="Şifre" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" placeholder="••••••••" />
-      {error ? (
-        <Text variant="callout" tone="danger" style={{ marginBottom: 12 }}>
-          {error}
-        </Text>
-      ) : null}
-      <Button title="Giriş yap" size="lg" full loading={busy} disabled={!email || !password} onPress={submit} />
-      <Pressable onPress={forgot} style={{ alignSelf: 'center', marginTop: 16 }} hitSlop={10} accessibilityRole="button">
-        <Text variant="callout" tone="primary">
-          Şifremi unuttum / şifre oluştur
-        </Text>
-      </Pressable>
-
-      <Card tone="alt" style={{ marginTop: 28 }}>
+      <Button title="Hekim hesabı oluştur" size="lg" full onPress={() => router.push('/auth/vet')} />
+      <Button title="Giriş yap" variant="secondary" full onPress={() => router.push('/auth/vet?mode=signin')} style={{ marginTop: 10 }} />
+      <Card tone="alt" style={{ marginTop: 24 }}>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <IconBadge name="shield-checkmark-outline" size={40} color={t.primary} background={t.surface} />
-          <View style={{ flex: 1 }}>
-            <Text variant="bodyStrong">Hesabınız yok mu?</Text>
-            <Text variant="caption" tone="muted">
-              Önce kliniğinizi ücretsiz doğrulayın; telefonla teyit edip hesabınızı açalım.
-            </Text>
-          </View>
+          <IconBadge name="call-outline" size={40} color={t.primary} background={t.surface} />
+          <Text variant="caption" tone="muted" style={{ flex: 1 }}>
+            Hesap açmadan yalnızca klinik bilgilerinizi düzeltmek isterseniz de başvurabilirsiniz.
+          </Text>
         </View>
-        <Button title="Kliniğimi doğrula" variant="secondary" onPress={() => router.push('/vets')} style={{ marginTop: 12 }} full />
+        <Button title="Klinik bilgilerini doğrula" variant="ghost" onPress={() => router.push('/vets')} style={{ alignSelf: 'flex-start', marginLeft: -12, marginTop: 4 }} />
       </Card>
-    </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function Pending() {
+  const t = useTheme();
+  const { refreshRole, signOut, name } = useSession();
+  const [checking, setChecking] = useState(false);
+  const steps = [
+    { title: 'Hesap oluşturuldu', done: true },
+    { title: 'Kliniğinizi seçip başvurun', done: false, action: true },
+    { title: 'Telefonla doğrulama', done: false },
+  ];
+  return (
+    <View style={{ paddingHorizontal: 20 }}>
+      <Card>
+        <Text variant="bodyStrong">Hoş geldiniz{name ? `, ${name}` : ''}</Text>
+        <Text variant="callout" tone="muted" style={{ marginTop: 4 }}>
+          Başvurunuzu aldıktan sonra kliniğin numarasını arayarak doğruluyoruz; genelde aynı gün tamamlanır. Onaylanınca
+          bu sayfa hekim panelinize dönüşür.
+        </Text>
+        <View style={{ marginTop: 16, gap: 12 }}>
+          {steps.map((st, i) => (
+            <View key={st.title} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: st.done ? t.primary : t.surfaceAlt,
+                }}
+              >
+                {st.done ? (
+                  <Icon name="checkmark" size={15} color={t.onPrimary} />
+                ) : (
+                  <Text variant="caption" color={t.textMuted} style={{ fontSize: 12 }}>
+                    {i + 1}
+                  </Text>
+                )}
+              </View>
+              <Text variant="callout" style={{ flex: 1 }}>
+                {st.title}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </Card>
+      <Button title="Kliniğimi seç ve başvur" size="lg" full onPress={() => router.push('/vets')} style={{ marginTop: 20 }} />
+      <Button
+        title="Durumu yenile"
+        variant="secondary"
+        full
+        loading={checking}
+        onPress={async () => {
+          setChecking(true);
+          await refreshRole();
+          setChecking(false);
+        }}
+        style={{ marginTop: 10 }}
+      />
+      <Button title="Çıkış yap" variant="ghost" onPress={() => signOut()} style={{ marginTop: 16 }} />
+    </View>
   );
 }
 
 function Panel() {
   const t = useTheme();
   const vet = useSession((s) => s.vet)!;
-  const vetSignOut = useSession((s) => s.vetSignOut);
+  const signOut = useSession((s) => s.signOut);
   const unread = useUnreadMessages();
   const [inbox, setInbox] = useState<ClinicInbox | null | undefined>(undefined);
   const [open, setOpen] = useState(false);
@@ -191,7 +214,7 @@ function Panel() {
               style: 'destructive',
               onPress: async () => {
                 await unregisterVetDevice(vet.clinic_id);
-                await vetSignOut();
+                await signOut();
               },
             },
           ])

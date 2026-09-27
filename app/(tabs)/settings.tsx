@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
-import { Screen, Text, Group, ListRow, LogoMark, Wordmark } from '@/components/ds';
+import { Screen, Text, Group, ListRow, LogoMark, Wordmark, Card, Avatar, IconBadge, Icon } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 import { RulesSheet } from '@/components/community/Safety';
 import { unblockAll } from '@/lib/data/safety';
@@ -18,13 +19,36 @@ function GroupTitle({ children }: { children: string }) {
 }
 
 export default function SettingsScreen() {
-  const vet = useSession((s) => s.vet);
+  const t = useTheme();
+  const { vet, role, name, email } = useSession();
   const [rules, setRules] = useState(false);
+  const guest = role === 'guest';
+  const displayName = vet ? vetDisplayName(vet) : name ?? 'Hesabım';
   return (
     <Screen scroll contentStyle={{ paddingHorizontal: 20 }}>
       <Text variant="title" style={{ marginTop: 12 }}>
         Ayarlar
       </Text>
+
+      {/* Hesap */}
+      <Card onPress={() => router.push(guest ? '/auth' : '/account')} style={{ marginTop: 16 }} accessibilityLabel={guest ? 'Hesap oluştur ya da giriş yap' : 'Hesabım'}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          {guest ? (
+            <IconBadge name="person-outline" size={52} />
+          ) : (
+            <Avatar label={displayName} size={52} background={vet ? t.honeySoft : t.primarySoft} color={vet ? t.honey : t.primary} />
+          )}
+          <View style={{ flex: 1 }}>
+            <Text variant="bodyStrong" numberOfLines={1}>
+              {guest ? 'Hesap oluştur ya da giriş yap' : displayName}
+            </Text>
+            <Text variant="caption" tone="muted" numberOfLines={2}>
+              {guest ? 'Acil kartların güvende kalsın, toplulukta soru sor, kliniklerle mesajlaş.' : email ?? ''}
+            </Text>
+          </View>
+          <Icon name="chevron-forward" size={18} color={t.textSubtle} />
+        </View>
+      </Card>
 
       <GroupTitle>Uygulama</GroupTitle>
       <Group>
@@ -60,12 +84,9 @@ export default function SettingsScreen() {
       <GroupTitle>Veteriner hekimler</GroupTitle>
       <Group>
         {vet ? (
-          <ListRow icon="medkit" title="Hekim paneli" subtitle={`${vetDisplayName(vet)} · ${vet.clinic_name}`} onPress={() => router.push('/vet')} last />
+          <ListRow icon="medkit" title="Hekim paneli" subtitle={vet.clinic_name} onPress={() => router.push('/vet')} last />
         ) : (
-          <>
-            <ListRow icon="medical-outline" title="Kliniğinizi doğrulayın" subtitle="Ücretsiz, reklam değil" onPress={() => router.push('/vets')} />
-            <ListRow icon="log-in-outline" title="Hekim girişi" subtitle="Doğrulanmış klinik hesapları için" onPress={() => router.push('/vet')} last />
-          </>
+          <ListRow icon="medkit-outline" title="Veteriner hekim misiniz?" subtitle="Ücretsiz klinik hesabı, reklam değil" onPress={() => router.push('/vet')} last />
         )}
       </Group>
 
