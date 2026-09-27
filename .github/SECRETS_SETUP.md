@@ -19,13 +19,32 @@ Sırayla şu secret'ları ekle:
 | `ASC_ISSUER_ID` | Issuer ID (UUID) | Aynı sayfanın üstünde |
 | `APPLE_TEAM_ID` | `U9XS8V85V3` | App Store Connect → Membership |
 
-İsteğe bağlı (canlı veri için — yoksa demo build çıkar):
+İsteğe bağlı (canlı veri için — yoksa uygulama gömülü klinik listesiyle çalışır):
 
 | Secret adı | Değer |
 |---|---|
+| `EXPO_PUBLIC_GOOGLE_PLACES_KEY` | Google Maps Platform API anahtarı (aşağıya bak) |
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase proje URL'i |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `EXPO_PUBLIC_POSTHOG_KEY` | PostHog proje key'i |
+
+Bu değerler build sırasında `eas.json` içine yazılıp EAS'a iletilir
+(`scripts/ci-prepare-credentials.js`). `.env` dosyası EAS'a yüklenmediği için
+CI'da kullanılmaz.
+
+### Google Places anahtarı (canlı klinik verisi)
+1. https://console.cloud.google.com → proje seç/oluştur → **Faturalandırmayı** aç
+   (aylık ücretsiz kota var; kota aşılmadıkça ücret çıkmaz).
+2. **APIs & Services → Library** → **"Places API (New)"** → **Enable**.
+   (Eski "Places API" değil — yeni projelerde o artık açılamıyor.)
+3. **APIs & Services → Credentials → Create credentials → API key**.
+4. Anahtarı düzenle:
+   - **API restrictions** → *Restrict key* → sadece **Places API (New)**
+   - **Application restrictions** → *iOS apps* → `com.patisos.app`
+5. Anahtarı `EXPO_PUBLIC_GOOGLE_PLACES_KEY` secret'ı olarak ekle.
+
+Uygulama her ~2 km'lik bölge için 2 arama yapıp sonucu cihazda 3 gün saklar;
+açık/kapalı durumu çalışma saatlerinden cihazda hesaplanır.
 
 > `.p8` içeriğini eklerken: dosyayı Not Defteri ile aç, **hepsini** seç-kopyala,
 > secret değerine yapıştır. Satır sonları korunur.

@@ -9,6 +9,18 @@ Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü 
 - **Admin:** Next.js (App Router, Server Actions)
 - **Analytics:** PostHog
 - **Haritalar:** react-native-maps + expo-location
+- **Canlı klinik verisi:** Google Places API (New) — `lib/data/places.ts`
+- **Topluluk:** Firebase Firestore (klinik ekleme, yorum, fotoğraf)
+
+## Klinik verisi nereden geliyor?
+
+1. **Google Places (canlı)** — `EXPO_PUBLIC_GOOGLE_PLACES_KEY` tanımlıysa, konumun
+   çevresindeki en yakın veterinerler + 7/24/acil veterinerler çekilir. Açık/kapalı
+   durumu çalışma saatlerinden cihazda hesaplanır; sonuç cihazda 3 gün saklanır.
+   Anahtar kurulumu: `.github/SECRETS_SETUP.md`.
+2. **Gömülü liste (yedek)** — `lib/data/clinics.ts`. Anahtar yokken ya da Google'a
+   ulaşılamadığında gösterilir. Canlı veri gelince listenin yerine geçer.
+3. **Topluluk** — kullanıcıların eklediği klinikler (Firestore), her iki durumda da eklenir.
 
 ## Kurulum
 

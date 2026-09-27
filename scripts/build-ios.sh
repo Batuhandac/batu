@@ -2,8 +2,8 @@
 # Pati SOS — iOS Build + TestFlight (tek seferlik)
 set -e
 
-BRANCH="claude/pati-sos-build-tLYBi"
-REPO="https://github.com/Batuhandac/batu"
+BRANCH="${BRANCH:-main}"
+REPO="https://github.com/Batuhandac/pati-sos"
 DIR="$HOME/pati-sos-build"
 
 echo ""
