@@ -7,27 +7,28 @@ import { Icon, type IconName } from './Icon';
 type Variant = 'primary' | 'sos' | 'secondary' | 'ghost' | 'danger' | 'soft';
 type Size = 'lg' | 'md' | 'sm';
 
+// Dolgulu (ana iş), gri (ikincil), yazı (üçüncül). Çerçeve kullanılmaz.
 function colors(t: Theme, v: Variant, pressed: boolean) {
   switch (v) {
     case 'primary':
-      return { bg: pressed ? t.primaryPressed : t.primary, fg: t.onPrimary, border: 'transparent' };
+      return { bg: pressed ? t.primaryPressed : t.primary, fg: t.onPrimary };
     case 'sos':
-      return { bg: pressed ? t.sosPressed : t.sos, fg: t.onSos, border: 'transparent' };
+      return { bg: pressed ? t.sosPressed : t.sos, fg: t.onSos };
     case 'danger':
-      return { bg: pressed ? t.dangerSoft : 'transparent', fg: t.danger, border: t.danger };
+      return { bg: t.dangerSoft, fg: t.danger };
     case 'soft':
-      return { bg: t.primarySoft, fg: t.primary, border: 'transparent' };
+      return { bg: t.primarySoft, fg: t.primary };
     case 'ghost':
-      return { bg: pressed ? t.surfaceAlt : 'transparent', fg: t.primary, border: 'transparent' };
+      return { bg: 'transparent', fg: t.primary };
     default:
-      return { bg: pressed ? t.surfaceAlt : t.surface, fg: t.text, border: t.border };
+      return { bg: t.surfaceAlt, fg: t.text };
   }
 }
 
-const SIZES: Record<Size, { h: number; px: number; icon: number }> = {
-  lg: { h: 58, px: 22, icon: 22 },
-  md: { h: 48, px: 18, icon: 19 },
-  sm: { h: 38, px: 14, icon: 16 },
+const SIZES: Record<Size, { h: number; px: number; icon: number; font: number }> = {
+  lg: { h: 54, px: 20, icon: 21, font: 17 },
+  md: { h: 46, px: 16, icon: 19, font: 16 },
+  sm: { h: 34, px: 12, icon: 16, font: 15 },
 };
 
 export interface ButtonProps {
@@ -72,15 +73,12 @@ export function Button({
           {
             minHeight: subtitle ? s.h + 18 : s.h,
             paddingHorizontal: s.px,
-            borderRadius: size === 'sm' ? radius.pill : radius.md,
+            borderRadius: size === 'sm' ? radius.sm : radius.lg,
             backgroundColor: c.bg,
-            borderWidth: variant === 'secondary' || variant === 'danger' ? 1 : 0,
-            borderColor: c.border,
             alignItems: 'center',
             justifyContent: 'center',
             alignSelf: full ? 'stretch' : 'auto',
-            opacity: disabled ? 0.45 : 1,
-            transform: [{ scale: pressed ? 0.985 : 1 }],
+            opacity: disabled ? 0.4 : pressed && variant !== 'primary' && variant !== 'sos' ? 0.6 : 1,
           },
           style,
         ];
@@ -94,7 +92,7 @@ export function Button({
           <View style={{ alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {icon ? <Icon name={icon} size={s.icon} color={c.fg} /> : null}
-              <Text variant="button" color={c.fg} style={size === 'lg' ? { fontSize: 18 } : size === 'sm' ? { fontSize: 14 } : undefined}>
+              <Text variant="button" color={c.fg} style={{ fontSize: s.font }}>
                 {title}
               </Text>
             </View>
@@ -143,17 +141,15 @@ export function IconButton({
             ? t.primarySoft
             : variant === 'plain'
             ? 'transparent'
-            : pressed ? t.surfaceAlt : t.surface;
+            : t.surfaceAlt;
         return {
           width: size,
           height: size,
           borderRadius: size / 2,
           backgroundColor: bg,
-          borderWidth: variant === 'secondary' ? 1 : 0,
-          borderColor: t.border,
           alignItems: 'center',
           justifyContent: 'center',
-          transform: [{ scale: pressed ? 0.94 : 1 }],
+          opacity: pressed ? 0.6 : 1,
         };
       }}
     >
@@ -162,7 +158,7 @@ export function IconButton({
         size={Math.round(size * 0.45)}
         color={
           color ??
-          (variant === 'primary' ? t.onPrimary : variant === 'sos' ? t.onSos : variant === 'soft' ? t.primary : t.text)
+          (variant === 'primary' ? t.onPrimary : variant === 'sos' ? t.onSos : variant === 'soft' || variant === 'plain' ? t.primary : t.text)
         }
       />
     </Pressable>

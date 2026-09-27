@@ -1,10 +1,12 @@
 # Pati SOS
 
-Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü — saniyeler içinde yakındaki açık, acil kabul eden kliniği bul, tek tuşla ara.
+Evcil hayvan sahipleri için: acil anında en yakın açık veteriner, her gün için aşı ve
+parazit takvimi, acil sağlık kartı ve veterinere soru. Gece 02:00, dostun kötü — saniyeler
+içinde yakındaki açık kliniği bul, tek dokunuşla ara.
 
 ## Stack
 
-- **Mobil:** Expo (React Native) + TypeScript + expo-router + NativeWind
+- **Mobil:** Expo (React Native) + TypeScript + expo-router; kendi tasarım sistemi `components/ds`
 - **Backend:** Supabase (Postgres + Auth + RLS + RPC)
 - **Admin:** Next.js (App Router, Server Actions)
 - **Analytics:** PostHog
@@ -12,6 +14,14 @@ Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü 
 - **Canlı klinik verisi:** Google Places API (New) — `lib/data/places.ts`
 - **Topluluk ve mesajlaşma:** Firebase Firestore + Storage + Auth (anonim oturum, hekim e-posta girişi)
 - **Bildirimler:** expo-notifications + Expo Push (sunucusuz, cihazdan cihaza)
+
+## Dostlar ve bakım
+
+- **Dost profili** (`app/pets`) — fotoğraf, doğum tarihi, cinsiyet, kısırlaştırma, çip,
+  alerji ve ilaçlar. Bilgiler yalnızca telefonda saklanır.
+- **Bakım takvimi** (`lib/data/care.ts`) — aşı, parazit, kontrol, ilaç. Bir gün önce
+  20:00'de ve gününde 10:00'da yerel bildirim; "yapıldı" deyince tekrarlıysa sonraki kurulur.
+- **Kilo takibi ve acil sağlık kartı** — klinik ararken ekranda, WhatsApp ile paylaşılabilir.
 
 ## Topluluk, mesajlaşma ve içerik
 
@@ -23,9 +33,11 @@ Türkiye'nin acil veteriner klinik bulucu uygulaması. Gece 02:00, petin kötü 
   kutusu açık kliniklere; hekim paneli `app/vet`. Cep numarası olan kliniklerde WhatsApp.
 - **Güvenlik (App Store 1.2)** — küfür/bağlantı filtresi, bildir, engelle, topluluk
   kuralları onayı (`lib/data/safety.ts`); şikayetler `content_reports`'a düşer.
-- **Karşılama slaytları ve ana sayfa bannerları** — çizimler `components/art`,
-  bannerlar `lib/content/banners.ts` (mevsime göre; Firestore `app_banners` ile
-  uygulama güncellemeden yönetilir).
+- **Tek ekranlık karşılama ve ana sayfa duyuruları** — duyurular
+  `lib/content/banners.ts` (mevsime göre; Firestore `app_banners` ile uygulama
+  güncellemeden yönetilir).
+- **Sade, yerel görünüm** — sistem yazı tipi, nötr zemin, tek marka rengi; gerekçeler
+  `docs/ARASTIRMA.md`, kurallar `brand/BRAND.md`.
 - Güvenlik kuralları `firestore.rules` Firestore emülatöründe 63 senaryoyla
   (kötüye kullanım denemeleri dahil) test edildi. Yönetim: `YONETICI_REHBERI.md`.
 

@@ -90,7 +90,7 @@ export function ReviewsSection({ clinicId, clinicName }: { clinicId: string; cli
               </Text>
             )}
             {r.vet_reply ? (
-              <View style={{ marginTop: 12, padding: 12, borderRadius: radius.md, backgroundColor: t.primarySoft, borderLeftWidth: 3, borderLeftColor: t.primary }}>
+              <View style={{ marginTop: 12, padding: 12, borderRadius: radius.md, backgroundColor: t.surfaceAlt }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Icon name="checkmark-circle" size={14} color={t.primary} />
                   <Text variant="caption" tone="primary">

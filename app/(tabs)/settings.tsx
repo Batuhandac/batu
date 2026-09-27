@@ -12,7 +12,7 @@ import { vetDisplayName } from '@/lib/auth';
 
 function GroupTitle({ children }: { children: string }) {
   return (
-    <Text variant="overline" tone="subtle" style={{ marginTop: 24, marginBottom: 8, marginLeft: 4 }}>
+    <Text variant="overline" tone="muted" style={{ marginTop: 28, marginBottom: 8, marginLeft: 16 }}>
       {children}
     </Text>
   );
@@ -26,18 +26,14 @@ export default function SettingsScreen() {
   const displayName = vet ? vetDisplayName(vet) : name ?? 'Hesabım';
   return (
     <Screen scroll contentStyle={{ paddingHorizontal: 20 }}>
-      <Text variant="title" style={{ marginTop: 12 }}>
+      <Text variant="display" style={{ marginTop: 48 }}>
         Ayarlar
       </Text>
 
       {/* Hesap */}
       <Card onPress={() => router.push(guest ? '/auth' : '/account')} style={{ marginTop: 16 }} accessibilityLabel={guest ? 'Hesap oluştur ya da giriş yap' : 'Hesabım'}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          {guest ? (
-            <IconBadge name="person-outline" size={52} />
-          ) : (
-            <Avatar label={displayName} size={52} background={vet ? t.honeySoft : t.primarySoft} color={vet ? t.honey : t.primary} />
-          )}
+          {guest ? <IconBadge name="person" size={52} color={t.textSubtle} background={t.surfaceAlt} /> : <Avatar label={displayName} size={52} />}
           <View style={{ flex: 1 }}>
             <Text variant="bodyStrong" numberOfLines={1}>
               {guest ? 'Hesap oluştur ya da giriş yap' : displayName}
@@ -46,7 +42,7 @@ export default function SettingsScreen() {
               {guest ? 'Acil kartların güvende kalsın, toplulukta soru sor, kliniklerle mesajlaş.' : email ?? ''}
             </Text>
           </View>
-          <Icon name="chevron-forward" size={18} color={t.textSubtle} />
+          <Icon name="chevron-forward" size={17} color={t.textSubtle} />
         </View>
       </Card>
 
@@ -125,7 +121,7 @@ export default function SettingsScreen() {
           <Wordmark size={15} />
         </View>
         <Text variant="caption" tone="subtle">
-          Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · Türkiye'de sevgiyle yapıldı
+          Sürüm {Constants.expoConfig?.version ?? '1.0.0'} · support@patisos.app
         </Text>
       </View>
       <RulesSheet visible={rules} onClose={() => setRules(false)} onAccept={() => setRules(false)} />

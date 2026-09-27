@@ -22,12 +22,12 @@ export function ClinicCard({ clinic }: { clinic: Clinic }) {
         router.push(`/clinic/${clinic.id}`);
       }}
       accessibilityLabel={`${clinic.name}, ${s.label}${meta ? ', ' + meta : ''}`}
-      style={{ marginHorizontal: 20, marginBottom: 12 }}
+      style={{ marginHorizontal: 20, marginBottom: 10 }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text variant="bodyStrong" numberOfLines={1} style={{ flexShrink: 1, fontSize: 17 }}>
+            <Text variant="bodyStrong" numberOfLines={1} style={{ flexShrink: 1 }}>
               {clinic.name}
             </Text>
             {clinic.is_verified ? <Icon name="shield-checkmark" size={16} color={t.primary} /> : null}
@@ -47,7 +47,7 @@ export function ClinicCard({ clinic }: { clinic: Clinic }) {
               </View>
             ) : null}
           </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 6 }}>
             <Badge label={s.label} tone={s.tone} dot />
             {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
             {clinic.accepts_emergency && !clinic.is_24_7 ? <Badge label="Acil kabul" tone="sos" /> : null}
@@ -58,8 +58,9 @@ export function ClinicCard({ clinic }: { clinic: Clinic }) {
         {clinic.phone || clinic.emergency_phone ? (
           <IconButton
             icon="call"
-            variant={s.tone === 'open' ? 'primary' : 'soft'}
-            size={48}
+            variant={s.tone === 'open' ? 'primary' : 'secondary'}
+            color={s.tone === 'open' ? t.onPrimary : t.primary}
+            size={44}
             onPress={() => callClinic(clinic.phone ? clinic : { ...clinic, phone: clinic.emergency_phone! }, 'list')}
             accessibilityLabel={`${clinic.name} ara`}
           />

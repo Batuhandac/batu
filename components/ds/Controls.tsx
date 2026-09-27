@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable, TextInput, Switch, type TextInputProps } from 'react-native';
-import { useTheme, radius, type, type Theme } from '@/lib/theme';
+import { useTheme, radius, type, hairline, type Theme } from '@/lib/theme';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 
@@ -25,16 +25,15 @@ export function Chip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 14,
-        height: 36,
-        borderRadius: radius.pill,
-        backgroundColor: active ? t.primary : pressed ? t.surfaceAlt : t.surface,
-        borderWidth: 1,
-        borderColor: active ? t.primary : t.border,
+        paddingHorizontal: 12,
+        height: 34,
+        borderRadius: radius.sm,
+        backgroundColor: active ? t.primary : t.surface,
+        opacity: pressed ? 0.6 : 1,
       })}
     >
       {icon ? <Icon name={icon} size={15} color={active ? t.onPrimary : t.textMuted} /> : null}
-      <Text variant="caption" color={active ? t.onPrimary : t.text}>
+      <Text variant="callout" color={active ? t.onPrimary : t.text} style={{ fontSize: 15 }}>
         {label}
       </Text>
     </Pressable>
@@ -62,25 +61,15 @@ function badgeColors(t: Theme, tone: BadgeTone) {
   }
 }
 
+/** Durum etiketi: renkli kısa metin, istenirse önünde nokta. Arka plan yok. */
 export function Badge({ label, tone = 'neutral', icon, dot }: { label: string; tone?: BadgeTone; icon?: IconName; dot?: boolean }) {
   const t = useTheme();
   const c = badgeColors(t, tone);
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-        paddingHorizontal: 9,
-        paddingVertical: 4,
-        borderRadius: radius.pill,
-        backgroundColor: c.bg,
-        alignSelf: 'flex-start',
-      }}
-    >
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start' }}>
       {dot ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.fg }} /> : null}
-      {icon ? <Icon name={icon} size={13} color={c.fg} /> : null}
-      <Text variant="caption" color={c.fg} style={{ fontSize: 12 }}>
+      {icon ? <Icon name={icon} size={14} color={c.fg} /> : null}
+      <Text variant="caption" color={c.fg} style={{ fontWeight: '600' }}>
         {label}
       </Text>
     </View>
@@ -119,12 +108,12 @@ export function Field({
           {
             color: t.text,
             backgroundColor: t.surface,
-            borderWidth: 1.5,
-            borderColor: error ? t.danger : focused ? t.primary : t.border,
+            borderWidth: 1,
+            borderColor: error ? t.danger : focused ? t.primary : t.dark ? t.surface : t.border,
             borderRadius: radius.md,
             paddingHorizontal: 14,
             paddingVertical: 12,
-            minHeight: multiline ? 88 : 50,
+            minHeight: multiline ? 88 : 48,
             textAlignVertical: multiline ? 'top' : 'center',
           },
           style,
@@ -164,19 +153,17 @@ export function SwitchRow({
         alignItems: 'center',
         gap: 12,
         backgroundColor: t.surface,
-        borderWidth: 1,
-        borderColor: t.border,
-        borderRadius: radius.md,
-        paddingHorizontal: 14,
+        borderRadius: radius.lg,
+        paddingHorizontal: 16,
         paddingVertical: 12,
         marginBottom: 12,
         opacity: disabled ? 0.6 : 1,
       }}
     >
       <View style={{ flex: 1 }}>
-        <Text variant="bodyStrong">{label}</Text>
+        <Text variant="body">{label}</Text>
         {hint ? (
-          <Text variant="caption" tone="muted">
+          <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>
             {hint}
           </Text>
         ) : null}
@@ -205,8 +192,8 @@ export function Checkbox({ checked, onPress, children }: { checked: boolean; onP
         style={{
           width: 24,
           height: 24,
-          borderRadius: 7,
-          borderWidth: 2,
+          borderRadius: 12,
+          borderWidth: 1.5,
           marginTop: 1,
           borderColor: checked ? t.primary : t.borderStrong,
           backgroundColor: checked ? t.primary : 'transparent',
@@ -221,7 +208,7 @@ export function Checkbox({ checked, onPress, children }: { checked: boolean; onP
   );
 }
 
-/** Seçenek butonları (tek seçim). */
+/** Seçenek düğmeleri (tek seçim), iOS bölümlü kontrolü gibi. */
 export function Segmented<T extends string>({
   options,
   value,
@@ -233,9 +220,10 @@ export function Segmented<T extends string>({
 }) {
   const t = useTheme();
   return (
-    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-      {options.map((o) => {
+    <View style={{ flexDirection: 'row', padding: 2, borderRadius: radius.md, backgroundColor: t.surfaceAlt, marginBottom: 16 }}>
+      {options.map((o, i) => {
         const on = o.key === value;
+        const prevOn = i > 0 && options[i - 1].key === value;
         return (
           <Pressable
             key={o.key}
@@ -244,19 +232,21 @@ export function Segmented<T extends string>({
             accessibilityState={{ selected: on }}
             style={{
               flex: 1,
-              minHeight: 48,
-              paddingVertical: 10,
-              borderRadius: radius.md,
-              borderWidth: 1.5,
-              borderColor: on ? t.primary : t.border,
-              backgroundColor: on ? t.primarySoft : t.surface,
+              minHeight: o.icon ? 52 : 36,
+              paddingVertical: 6,
+              paddingHorizontal: 4,
+              borderRadius: radius.sm,
+              backgroundColor: on ? (t.dark ? t.borderStrong : t.surface) : 'transparent',
+              borderLeftWidth: i === 0 || on || prevOn ? 0 : hairline,
+              borderLeftColor: t.borderStrong,
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
+              gap: 3,
+              ...(on && !t.dark ? { shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
             }}
           >
-            {o.icon ? <Icon name={o.icon} size={18} color={on ? t.primary : t.textMuted} /> : null}
-            <Text variant="caption" color={on ? t.primary : t.text}>
+            {o.icon ? <Icon name={o.icon} size={18} color={on ? t.text : t.textMuted} /> : null}
+            <Text variant="caption" color={t.text} style={{ fontSize: 14, fontWeight: on ? '600' : '400' }} numberOfLines={1}>
               {o.label}
             </Text>
           </Pressable>

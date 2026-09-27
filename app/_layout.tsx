@@ -5,14 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  useFonts,
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-  Nunito_800ExtraBold,
-  Nunito_900Black,
-} from '@expo-google-fonts/nunito';
+import { useFonts } from 'expo-font';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOnboardingStore } from '@/stores/onboarding';
 import { useSession } from '@/stores/session';
@@ -47,14 +40,8 @@ async function openNotification(response: Notifications.NotificationResponse | n
 export default function RootLayout() {
   const t = useTheme();
   const { load, hydrated, completed } = useOnboardingStore();
-  const [fontsLoaded, fontError] = useFonts({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
-    Nunito_900Black,
-    ...Ionicons.font,
-  });
+  // Metinler sistem yazı tipinde; yalnızca ikon fontu önceden yüklenir
+  const [fontsLoaded, fontError] = useFonts({ ...Ionicons.font });
 
   useEffect(() => {
     load();
@@ -72,7 +59,7 @@ export default function RootLayout() {
       .catch(() => {});
   }, [hydrated, completed]);
 
-  // Yazı tipleri yüklenene kadar markalı bekleme (hata olursa sistem fontuyla devam)
+  // İkon fontu yüklenene kadar markalı bekleme (hata olursa yine devam)
   if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>

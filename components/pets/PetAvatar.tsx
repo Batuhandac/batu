@@ -24,7 +24,7 @@ export function PetAvatar({
         source={{ uri: pet.photo_uri }}
         onError={() => setFailed(true)}
         accessibilityIgnoresInvertColors
-        style={{ width: size, height: size, borderRadius: size * 0.36, borderWidth: ring ? 2 : 0, borderColor: ring }}
+        style={{ width: size, height: size, borderRadius: size / 2, borderWidth: ring ? 2 : 0, borderColor: ring }}
       />
     );
   }

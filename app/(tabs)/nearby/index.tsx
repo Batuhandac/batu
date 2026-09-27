@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Screen, Text, Chip, Button, EmptyState, IconBadge } from '@/components/ds';
+import { Screen, Text, Chip, Button, EmptyState, Icon } from '@/components/ds';
 import { ClinicCard } from '@/components/clinic/ClinicCard';
 import { DataAttribution } from '@/components/ui/DataAttribution';
 import { LocationBar } from '@/components/location/LocationBar';
@@ -47,8 +47,8 @@ export default function NearbyScreen() {
   if (lat == null || lng == null) {
     return (
       <Screen scroll contentStyle={{ paddingHorizontal: 24, paddingTop: 32 }}>
-        <IconBadge name="location" size={64} />
-        <Text variant="title" style={{ marginTop: 18 }}>
+        <Icon name="location-outline" size={44} color={t.primary} />
+        <Text variant="title" style={{ marginTop: 16 }}>
           Neredesin?
         </Text>
         <Text variant="body" tone="muted" style={{ marginTop: 6 }}>
@@ -56,7 +56,7 @@ export default function NearbyScreen() {
           telefonunda kullanılır.
         </Text>
         <Button title="Konumumu kullan" icon="navigate" size="lg" full loading={locating} onPress={request} style={{ marginTop: 24 }} />
-        <Text variant="overline" tone="subtle" style={{ marginTop: 32, marginBottom: 12 }}>
+        <Text variant="overline" tone="muted" style={{ marginTop: 32, marginBottom: 8, marginLeft: 16 }}>
           Ya da ilçeni seç
         </Text>
         <DistrictList onPick={(d) => setManual(d.lat, d.lng, d.name)} />
@@ -65,18 +65,16 @@ export default function NearbyScreen() {
   }
 
   const header = (
-    <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-        <View style={{ flex: 1 }}>
-          <Text variant="title">Yakınındaki klinikler</Text>
-          <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
-            {clinics.length > 0 ? `${openCount} açık · toplam ${clinics.length} klinik` : 'Açık ve yakın olanlar önce gösterilir'}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Button title="Harita" icon="map-outline" variant="secondary" size="sm" onPress={() => router.push('/map')} />
-          <Button title="Acil" icon="medkit" variant="sos" size="sm" onPress={() => router.push('/emergency')} accessibilityLabel="Acil mod" />
-        </View>
+    <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minHeight: 44 }}>
+        <Button title="Harita" icon="map-outline" variant="ghost" size="sm" onPress={() => router.push('/map')} />
+        <Button title="Acil" icon="medkit" variant="sos" size="sm" onPress={() => router.push('/emergency')} accessibilityLabel="Acil mod" />
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text variant="display">Klinikler</Text>
+        <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+          {clinics.length > 0 ? `${openCount} açık · toplam ${clinics.length} klinik` : 'Açık ve yakın olanlar önce gösterilir'}
+        </Text>
       </View>
       <LocationBar />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 14 }}>
@@ -131,7 +129,7 @@ export default function NearbyScreen() {
               icon="search-outline"
               title="Yakınında kayıtlı klinik yok"
               text="Konumunu kontrol et ya da başka bir ilçe seç. Bildiğin bir kliniği ekleyerek başkalarına da yardım edebilirsin."
-              action={<Button title="Klinik ekle" variant="soft" icon="add" onPress={() => router.push('/clinic/add')} full />}
+              action={<Button title="Klinik ekle" variant="secondary" icon="add" onPress={() => router.push('/clinic/add')} full />}
             />
           )
         }

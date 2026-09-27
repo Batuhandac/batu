@@ -1,10 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Screen, Text, Card, Badge, Button, Icon, IconButton } from '@/components/ds';
-import { Art } from '@/components/art';
+import { Screen, Text, Card, Button, Icon, IconButton } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
-import { useTheme } from '@/lib/theme';
+import { useTheme, hairline } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
 import { upcomingCare, type CareItem } from '@/lib/data/care';
 import { speciesLabel, petAge } from '@/lib/utils/pets';
@@ -16,36 +15,34 @@ function PetRow({ pet, next }: { pet: Pet; next?: CareItem }) {
   const details = [pet.breed ?? speciesLabel(pet.species), petAge(pet), pet.weight_kg != null ? `${String(pet.weight_kg).replace('.', ',')} kg` : null]
     .filter(Boolean)
     .join(' · ');
-  const alerts = [pet.allergies ? 'Alerji' : null, pet.medications ? 'İlaç' : null, pet.chronic_conditions ? 'Kronik' : null].filter(Boolean) as string[];
+  const alerts = [pet.allergies ? 'Alerji' : null, pet.medications ? 'İlaç' : null, pet.chronic_conditions ? 'Kronik hastalık' : null].filter(Boolean) as string[];
   const due = next ? dueLabel(next.due) : null;
+  const dueColor = due?.tone === 'sos' ? t.sos : due?.tone === 'honey' ? t.honey : t.textMuted;
   return (
-    <Card onPress={() => router.push(`/pets/${pet.id}`)} style={{ marginHorizontal: 20, marginBottom: 12 }} accessibilityLabel={pet.name}>
+    <Card onPress={() => router.push(`/pets/${pet.id}`)} style={{ marginHorizontal: 20, marginBottom: 10 }} accessibilityLabel={pet.name}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <PetAvatar pet={pet} size={64} />
+        <PetAvatar pet={pet} size={56} />
         <View style={{ flex: 1 }}>
           <Text variant="headline">{pet.name}</Text>
-          <Text variant="caption" tone="muted" style={{ marginTop: 2 }} numberOfLines={1}>
+          <Text variant="caption" tone="muted" style={{ marginTop: 1 }} numberOfLines={1}>
             {details}
           </Text>
           {alerts.length > 0 ? (
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-              {alerts.map((a) => (
-                <Badge key={a} label={a} tone="sos" />
-              ))}
-            </View>
+            <Text variant="caption" tone="sos" style={{ marginTop: 3, fontWeight: '600' }} numberOfLines={1}>
+              {alerts.join(' · ')}
+            </Text>
           ) : null}
         </View>
-        <Icon name="chevron-forward" size={20} color={t.textSubtle} />
+        <Icon name="chevron-forward" size={17} color={t.textSubtle} />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.border }}>
-        <Icon name="calendar-outline" size={16} color={t.textMuted} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTopWidth: hairline, borderTopColor: t.border }}>
         {next && due ? (
-          <>
-            <Text variant="caption" style={{ flex: 1 }} numberOfLines={1}>
-              {next.title}
+          <Text variant="caption" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
+            Sıradaki: {next.title} ·{' '}
+            <Text variant="caption" color={dueColor} style={due.tone === 'sos' || due.tone === 'honey' ? { fontWeight: '600' } : undefined}>
+              {due.label.toLocaleLowerCase('tr-TR')}
             </Text>
-            <Badge label={due.label} tone={due.tone} />
-          </>
+          </Text>
         ) : (
           <Text variant="caption" tone="primary" style={{ flex: 1 }}>
             Aşı ve parazit takvimini ekle
@@ -75,15 +72,12 @@ export default function PetsScreen() {
 
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-        <View style={{ flex: 1 }}>
-          <Text variant="title">Dostlarım</Text>
-          <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
-            Profil, bakım takvimi ve acil kart
-          </Text>
-        </View>
-        <IconButton icon="add" variant="primary" onPress={() => router.push('/pets/create')} accessibilityLabel="Dost ekle" size={44} />
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 4, minHeight: 44, alignItems: 'center' }}>
+        <IconButton icon="add" variant="plain" onPress={() => router.push('/pets/create')} accessibilityLabel="Dost ekle" size={36} />
       </View>
+      <Text variant="display" style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+        Dostlarım
+      </Text>
 
       {loading && pets.length === 0 ? (
         <ActivityIndicator color={t.primary} style={{ marginTop: 40 }} />
@@ -94,9 +88,9 @@ export default function PetsScreen() {
           renderItem={({ item }) => <PetRow pet={item} next={nextByPet[item.id]} />}
           contentContainerStyle={{ paddingBottom: 24 }}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 12 }}>
-              <Art name="petcard" width={240} />
-              <Text variant="headline" center style={{ marginTop: 8 }}>
+            <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 32 }}>
+              <Icon name="paw-outline" size={44} color={t.textSubtle} />
+              <Text variant="headline" center style={{ marginTop: 12 }}>
                 İlk dostunu ekle
               </Text>
               <Text variant="callout" tone="muted" center style={{ marginTop: 6 }}>

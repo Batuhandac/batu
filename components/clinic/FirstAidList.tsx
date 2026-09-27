@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text, Icon, IconBadge } from '@/components/ds';
-import { useTheme, radius } from '@/lib/theme';
+import { useTheme, radius, hairline } from '@/lib/theme';
 import { FIRST_AID, NEVER_HUMAN_MEDS } from '@/lib/content/firstAid';
 
 /** "Veterinere ulaşana kadar" — açılır kapanır ilk yardım rehberi. */
@@ -17,13 +17,11 @@ export function FirstAidList({ initiallyOpen }: { initiallyOpen?: string }) {
           {NEVER_HUMAN_MEDS}
         </Text>
       </View>
-      {FIRST_AID.map((g) => {
+      <View style={{ backgroundColor: t.surface, borderRadius: radius.lg, overflow: 'hidden' }}>
+      {FIRST_AID.map((g, i) => {
         const expanded = open === g.key;
         return (
-          <View
-            key={g.key}
-            style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.md, marginBottom: 8, overflow: 'hidden' }}
-          >
+          <View key={g.key} style={{ borderTopWidth: i === 0 ? 0 : hairline, borderTopColor: t.border }}>
             <Pressable
               onPress={() => setOpen(expanded ? null : g.key)}
               accessibilityRole="button"
@@ -32,12 +30,13 @@ export function FirstAidList({ initiallyOpen }: { initiallyOpen?: string }) {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
-                padding: 12,
+                paddingVertical: 13,
+                paddingHorizontal: 16,
                 backgroundColor: pressed ? t.surfaceAlt : 'transparent',
               })}
             >
-              <IconBadge name={g.icon} size={36} />
-              <Text variant="bodyStrong" style={{ flex: 1 }}>
+              <IconBadge name={g.icon} size={26} />
+              <Text variant="body" style={{ flex: 1 }}>
                 {g.title}
               </Text>
               <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={t.textSubtle} />
@@ -65,6 +64,7 @@ export function FirstAidList({ initiallyOpen }: { initiallyOpen?: string }) {
           </View>
         );
       })}
+      </View>
     </View>
   );
 }

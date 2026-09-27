@@ -2,9 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, FlatList, ScrollView, RefreshControl, ActivityIndicator, Pressable } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Text, Chip, Button, IconButton, EmptyState, Icon } from '@/components/ds';
-import { Art } from '@/components/art';
 import { QuestionCard } from '@/components/community/QuestionCard';
-import { useTheme, radius, palette, shadow } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 import { fetchQuestions, type Question, type QuestionCursor } from '@/lib/data/qa';
 import { getBlockedUsers } from '@/lib/data/safety';
 import { useMyQuestions, useUnreadMessages } from '@/lib/hooks/useCommunity';
@@ -92,74 +91,38 @@ export default function CommunityScreen() {
 
   const header = (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Text variant="title">Topluluk</Text>
-          <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
-            Pati sahipleri ve veteriner hekimler
-          </Text>
-        </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 14, paddingHorizontal: 20, paddingTop: 4, minHeight: 44 }}>
         <View>
-          <IconButton icon="chatbubbles-outline" onPress={() => router.push('/messages')} accessibilityLabel="Mesajlar" size={42} />
+          <IconButton icon="chatbubbles-outline" variant="plain" onPress={() => router.push('/messages')} accessibilityLabel="Mesajlar" size={36} />
           {unreadMessages > 0 ? (
-            <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: t.sos, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderWidth: 2, borderColor: t.bg }}>
-              <Text variant="caption" color={t.onSos} style={{ fontSize: 10, lineHeight: 12 }}>
+            <View style={{ position: 'absolute', top: -2, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: t.sos, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+              <Text variant="caption" color={t.onSos} style={{ fontSize: 11, lineHeight: 13, fontWeight: '600' }}>
                 {unreadMessages > 9 ? '9+' : unreadMessages}
               </Text>
             </View>
           ) : null}
         </View>
+        <Button title="Soru sor" size="sm" icon="create-outline" onPress={() => router.push('/community/ask')} />
       </View>
-
-      {/* Tanıtım kartı */}
-      <View style={{ marginHorizontal: 20, marginTop: 16, borderRadius: radius.xl, backgroundColor: palette.teal[700], overflow: 'hidden', flexDirection: 'row' }}>
-        <View style={{ flex: 1, padding: 18, paddingRight: 4 }}>
-          <Text variant="headline" color="#FFFFFF">
-            {vet ? `Hoş geldiniz, ${vetDisplayName(vet)}` : 'Veterinere sor'}
-          </Text>
-          <Text variant="caption" color="rgba(255,255,255,0.85)" style={{ marginTop: 4 }}>
-            {vet
-              ? 'Yanıtlarınız kliniğinizin adıyla ve "Veteriner hekim" rozetiyle görünür.'
-              : 'Acil olmayan soruların için. Onaylı hekimler ve deneyimli pati sahipleri yanıtlar.'}
-          </Text>
-          <Pressable
-            onPress={() => router.push('/community/ask')}
-            accessibilityRole="button"
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              marginTop: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              backgroundColor: '#FFFFFF',
-              borderRadius: radius.pill,
-              paddingHorizontal: 16,
-              height: 38,
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <Icon name="create-outline" size={17} color={palette.teal[700]} />
-            <Text variant="caption" color={palette.teal[700]} style={{ fontSize: 14 }}>
-              Soru sor
-            </Text>
-          </Pressable>
-        </View>
-        <View style={{ justifyContent: 'center', marginRight: -8 }}>
-          <Art name="community" width={130} onColor />
-        </View>
-      </View>
-
-      <Pressable
-        onPress={() => router.push('/emergency')}
-        accessibilityRole="button"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginTop: 10, paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: t.sosSoft }}
-      >
-        <Icon name="alert-circle" size={18} color={t.sos} />
-        <Text variant="caption" style={{ flex: 1 }}>
-          Acil bir durum mu? Soru yazma, <Text variant="caption" tone="sos">hemen bir veterineri ara.</Text>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text variant="display">Topluluk</Text>
+        <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
+          {vet
+            ? `Hoş geldiniz, ${vetDisplayName(vet)}. Yanıtlarınız kliniğinizin adıyla ve "Veteriner hekim" etiketiyle görünür.`
+            : 'Acil olmayan soruların için. Onaylı veteriner hekimler ve pati sahipleri yanıtlar.'}
         </Text>
-        <Icon name="chevron-forward" size={16} color={t.sos} />
-      </Pressable>
+        <Pressable
+          onPress={() => router.push('/emergency')}
+          accessibilityRole="button"
+          hitSlop={6}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, opacity: pressed ? 0.6 : 1 })}
+        >
+          <Icon name="alert-circle-outline" size={17} color={t.sos} />
+          <Text variant="callout" tone="sos" style={{ flex: 1 }}>
+            Acil bir durum mu? Soru yazma, hemen ara.
+          </Text>
+        </Pressable>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 20, paddingVertical: 16 }}>
         {FILTERS.map((f) => (
@@ -213,36 +176,13 @@ export default function CommunityScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
         ListFooterComponent={
-          loadingMore ? <ActivityIndicator color={t.primary} style={{ marginVertical: 16 }} /> : <View style={{ height: 90 }} />
+          loadingMore ? <ActivityIndicator color={t.primary} style={{ marginVertical: 16 }} /> : <View style={{ height: 24 }} />
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.4}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={t.primary} />}
         showsVerticalScrollIndicator={false}
       />
-      <Pressable
-        onPress={() => router.push('/community/ask')}
-        accessibilityRole="button"
-        accessibilityLabel="Soru sor"
-        style={({ pressed }) => ({
-          position: 'absolute',
-          right: 20,
-          bottom: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          height: 52,
-          paddingHorizontal: 20,
-          borderRadius: 26,
-          backgroundColor: pressed ? t.primaryPressed : t.primary,
-          ...shadow(t, 2),
-        })}
-      >
-        <Icon name="create" size={19} color={t.onPrimary} />
-        <Text variant="button" color={t.onPrimary}>
-          Soru sor
-        </Text>
-      </Pressable>
     </Screen>
   );
 }

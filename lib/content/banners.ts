@@ -5,9 +5,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
-import type { ArtName } from '@/components/art';
-
-export type BannerTone = 'teal' | 'coral' | 'honey' | 'night';
 
 export interface Banner {
   id: string;
@@ -17,8 +14,6 @@ export interface Banner {
   cta: string;
   route?: string; // uygulama içi yol, ör. /community
   url?: string; // https bağlantısı
-  art: ArtName;
-  tone: BannerTone;
   months?: number[]; // 1–12; yoksa her ay
   when?: 'no_pets' | 'has_pets';
   order?: number;
@@ -32,8 +27,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Bakım takvimine ekle, zamanı gelince hatırlatalım.',
     cta: 'Takvime ekle',
     route: '/care/edit',
-    art: 'vaccine',
-    tone: 'teal',
     when: 'has_pets',
   },
   {
@@ -43,8 +36,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Fotoğrafı, yaşı ve sağlık bilgileriyle profilini oluştur.',
     cta: 'Dost ekle',
     route: '/pets/create',
-    art: 'petcard',
-    tone: 'coral',
     when: 'no_pets',
   },
   {
@@ -54,8 +45,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Onaylı hekimler ve pati sahipleri yanıtlıyor.',
     cta: 'Soru sor',
     route: '/community',
-    art: 'community',
-    tone: 'honey',
   },
   {
     id: 'sicak',
@@ -64,8 +53,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Arabada asla bırakma, yürüyüşleri serin saatlere al.',
     cta: 'Belirtiler',
     route: '/first-aid',
-    art: 'heat',
-    tone: 'honey',
     months: [6, 7, 8, 9],
   },
   {
@@ -75,8 +62,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Dökülen antifrizi hemen sil; birkaç yalamak bile tehlikeli.',
     cta: 'Ne yapmalı?',
     route: '/first-aid',
-    art: 'shield',
-    tone: 'teal',
     months: [11, 12, 1, 2, 3],
   },
   {
@@ -86,8 +71,6 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Pire ve kene damlasının gününü takvime ekle.',
     cta: 'Hatırlat',
     route: '/care/edit?kind=external_parasite',
-    art: 'shield',
-    tone: 'teal',
     months: [4, 5, 6, 7, 8, 9, 10],
     when: 'has_pets',
   },
@@ -98,13 +81,9 @@ export const LOCAL_BANNERS: Banner[] = [
     text: 'Kliniğinizi ücretsiz doğrulayın, sorulara yanıt verin.',
     cta: 'Bilgi alın',
     route: '/vet',
-    art: 'vet',
-    tone: 'night',
   },
 ];
 
-const ARTS: ArtName[] = ['emergency', 'petcard', 'community', 'vet', 'heat', 'vaccine', 'shield', 'chat'];
-const TONES: BannerTone[] = ['teal', 'coral', 'honey', 'night'];
 const CACHE_KEY = 'patisos:remote_banners';
 
 type RemoteBanner = Banner & { active: boolean; starts_at?: string; ends_at?: string };
@@ -122,8 +101,6 @@ function parseRemote(id: string, x: any): RemoteBanner | null {
     cta: x.cta.slice(0, 20),
     route,
     url,
-    art: ARTS.includes(x.art) ? x.art : 'shield',
-    tone: TONES.includes(x.tone) ? x.tone : 'teal',
     months: Array.isArray(x.months) ? x.months.filter((m: unknown) => typeof m === 'number') : undefined,
     when: x.when === 'no_pets' || x.when === 'has_pets' ? x.when : undefined,
     order: typeof x.order === 'number' ? x.order : 100,

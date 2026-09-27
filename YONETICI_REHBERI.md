@@ -146,13 +146,12 @@ yeni banner eklemek için `app_banners` koleksiyonuna belge ekle:
 | `route` | string | Uygulama içi sayfa: `/community`, `/first-aid`, `/pets/create`, `/care/edit`, `/nearby`, `/vet` |
 | `url` | string | Ya da `https://` ile başlayan bağlantı |
 | `tag` | string | Küçük etiket: `Yeni`, `Bayram`, `İpucu` |
-| `art` | string | `emergency`, `petcard`, `community`, `vet`, `heat`, `vaccine`, `shield`, `chat` |
-| `tone` | string | `teal`, `coral`, `honey`, `night` |
 | `order` | number | Küçük olan önce |
 | `active` | boolean | `false` ise gösterilmez |
 | `starts_at` / `ends_at` | string | `2026-12-25` biçiminde tarih aralığı (isteğe bağlı) |
 | `months` | array | `[6,7,8]` gibi aylar (isteğe bağlı) |
 
-Uygulamayla gelen bir bannerı kapatmak için **aynı kimlikle** (`sicak` gibi) `active: false`
+Bannerlar sade metin kartı olarak görünür; görsel ya da renk seçilmez (eski `art` ve
+`tone` alanları yok sayılır). Uygulamayla gelen bir bannerı kapatmak için **aynı kimlikle** (`sicak` gibi) `active: false`
 olan bir belge oluştur. Bannerlar reklam değildir: ücretli tanıtım, klinik övgüsü ya da
 ürün satışı koyma (hem klinikler reklam veremez hem de uygulama "reklamsız" sözü veriyor).

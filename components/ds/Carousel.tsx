@@ -2,20 +2,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, AccessibilityInfo, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { useTheme } from '@/lib/theme';
 
-/** Sayfa göstergesi: etkin nokta uzun hap. */
+/** Sayfa göstergesi (iOS sayfa noktaları gibi). */
 export function Dots({ count, index, color, idle }: { count: number; index: number; color?: string; idle?: string }) {
   const t = useTheme();
   if (count < 2) return null;
   return (
-    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', alignItems: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={{ flexDirection: 'row', gap: 7, justifyContent: 'center', alignItems: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {Array.from({ length: count }).map((_, i) => (
         <View
           key={i}
           style={{
-            width: i === index ? 22 : 7,
+            width: 7,
             height: 7,
             borderRadius: 4,
-            backgroundColor: i === index ? color ?? t.primary : idle ?? t.borderStrong,
+            backgroundColor: i === index ? color ?? t.text : idle ?? t.borderStrong,
           }}
         />
       ))}

@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Icon, IconButton, Avatar, EmptyState, Button, Chip } from '@/components/ds';
+import { Text, Icon, IconButton, Avatar, EmptyState, Chip, BackButton } from '@/components/ds';
 import { ContentMenu } from '@/components/community/Safety';
-import { useTheme, radius, type } from '@/lib/theme';
+import { useTheme, radius, type, hairline } from '@/lib/theme';
 import {
   subscribeConversation,
   subscribeMessages,
@@ -101,7 +101,7 @@ export default function ChatScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-          <IconButton icon="chevron-back" onPress={back} accessibilityLabel="Geri" size={40} />
+          <BackButton onPress={back} />
         </View>
         <EmptyState icon="chatbubbles-outline" title="Konuşma açılamadı" text="İnternet bağlantını kontrol edip tekrar dene." />
       </SafeAreaView>
@@ -115,14 +115,14 @@ export default function ChatScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Üst bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: t.border }}>
-          <IconButton icon="chevron-back" onPress={back} accessibilityLabel="Geri" size={40} variant="plain" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 6, borderBottomWidth: hairline, borderBottomColor: t.border }}>
+          <BackButton onPress={back} label="" />
           <Pressable
             onPress={() => !asVet && router.push(`/clinic/${conv.clinic_id}`)}
             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}
             accessibilityRole={asVet ? undefined : 'link'}
           >
-            <Avatar label={title} size={38} background={asVet ? t.honeySoft : t.primarySoft} color={asVet ? t.honey : t.primary} />
+            <Avatar label={title} size={38} />
             <View style={{ flex: 1 }}>
               <Text variant="bodyStrong" numberOfLines={1}>
                 {title}
@@ -133,7 +133,7 @@ export default function ChatScreen() {
             </View>
           </Pressable>
           {!asVet && clinicPhone ? (
-            <IconButton icon="call" variant="soft" onPress={() => callClinic({ id: conv.clinic_id, name: conv.clinic_name, phone: clinicPhone }, 'chat')} accessibilityLabel="Kliniği ara" size={40} />
+            <IconButton icon="call" variant="secondary" color={t.primary} onPress={() => callClinic({ id: conv.clinic_id, name: conv.clinic_name, phone: clinicPhone }, 'chat')} accessibilityLabel="Kliniği ara" size={40} />
           ) : null}
           <IconButton icon="ellipsis-horizontal" variant="plain" onPress={() => setMenu(true)} accessibilityLabel="Seçenekler" size={40} />
         </View>
@@ -145,14 +145,14 @@ export default function ChatScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {!asVet ? (
-            <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: t.sosSoft, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: t.surfaceAlt, marginBottom: 16 }}>
               <Icon name="alert-circle" size={18} color={t.sos} />
               <Text variant="caption" style={{ flex: 1 }}>
                 Acil durumda mesaj yazma, {clinicPhone ? 'yukarıdan hemen ara' : 'hemen bir veterineri ara'}. Mesajlar geç yanıtlanabilir.
               </Text>
             </View>
           ) : conv.pet_summary ? (
-            <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: t.primarySoft, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: t.surfaceAlt, marginBottom: 16 }}>
               <Icon name="paw" size={18} color={t.primary} />
               <Text variant="caption" style={{ flex: 1 }}>
                 {conv.pet_summary}
@@ -189,8 +189,6 @@ export default function ChatScreen() {
                     style={{
                       maxWidth: '82%',
                       backgroundColor: mine ? t.primary : t.surface,
-                      borderWidth: mine ? 0 : 1,
-                      borderColor: t.border,
                       borderRadius: 18,
                       borderBottomRightRadius: mine ? 6 : 18,
                       borderBottomLeftRadius: mine ? 18 : 6,
@@ -219,7 +217,7 @@ export default function ChatScreen() {
           })}
         </ScrollView>
 
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1, borderTopColor: t.border, backgroundColor: t.surface }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: hairline, borderTopColor: t.border, backgroundColor: t.surface }}>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -227,7 +225,7 @@ export default function ChatScreen() {
             placeholderTextColor={t.textSubtle}
             multiline
             maxLength={2000}
-            style={[type.body, { flex: 1, maxHeight: 120, minHeight: 44, color: t.text, backgroundColor: t.bg, borderRadius: 22, borderWidth: 1, borderColor: t.border, paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11 }]}
+            style={[type.body, { flex: 1, maxHeight: 120, minHeight: 44, color: t.text, backgroundColor: t.surfaceAlt, borderRadius: 22, paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11 }]}
           />
           {sending ? (
             <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>

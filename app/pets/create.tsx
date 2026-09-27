@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Alert, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Screen, Header, Text, Field, Segmented, Button, DateField, SwitchRow, Icon } from '@/components/ds';
+import { Screen, Header, Text, Field, Segmented, Button, DateField, SwitchRow, IconBadge } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
 import { usePets } from '@/lib/hooks/usePets';
 import { getPet } from '@/lib/data/localStore';
@@ -129,25 +129,15 @@ export default function PetFormScreen() {
             onBack={() => router.back()}
           />
           <View style={{ paddingHorizontal: 20 }}>
-            <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Fotoğraf seç" style={{ alignSelf: 'center', marginBottom: 20 }}>
-              <PetAvatar pet={{ name: name || '?', photo_uri: photo }} size={104} />
-              <View
-                style={{
-                  position: 'absolute',
-                  right: -4,
-                  bottom: -4,
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: t.primary,
-                  borderWidth: 3,
-                  borderColor: t.bg,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="camera" size={17} color={t.onPrimary} />
-              </View>
+            <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Fotoğraf seç" style={{ alignSelf: 'center', alignItems: 'center', marginBottom: 20 }}>
+              {photo || name.trim() ? (
+                <PetAvatar pet={{ name: name.trim() || ' ', photo_uri: photo }} size={96} />
+              ) : (
+                <IconBadge name="camera-outline" size={96} color={t.textSubtle} background={t.surfaceAlt} />
+              )}
+              <Text variant="callout" tone="primary" style={{ marginTop: 8 }}>
+                {photo ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle'}
+              </Text>
             </Pressable>
             <Field
               label="Adı"
@@ -205,7 +195,7 @@ export default function PetFormScreen() {
             {sex ? <SwitchRow label="Kısırlaştırıldı" value={neutered} onValueChange={setNeutered} /> : null}
             <Field label="Çip numarası" value={chipNo} onChangeText={setChipNo} placeholder="15 haneli numara" keyboardType="number-pad" maxLength={20} hint="Kaybolursa bulan kişi ya da klinik seni bununla bulur." />
 
-            <Text variant="overline" tone="subtle" style={{ marginTop: 8, marginBottom: 12 }}>
+            <Text variant="overline" tone="muted" style={{ marginTop: 8, marginBottom: 12 }}>
               Sağlık bilgileri · isteğe bağlı
             </Text>
             <Field label="Alerjileri" value={allergies} onChangeText={setAllergies} placeholder="Örn. Penisilin, tavuk" />
@@ -221,7 +211,7 @@ export default function PetFormScreen() {
             </View>
             <Field label="Acil not" value={emergencyNote} onChangeText={setEmergencyNote} placeholder="Kliniğe mutlaka söylenmesi gereken bir durum" multiline />
 
-            <Text variant="overline" tone="subtle" style={{ marginTop: 8, marginBottom: 12 }}>
+            <Text variant="overline" tone="muted" style={{ marginTop: 8, marginBottom: 12 }}>
               Sahibi
             </Text>
             <Field label="Adın" value={ownerName} onChangeText={setOwnerName} placeholder="Adın soyadın" />

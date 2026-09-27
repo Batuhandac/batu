@@ -1,15 +1,14 @@
-// Pati SOS tasarım dili — renk, tipografi, köşe ve gölge değerleri.
-// Tüm ekranlar renkleri buradan alır; açık/koyu tema cihaz ayarını izler
-// (gece 03:00'te göz yormayan koyu tema, gündüz sıcak krem zemin).
-import { useColorScheme } from 'react-native';
+// Pati SOS tasarım dili: renk, tipografi, köşe değerleri.
+// Telefonun kendi uygulamaları gibi sade: sistem yazı tipi, nötr gri zemin,
+// beyaz gruplar ve tek marka rengi. Kırmızı yalnızca acil durum ve silme için.
+// Açık/koyu tema cihaz ayarını izler. Gerekçeler: docs/ARASTIRMA.md
+import { useColorScheme, StyleSheet, type TextStyle } from 'react-native';
 
 export const palette = {
-  teal: { 900: '#0B3F38', 800: '#0E5249', 700: '#13695E', 600: '#1C8272', 500: '#2A9D8A', 400: '#3FB8A5', 100: '#DCEFEA', 50: '#EDF7F4' },
-  coral: { 700: '#C9432E', 600: '#E8543C', 500: '#F2644B', 400: '#FF7A62', 100: '#FCE1DA', 50: '#FEF2EF' },
-  honey: { 600: '#B7791A', 500: '#E9A93A', 100: '#FBEFD6' },
-  cream: { 50: '#FFFDF9', 100: '#FBF7F1', 200: '#F4EEE5', 300: '#E9E0D4', 400: '#D8CCBD' },
-  ink: { 900: '#1E2A28', 700: '#3B4845', 500: '#5E6A67', 400: '#87918D', 300: '#B0B8B4' },
-  night: { 900: '#0E1413', 800: '#151D1B', 700: '#1C2624', 600: '#26322F', 500: '#33413D' },
+  pine: { 800: '#154C3A', 700: '#1F6B52', 600: '#2A7F62', 400: '#52B891', 100: '#E3EFEA' },
+  red: { 700: '#B42318', 600: '#D92D20', 400: '#FF6B5E' },
+  amber: { 700: '#A15C07', 400: '#F5A524' },
+  gray: { 50: '#F2F2F7', 100: '#E8E8ED', 200: '#D1D1D6', 300: '#AEAEB2', 500: '#8E8E93', 600: '#636366', 700: '#48484A', 800: '#2C2C2E', 850: '#1C1C1E', 900: '#111214' },
 } as const;
 
 export interface Theme {
@@ -46,64 +45,64 @@ export interface Theme {
 
 export const lightTheme: Theme = {
   dark: false,
-  bg: palette.cream[100],
+  bg: palette.gray[50],
   surface: '#FFFFFF',
-  surfaceAlt: palette.cream[200],
-  border: palette.cream[300],
-  borderStrong: palette.cream[400],
-  text: palette.ink[900],
-  textMuted: palette.ink[500],
-  textSubtle: palette.ink[400],
-  primary: palette.teal[700],
-  primaryPressed: palette.teal[800],
-  primarySoft: palette.teal[50],
+  surfaceAlt: palette.gray[100],
+  border: palette.gray[200],
+  borderStrong: palette.gray[300],
+  text: palette.gray[900],
+  textMuted: '#5E5E63',
+  textSubtle: palette.gray[500],
+  primary: palette.pine[700],
+  primaryPressed: palette.pine[800],
+  primarySoft: palette.pine[100],
   onPrimary: '#FFFFFF',
-  sos: palette.coral[600],
-  sosPressed: palette.coral[700],
-  sosSoft: palette.coral[50],
+  sos: palette.red[600],
+  sosPressed: palette.red[700],
+  sosSoft: '#FDECEA',
   onSos: '#FFFFFF',
-  honey: palette.honey[600],
-  honeySoft: palette.honey[100],
-  open: '#1E8A5A',
-  openSoft: '#E2F3E9',
-  closed: palette.ink[400],
-  closedSoft: palette.cream[200],
-  unknown: palette.honey[600],
-  unknownSoft: palette.honey[100],
-  danger: '#C23B2B',
-  dangerSoft: '#FBE6E2',
-  overlay: 'rgba(20,28,26,0.45)',
-  shadow: '#3B2F22',
+  honey: palette.amber[700],
+  honeySoft: '#FBF0E1',
+  open: palette.pine[700],
+  openSoft: palette.pine[100],
+  closed: palette.gray[500],
+  closedSoft: palette.gray[100],
+  unknown: palette.amber[700],
+  unknownSoft: '#FBF0E1',
+  danger: palette.red[600],
+  dangerSoft: '#FDECEA',
+  overlay: 'rgba(0,0,0,0.4)',
+  shadow: '#000000',
 };
 
 export const darkTheme: Theme = {
   dark: true,
-  bg: palette.night[900],
-  surface: palette.night[800],
-  surfaceAlt: palette.night[700],
-  border: palette.night[600],
-  borderStrong: palette.night[500],
-  text: '#F3F0EA',
-  textMuted: '#B4BDB9',
-  textSubtle: '#808B87',
-  primary: palette.teal[400],
-  primaryPressed: palette.teal[500],
-  primarySoft: 'rgba(63,184,165,0.14)',
-  onPrimary: palette.night[900],
-  sos: palette.coral[600],
-  sosPressed: palette.coral[700],
-  sosSoft: 'rgba(242,100,75,0.16)',
+  bg: '#000000',
+  surface: palette.gray[850],
+  surfaceAlt: palette.gray[800],
+  border: '#38383A',
+  borderStrong: palette.gray[700],
+  text: '#F5F5F7',
+  textMuted: palette.gray[300],
+  textSubtle: palette.gray[500],
+  primary: palette.pine[400],
+  primaryPressed: '#43A07C',
+  primarySoft: 'rgba(82,184,145,0.16)',
+  onPrimary: '#06201A',
+  sos: '#E5483B',
+  sosPressed: palette.red[600],
+  sosSoft: 'rgba(229,72,59,0.18)',
   onSos: '#FFFFFF',
-  honey: palette.honey[500],
-  honeySoft: 'rgba(233,169,58,0.15)',
-  open: '#4CC38A',
-  openSoft: 'rgba(76,195,138,0.15)',
-  closed: '#808B87',
-  closedSoft: palette.night[700],
-  unknown: palette.honey[500],
-  unknownSoft: 'rgba(233,169,58,0.14)',
-  danger: '#FF8A7A',
-  dangerSoft: 'rgba(255,138,122,0.14)',
+  honey: palette.amber[400],
+  honeySoft: 'rgba(245,165,36,0.16)',
+  open: palette.pine[400],
+  openSoft: 'rgba(82,184,145,0.16)',
+  closed: palette.gray[500],
+  closedSoft: palette.gray[800],
+  unknown: palette.amber[400],
+  unknownSoft: 'rgba(245,165,36,0.16)',
+  danger: palette.red[400],
+  dangerSoft: 'rgba(255,107,94,0.16)',
   overlay: 'rgba(0,0,0,0.6)',
   shadow: '#000000',
 };
@@ -112,35 +111,29 @@ export function useTheme(): Theme {
   return useColorScheme() === 'dark' ? darkTheme : lightTheme;
 }
 
-// Nunito: yuvarlak hatlı, sıcak ama ciddi; Türkçe karakterleri tam destekler.
-export const fonts = {
-  regular: 'Nunito_400Regular',
-  semibold: 'Nunito_600SemiBold',
-  bold: 'Nunito_700Bold',
-  extrabold: 'Nunito_800ExtraBold',
-  black: 'Nunito_900Black',
-} as const;
-
+// Sistem yazı tipi (iOS'ta SF Pro, Android'de Roboto): okunaklı, Türkçe karakterleri
+// tam destekler, kullanıcının "büyük yazı" ayarına uyar. Ölçüler iOS metin stillerinden.
 export const type = {
-  display: { fontFamily: fonts.black, fontSize: 30, lineHeight: 36, letterSpacing: -0.6 },
-  title: { fontFamily: fonts.extrabold, fontSize: 24, lineHeight: 30, letterSpacing: -0.4 },
-  headline: { fontFamily: fonts.extrabold, fontSize: 19, lineHeight: 25, letterSpacing: -0.2 },
-  body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23 },
-  bodyStrong: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 23 },
-  callout: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 21 },
-  caption: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18 },
+  display: { fontSize: 34, lineHeight: 41, fontWeight: '700' },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
+  headline: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
+  body: { fontSize: 17, lineHeight: 23 },
+  bodyStrong: { fontSize: 17, lineHeight: 23, fontWeight: '600' },
+  callout: { fontSize: 16, lineHeight: 21 },
+  caption: { fontSize: 13, lineHeight: 18 },
   // Büyük harfe Text bileşeni Türkçe kurallarla çevirir (i → İ); textTransform 'I' üretir
-  overline: { fontFamily: fonts.extrabold, fontSize: 12, lineHeight: 16, letterSpacing: 0.8 },
-  button: { fontFamily: fonts.extrabold, fontSize: 16, lineHeight: 20 },
-} as const;
+  overline: { fontSize: 13, lineHeight: 18, letterSpacing: 0.2 },
+  button: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+} as const satisfies Record<string, TextStyle>;
 
 export type TypeVariant = keyof typeof type;
 
-export const radius = { sm: 10, md: 14, lg: 20, xl: 28, pill: 999 } as const;
+export const radius = { sm: 8, md: 10, lg: 12, xl: 16, pill: 999 } as const;
 
+/** Yalnızca zeminden ayrılması gereken yüzen öğeler için (bildirim, harita kartı). */
 export function shadow(t: Theme, level: 1 | 2 = 1) {
-  if (t.dark) return {};
-  return level === 1
-    ? { shadowColor: t.shadow, shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }
-    : { shadowColor: t.shadow, shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 6 };
+  if (t.dark || level === 1) return {};
+  return { shadowColor: t.shadow, shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 6 };
 }
+
+export const hairline = StyleSheet.hairlineWidth;

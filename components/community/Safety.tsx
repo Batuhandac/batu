@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { View, Alert } from 'react-native';
 import { Text, Sheet, Button, Group, ListRow, IconBadge } from '@/components/ds';
-import { useTheme } from '@/lib/theme';
 import { COMMUNITY_RULES, REPORT_REASONS, reportContent, blockUser, type ReportKind, type ReportReason } from '@/lib/data/safety';
 
 /** İlk gönderiden önce bir kez gösterilen topluluk kuralları. */
 export function RulesSheet({ visible, onClose, onAccept }: { visible: boolean; onClose: () => void; onAccept: () => void }) {
-  const t = useTheme();
   return (
     <Sheet visible={visible} onClose={onClose} title="Topluluk kuralları">
       <View style={{ paddingHorizontal: 20 }}>
@@ -15,7 +13,7 @@ export function RulesSheet({ visible, onClose, onAccept }: { visible: boolean; o
         </Text>
         {COMMUNITY_RULES.map((r) => (
           <View key={r.title} style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
-            <IconBadge name={r.icon} size={36} color={t.primary} background={t.primarySoft} />
+            <IconBadge name={r.icon} size={32} />
             <View style={{ flex: 1 }}>
               <Text variant="bodyStrong">{r.title}</Text>
               <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>

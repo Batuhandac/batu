@@ -1,12 +1,14 @@
 import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Text, Button, IconBadge } from '@/components/ds';
+import { Screen, Text, Button, Icon } from '@/components/ds';
+import { useTheme } from '@/lib/theme';
 import { DistrictList } from '@/components/location/DistrictPicker';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { useOnboardingStore } from '@/stores/onboarding';
 
 export default function LocationScreen() {
+  const t = useTheme();
   const { request, loading, setManual } = useLocation();
   const { setCompleted } = useOnboardingStore();
 
@@ -17,7 +19,7 @@ export default function LocationScreen() {
 
   return (
     <Screen scroll edges={['top', 'bottom']} contentStyle={{ paddingHorizontal: 24, paddingTop: 40 }}>
-      <IconBadge name="location" size={72} />
+      <Icon name="location-outline" size={44} color={t.primary} />
       <Text variant="title" style={{ marginTop: 20 }}>
         Konumunu kullanalım mı?
       </Text>
@@ -40,7 +42,7 @@ export default function LocationScreen() {
       />
 
       <View style={{ marginTop: 32 }}>
-        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+        <Text variant="overline" tone="muted" style={{ marginBottom: 8, marginLeft: 16 }}>
           Ya da ilçeni seç
         </Text>
         <DistrictList

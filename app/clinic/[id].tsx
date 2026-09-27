@@ -3,8 +3,8 @@ import { View, ScrollView, Linking, ActivityIndicator, Pressable, Alert } from '
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
-import { Text, Icon, IconButton, Button, Card, Badge, Group, ListRow, Avatar, Section, EmptyState, Chip } from '@/components/ds';
-import { useTheme, radius } from '@/lib/theme';
+import { Text, Icon, IconButton, Button, Card, Badge, Group, ListRow, Section, EmptyState, Chip, BackButton } from '@/components/ds';
+import { useTheme, radius, hairline } from '@/lib/theme';
 import { Stars } from '@/components/ui/Stars';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 import { DataAttribution } from '@/components/ui/DataAttribution';
@@ -119,7 +119,7 @@ export default function ClinicDetailScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-          <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel="Geri" size={40} />
+          <BackButton onPress={() => router.back()} />
         </View>
         {loading ? (
           <ActivityIndicator color={t.primary} size="large" style={{ marginTop: 80 }} />
@@ -144,7 +144,7 @@ export default function ClinicDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 6 }}>
-        <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel="Geri" size={40} />
+        <BackButton onPress={() => router.back()} />
         <IconButton
           icon={isFav(id) ? 'heart' : 'heart-outline'}
           color={isFav(id) ? t.sos : undefined}
@@ -158,7 +158,6 @@ export default function ClinicDetailScreen() {
         {/* Kimlik */}
         <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <Avatar label={clinic.name} size={64} />
             <View style={{ flex: 1 }}>
               <Text variant="title">{clinic.name}</Text>
               {meta ? (
@@ -177,7 +176,7 @@ export default function ClinicDetailScreen() {
               </Text>
             </View>
           ) : null}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 12 }}>
             <Badge label={s.label} tone={s.tone} dot />
             {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
             {clinic.accepts_emergency && !clinic.is_24_7 ? <Badge label="Acil kabul" tone="sos" /> : null}
@@ -191,7 +190,7 @@ export default function ClinicDetailScreen() {
           {clinic.phone ? (
             <Button title="Hemen ara" subtitle={clinic.phone} icon="call" size="lg" full onPress={() => callClinic(clinic, 'detail')} accessibilityLabel={`${clinic.name} ara`} />
           ) : (
-            <Card tone="honey">
+            <Card>
               <Text variant="bodyStrong">Telefon bilgisi yok</Text>
               <Text variant="callout" tone="muted" style={{ marginTop: 2 }}>
                 Bu kliniğin numarasını bilmiyoruz. Biliyorsan bildir; bir sonraki acilde başkası arayabilsin.
@@ -218,7 +217,7 @@ export default function ClinicDetailScreen() {
               title="Mesaj gönder"
               subtitle={inbox.response_hint ?? 'Acil olmayan soruların için'}
               icon="chatbubble-ellipses-outline"
-              variant="soft"
+              variant="secondary"
               full
               loading={opening}
               onPress={handleMessage}
@@ -230,7 +229,7 @@ export default function ClinicDetailScreen() {
         <Section title="Bilgiler">
           <Group>
             {clinic.address ? <ListRow icon="location-outline" title={clinic.address} subtitle="Adres" onPress={handleDirections} /> : null}
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: t.border }}>
+            <View style={{ padding: 16, borderBottomWidth: hairline, borderBottomColor: t.border }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: weekdayText.length ? 10 : 0 }}>
                 <Icon name="time-outline" size={20} color={t.primary} />
                 <Text variant="bodyStrong">Çalışma saatleri</Text>
@@ -266,7 +265,7 @@ export default function ClinicDetailScreen() {
 
           {clinic.services && clinic.services.length > 0 ? (
             <View style={{ marginTop: 14 }}>
-              <Text variant="overline" tone="subtle" style={{ marginBottom: 8 }}>
+              <Text variant="overline" tone="muted" style={{ marginBottom: 8 }}>
                 Hizmetler
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -278,8 +277,8 @@ export default function ClinicDetailScreen() {
           ) : null}
 
           {clinic.note ? (
-            <Card tone="honey" style={{ marginTop: 14 }}>
-              <Text variant="overline" tone="honey">
+            <Card style={{ marginTop: 14 }}>
+              <Text variant="overline" tone="muted">
                 Klinikten not
               </Text>
               <Text variant="callout" style={{ marginTop: 4 }}>
@@ -294,7 +293,7 @@ export default function ClinicDetailScreen() {
           onPress={handleDirections}
           accessibilityRole="button"
           accessibilityLabel="Yol tarifi"
-          style={{ marginHorizontal: 20, marginTop: 20, height: 160, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: t.border }}
+          style={{ marginHorizontal: 20, marginTop: 20, height: 160, borderRadius: radius.lg, overflow: 'hidden' }}
         >
           <MapView
             style={{ flex: 1 }}

@@ -22,7 +22,7 @@ export function PingButton({ clinicId }: { clinicId: string }) {
 
   if (state === 'sent') {
     return (
-      <Card tone="primary" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Icon name="heart" size={20} color={t.primary} />
         <Text variant="callout" tone="primary" style={{ flex: 1 }}>
           Teşekkürler, başka pati sahiplerine yardım ettin.
@@ -41,7 +41,7 @@ export function PingButton({ clinicId }: { clinicId: string }) {
         <ActivityIndicator color={t.primary} />
       ) : (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button title="Açık" icon="checkmark" variant="soft" size="sm" style={{ flex: 1 }} onPress={() => ping(true)} />
+          <Button title="Açık" icon="checkmark" variant="secondary" size="sm" style={{ flex: 1 }} onPress={() => ping(true)} />
           <Button title="Kapalı" icon="close" variant="secondary" size="sm" style={{ flex: 1 }} onPress={() => ping(false)} />
         </View>
       )}

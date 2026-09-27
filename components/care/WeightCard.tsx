@@ -69,7 +69,7 @@ export function WeightCard({ petId, petName, entries, onChanged }: { petId: stri
           Düzenli tartmak, sağlık sorunlarını erken fark etmeni sağlar. {petName} için ilk kiloyu ekle.
         </Text>
       )}
-      <Button title="Kilo ekle" variant="soft" icon="add" size="sm" onPress={() => setOpen(true)} style={{ alignSelf: 'flex-start', marginTop: 12 }} />
+      <Button title="Kilo ekle" variant="secondary" icon="add" size="sm" onPress={() => setOpen(true)} style={{ alignSelf: 'flex-start', marginTop: 12 }} />
       <Sheet visible={open} onClose={() => setOpen(false)} title="Kilo ekle">
         <View style={{ paddingHorizontal: 20 }}>
           <Field label={`${petName} kaç kilo? (kg)`} value={value} onChangeText={setValue} keyboardType="decimal-pad" placeholder={last ? String(last.kg).replace('.', ',') : '4,2'} autoFocus />

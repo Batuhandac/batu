@@ -37,7 +37,7 @@ export function DistrictPicker({ visible, onClose, onPick, onUseGps }: Props) {
             style={{ marginBottom: 20 }}
           />
         )}
-        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+        <Text variant="overline" tone="muted" style={{ marginBottom: 12 }}>
           Ya da ilçe / semt seç · Ankara
         </Text>
         <DistrictList

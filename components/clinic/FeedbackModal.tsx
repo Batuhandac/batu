@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Sheet, Text, Button, IconBadge } from '@/components/ds';
+import { Sheet, Text, Button, Icon } from '@/components/ds';
 import { useTheme } from '@/lib/theme';
 import { submitCallFeedback } from '@/lib/data/community';
 import { track } from '@/lib/analytics';
@@ -61,12 +61,7 @@ export function FeedbackModal({ visible, onClose, clinicId, clinicName }: Props)
         {step === 'sending' && <ActivityIndicator color={t.primary} style={{ marginVertical: 28 }} />}
         {(step === 'done' || step === 'failed') && (
           <View style={{ alignItems: 'center' }}>
-            <IconBadge
-              name={step === 'done' ? 'heart' : 'cloud-offline-outline'}
-              size={56}
-              color={step === 'done' ? t.sos : t.textMuted}
-              background={step === 'done' ? t.sosSoft : t.surfaceAlt}
-            />
+            <Icon name={step === 'done' ? 'checkmark-circle-outline' : 'cloud-offline-outline'} size={48} color={step === 'done' ? t.primary : t.textSubtle} />
             <Text variant="headline" center style={{ marginTop: 12 }}>
               {step === 'done' ? 'Teşekkürler' : 'Gönderilemedi'}
             </Text>

@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { View, Alert, Pressable } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { Screen, Header, Text, Card, Button, Badge, IconButton, Icon, Group, Section, Chip, useToast } from '@/components/ds';
+import { Screen, Header, Text, Card, Button, Badge, Icon, Group, Section, Chip, useToast } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
 import { CareRow } from '@/components/care/CareRow';
 import { WeightCard } from '@/components/care/WeightCard';
-import { useTheme, radius } from '@/lib/theme';
+import { useTheme, hairline } from '@/lib/theme';
 import { getPet, removePet, setPrimaryPet } from '@/lib/data/localStore';
 import { upcomingCare, doneCare, completeCare, loadWeights, removePetCare, kindMeta, type CareItem, type WeightEntry } from '@/lib/data/care';
 import { deletePetPhoto } from '@/lib/data/petPhoto';
@@ -14,20 +14,6 @@ import { speciesLabel, petAge, sexLabel, upcomingBirthday, genitive } from '@/li
 import { formatDate } from '@/lib/utils/dates';
 import { track } from '@/lib/analytics';
 import type { Pet } from '@/types';
-
-function Row({ label, value, alert, first }: { label: string; value: string; alert?: boolean; first?: boolean }) {
-  const t = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderTopColor: t.border, gap: 12 }}>
-      <Text variant="caption" tone="muted" style={{ width: 96, marginTop: 2 }}>
-        {label}
-      </Text>
-      <Text variant={alert ? 'bodyStrong' : 'body'} tone={alert ? 'sos' : 'default'} style={{ flex: 1 }}>
-        {value}
-      </Text>
-    </View>
-  );
-}
 
 const QUICK_KINDS = ['vaccine', 'internal_parasite', 'external_parasite', 'checkup'] as const;
 
@@ -81,9 +67,23 @@ export default function PetDetailScreen() {
   };
 
   const age = petAge(pet);
+  const emergencyRows = (
+    [
+      { label: 'Alerji', value: pet.allergies, alert: true },
+      { label: 'İlaçlar', value: pet.medications, alert: true },
+      { label: 'Kronik', value: pet.chronic_conditions, alert: true },
+      { label: 'Son aşı', value: pet.last_vaccine_date },
+      { label: 'Son parazit', value: pet.last_parasite_date },
+      { label: 'Çip no', value: pet.chip_no ?? null },
+      { label: 'Acil not', value: pet.emergency_note, alert: true },
+    ] as { label: string; value: string | null; alert?: boolean }[]
+  ).filter((r): r is { label: string; value: string; alert?: boolean } => !!r.value);
   const sex = sexLabel(pet);
   const bday = upcomingBirthday(pet);
   const facts = [speciesLabel(pet.species), pet.breed].filter(Boolean).join(' · ');
+  const stats = [age, sex, pet.weight_kg != null ? `${String(pet.weight_kg).replace('.', ',')} kg` : null, pet.chip_no ? 'Çipli' : null]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Screen scroll>
@@ -91,7 +91,13 @@ export default function PetDetailScreen() {
         title=""
         large={false}
         onBack={() => router.back()}
-        right={<IconButton icon="create-outline" onPress={() => router.push(`/pets/create?id=${pet.id}`)} accessibilityLabel="Profili düzenle" size={40} />}
+        right={
+          <Pressable onPress={() => router.push(`/pets/create?id=${pet.id}`)} accessibilityRole="button" accessibilityLabel="Profili düzenle" hitSlop={10}>
+            <Text variant="body" tone="primary">
+              Düzenle
+            </Text>
+          </Pressable>
+        }
       />
 
       {/* Profil */}
@@ -105,20 +111,19 @@ export default function PetDetailScreen() {
             {facts}
           </Text>
         ) : null}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-          {age ? <Badge label={age} tone="primary" /> : null}
-          {sex ? <Badge label={sex} tone="neutral" /> : null}
-          {pet.weight_kg != null ? <Badge label={`${String(pet.weight_kg).replace('.', ',')} kg`} tone="neutral" /> : null}
-          {pet.chip_no ? <Badge label="Çipli" tone="neutral" icon="radio-outline" /> : null}
-        </View>
+        {stats ? (
+          <Text variant="callout" tone="muted" center style={{ marginTop: 2 }}>
+            {stats}
+          </Text>
+        ) : null}
       </View>
 
       {bday && bday.days <= 14 ? (
         <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
-          <Card tone="honey">
+          <Card>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Icon name="gift-outline" size={24} color={t.honey} />
-              <Text variant="bodyStrong" style={{ flex: 1 }}>
+              <Icon name="gift-outline" size={22} color={t.primary} />
+              <Text variant="body" style={{ flex: 1 }}>
                 {bday.days === 0 ? `Bugün ${genitive(pet.name)} doğum günü! ${bday.turns} yaşında.` : `${pet.name} ${bday.days} gün sonra ${bday.turns} yaşında.`}
               </Text>
             </View>
@@ -155,58 +160,48 @@ export default function PetDetailScreen() {
 
       {/* Acil sağlık kartı */}
       <Section title="Acil sağlık kartı">
-        <View style={{ borderRadius: radius.xl, backgroundColor: t.primary, padding: 18 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text variant="overline" color={t.dark ? t.onPrimary : 'rgba(255,255,255,0.8)'}>
-              Veterinere söylenecekler
-            </Text>
-            <Icon name="medkit" size={18} color={t.onPrimary} />
-          </View>
-          <View style={{ marginTop: 10 }}>
-            {(
-              [
-                { label: 'Alerji', value: pet.allergies },
-                { label: 'İlaçlar', value: pet.medications },
-                { label: 'Kronik', value: pet.chronic_conditions },
-                { label: 'Son aşı', value: pet.last_vaccine_date },
-                { label: 'Son parazit', value: pet.last_parasite_date },
-                { label: 'Çip no', value: pet.chip_no ?? null },
-                { label: 'Acil not', value: pet.emergency_note },
-              ].filter((r) => !!r.value) as { label: string; value: string }[]
-            ).map((r) => (
-              <View key={r.label} style={{ flexDirection: 'row', gap: 10, paddingVertical: 6 }}>
-                <Text variant="caption" color={t.onPrimary} style={{ width: 84, opacity: 0.8 }}>
+        {emergencyRows.length > 0 ? (
+          <Group>
+            {emergencyRows.map((r, i) => (
+              <View
+                key={r.label}
+                style={{ flexDirection: 'row', gap: 12, paddingVertical: 11, paddingHorizontal: 16, borderBottomWidth: i === emergencyRows.length - 1 ? 0 : hairline, borderBottomColor: t.border }}
+              >
+                <Text variant="callout" tone="muted" style={{ width: 96 }}>
                   {r.label}
                 </Text>
-                <Text variant="callout" color={t.onPrimary} style={{ flex: 1 }}>
+                <Text variant="callout" tone={r.alert ? 'sos' : 'default'} style={[{ flex: 1 }, r.alert ? { fontWeight: '600' } : null]}>
                   {r.value}
                 </Text>
               </View>
             ))}
-            {!pet.allergies && !pet.medications && !pet.chronic_conditions && !pet.emergency_note ? (
-              <Text variant="callout" color={t.onPrimary} style={{ opacity: 0.9, marginTop: 4 }}>
-                Alerji ya da ilaç varsa profile eklemen acil anda çok işe yarar.
-              </Text>
-            ) : null}
-          </View>
-        </View>
+          </Group>
+        ) : null}
+        {!pet.allergies && !pet.medications && !pet.chronic_conditions && !pet.emergency_note ? (
+          <Text variant="caption" tone="muted" style={{ marginTop: 8, marginHorizontal: 16 }}>
+            Alerji ya da ilaç varsa profile eklemen acil anda çok işe yarar.
+          </Text>
+        ) : (
+          <Text variant="caption" tone="muted" style={{ marginTop: 8, marginHorizontal: 16 }}>
+            Klinik ararken ekranında görünür. Veterinere bunları söyle.
+          </Text>
+        )}
         {pet.is_primary ? (
-          <View style={{ marginTop: 10 }}>
+          <View style={{ marginTop: 12, marginLeft: 16 }}>
             <Badge label="Acil modda bu kart gösterilir" tone="primary" icon="checkmark-circle" />
           </View>
         ) : (
           <Button
             title="Acil modda bu kartı göster"
             variant="ghost"
-            icon="star-outline"
             onPress={async () => {
               await setPrimaryPet(pet.id);
               load();
             }}
-            style={{ alignSelf: 'flex-start', marginTop: 6, marginLeft: -12 }}
+            style={{ alignSelf: 'flex-start', marginTop: 4, paddingHorizontal: 16 }}
           />
         )}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
           <Button
             title="WhatsApp"
             icon="logo-whatsapp"
@@ -237,9 +232,9 @@ export default function PetDetailScreen() {
             {history.slice(0, 10).map((h, i, arr) => (
               <View
                 key={h.id}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderBottomColor: t.border }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: i === arr.length - 1 ? 0 : hairline, borderBottomColor: t.border }}
               >
-                <Icon name="checkmark-circle" size={20} color={t.open} />
+                <Icon name="checkmark-circle" size={20} color={t.textSubtle} />
                 <Text variant="callout" style={{ flex: 1 }} numberOfLines={1}>
                   {h.title}
                 </Text>

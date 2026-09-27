@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { View, Alert, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, Text, Card, Avatar, Badge, Group, ListRow } from '@/components/ds';
-import { useTheme } from '@/lib/theme';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
 import { unregisterVetDevice } from '@/lib/data/messages';
@@ -11,7 +10,6 @@ import { track } from '@/lib/analytics';
 const ROLE_LABEL = { owner: 'Evcil hayvan sahibi', vet: 'Veteriner hekim', vet_pending: 'Hekim · doğrulama bekliyor', guest: 'Misafir' } as const;
 
 export default function AccountScreen() {
-  const t = useTheme();
   const s = useSession();
   const back = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
 
@@ -64,7 +62,7 @@ export default function AccountScreen() {
       <Header title="Hesabım" onBack={back} />
       <View style={{ paddingHorizontal: 20 }}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar label={displayName} size={60} background={s.vet ? t.honeySoft : t.primarySoft} color={s.vet ? t.honey : t.primary} />
+          <Avatar label={displayName} size={60} />
           <View style={{ flex: 1 }}>
             <Text variant="headline" numberOfLines={1}>
               {displayName}

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, IconBadge, Icon } from '@/components/ds';
-import { Art } from '@/components/art';
+import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, Icon } from '@/components/ds';
 import { useTheme } from '@/lib/theme';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
@@ -24,27 +23,23 @@ export default function VetPanelScreen() {
 }
 
 function Intro() {
-  const t = useTheme();
   return (
     <View style={{ paddingHorizontal: 20 }}>
-      <View style={{ alignItems: 'center', marginBottom: 8 }}>
-        <Art name="vet" width={220} />
-      </View>
       <Text variant="body" tone="muted" style={{ marginBottom: 20 }}>
         Doğrulanan klinikler hasta sahiplerinin mesajlarını yanıtlar, topluluktaki sorulara kliniğinin adıyla ve
         "Veteriner hekim" rozetiyle cevap verir. Ücretsizdir; sıralama satın alınamaz.
       </Text>
       <Button title="Hekim hesabı oluştur" size="lg" full onPress={() => router.push('/auth/vet')} />
       <Button title="Giriş yap" variant="secondary" full onPress={() => router.push('/auth/vet?mode=signin')} style={{ marginTop: 10 }} />
-      <Card tone="alt" style={{ marginTop: 24 }}>
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <IconBadge name="call-outline" size={40} color={t.primary} background={t.surface} />
-          <Text variant="caption" tone="muted" style={{ flex: 1 }}>
-            Hesap açmadan yalnızca klinik bilgilerinizi düzeltmek isterseniz de başvurabilirsiniz.
-          </Text>
-        </View>
-        <Button title="Klinik bilgilerini doğrula" variant="ghost" onPress={() => router.push('/vets')} style={{ alignSelf: 'flex-start', marginLeft: -12, marginTop: 4 }} />
-      </Card>
+      <Group style={{ marginTop: 24 }}>
+        <ListRow
+          icon="create-outline"
+          title="Yalnızca klinik bilgilerini düzelt"
+          subtitle="Hesap açmadan telefon, saat ve adres düzeltmesi"
+          onPress={() => router.push('/vets')}
+          last
+        />
+      </Group>
     </View>
   );
 }
@@ -142,15 +137,14 @@ function Panel() {
     <View style={{ paddingHorizontal: 20 }}>
       <Card>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <IconBadge name="medkit" size={52} color={t.onPrimary} background={t.primary} />
           <View style={{ flex: 1 }}>
             <Text variant="headline">{vetDisplayName(vet)}</Text>
             <Text variant="caption" tone="muted">
               {vet.clinic_name}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-              <IconBadge name="checkmark" size={16} color={t.onPrimary} background={t.primary} />
-              <Text variant="caption" tone="primary">
+              <Icon name="checkmark-circle" size={15} color={t.primary} />
+              <Text variant="caption" tone="primary" style={{ fontWeight: '600' }}>
                 Doğrulanmış hekim hesabı
               </Text>
             </View>
@@ -158,11 +152,11 @@ function Panel() {
         </View>
       </Card>
 
-      <Text variant="overline" tone="subtle" style={{ marginTop: 24, marginBottom: 8, marginLeft: 4 }}>
+      <Text variant="overline" tone="muted" style={{ marginTop: 24, marginBottom: 8, marginLeft: 16 }}>
         Mesajlar
       </Text>
       {inbox === null ? (
-        <Card tone="honey">
+        <Card>
           <Text variant="callout">
             Kliniğinizin gelen kutusu henüz açılmadı. support@patisos.app adresine yazın, aynı gün etkinleştirelim.
           </Text>

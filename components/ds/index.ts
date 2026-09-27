@@ -3,7 +3,7 @@
 export { Text, trUpper } from './Text';
 export { Icon, IconBadge, type IconName } from './Icon';
 export { Button, IconButton } from './Button';
-export { Screen, Card, Header, Section, ListRow, Group, EmptyState, Sheet, Divider, Avatar } from './Surfaces';
+export { Screen, Card, Header, BackButton, Section, ListRow, Group, EmptyState, Sheet, Divider, Avatar } from './Surfaces';
 export { Chip, Badge, Field, SwitchRow, Checkbox, Segmented, type BadgeTone } from './Controls';
 export { Logo, LogoMark, Wordmark } from './Logo';
 export { Carousel, Dots } from './Carousel';

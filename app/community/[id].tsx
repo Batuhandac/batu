@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, TextInput, Image, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Icon, IconButton, Avatar, Card, EmptyState, Button, IconBadge } from '@/components/ds';
+import { Text, Icon, IconButton, Avatar, Card, EmptyState, Button, IconBadge, BackButton } from '@/components/ds';
 import { ContentMenu, RulesSheet } from '@/components/community/Safety';
-import { useTheme, radius, type } from '@/lib/theme';
+import { useTheme, radius, type, hairline } from '@/lib/theme';
 import {
   subscribeQuestion,
   subscribeAnswers,
@@ -128,7 +128,7 @@ export default function QuestionScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-          <IconButton icon="chevron-back" onPress={() => router.back()} accessibilityLabel="Geri" size={40} />
+          <BackButton onPress={() => router.back()} />
         </View>
         <EmptyState
           icon="chatbubble-ellipses-outline"
@@ -146,7 +146,7 @@ export default function QuestionScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 }}>
-          <IconButton icon="chevron-back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/community'))} accessibilityLabel="Geri" size={40} />
+          <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/community'))} />
           <IconButton
             icon="ellipsis-horizontal"
             onPress={() =>
@@ -236,7 +236,7 @@ export default function QuestionScreen() {
         </ScrollView>
 
         {/* Yazma alanı */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1, borderTopColor: t.border, backgroundColor: t.surface }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: hairline, borderTopColor: t.border, backgroundColor: t.surface }}>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -244,7 +244,7 @@ export default function QuestionScreen() {
             placeholderTextColor={t.textSubtle}
             multiline
             maxLength={2000}
-            style={[type.body, { flex: 1, maxHeight: 120, minHeight: 44, color: t.text, backgroundColor: t.bg, borderRadius: 22, borderWidth: 1, borderColor: t.border, paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11 }]}
+            style={[type.body, { flex: 1, maxHeight: 120, minHeight: 44, color: t.text, backgroundColor: t.surfaceAlt, borderRadius: 22, paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11 }]}
           />
           {sending ? (
             <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
@@ -288,16 +288,14 @@ function AnswerItem({ a, q, helpful, onHelpful, onMenu }: { a: Answer; q: Questi
   return (
     <View
       style={{
-        backgroundColor: a.is_vet ? t.primarySoft : t.surface,
+        backgroundColor: t.surface,
         borderRadius: radius.lg,
-        borderWidth: a.is_vet ? 1.5 : 1,
-        borderColor: a.is_vet ? t.primary : t.border,
         padding: 14,
         marginBottom: 10,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        {a.is_vet ? <IconBadge name="medkit" size={36} color={t.onPrimary} background={t.primary} /> : <Avatar label={a.author_name} size={32} />}
+        {a.is_vet ? <IconBadge name="medkit" size={32} color={t.primary} background={t.primarySoft} /> : <Avatar label={a.author_name} size={32} />}
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <Text variant="bodyStrong" numberOfLines={1}>
@@ -305,11 +303,9 @@ function AnswerItem({ a, q, helpful, onHelpful, onMenu }: { a: Answer; q: Questi
             </Text>
             {a.is_vet ? <Icon name="checkmark-circle" size={16} color={t.primary} /> : null}
             {!a.is_vet && a.author_uid === q.author_uid ? (
-              <View style={{ backgroundColor: t.surfaceAlt, borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 1 }}>
-                <Text variant="caption" tone="muted" style={{ fontSize: 11 }}>
-                  Soru sahibi
-                </Text>
-              </View>
+              <Text variant="caption" tone="muted">
+                · Soru sahibi
+              </Text>
             ) : null}
           </View>
           {a.is_vet && a.vet_clinic_name ? (

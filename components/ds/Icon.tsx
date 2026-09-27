@@ -10,7 +10,10 @@ export function Icon({ name, size = 20, color }: { name: IconName; size?: number
   return <Ionicons name={name} size={size} color={color ?? t.text} />;
 }
 
-/** Yumuşak renkli daire içinde ikon — liste ve kartlarda görsel çapa. */
+/**
+ * Satır ve kart başındaki ikon. Varsayılan hâli arka plansız sade ikondur;
+ * arka plan yalnızca avatar gibi dolu bir işaret gerektiğinde verilir.
+ */
 export function IconBadge({
   name,
   color,
@@ -33,15 +36,15 @@ export function IconBadge({
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: background ? size / 2 : 0,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: background ?? t.primarySoft,
+          backgroundColor: background ?? 'transparent',
         },
         style,
       ]}
     >
-      <Ionicons name={name} size={iconSize ?? Math.round(size * 0.5)} color={color ?? t.primary} />
+      <Ionicons name={name} size={iconSize ?? Math.round(size * (background ? 0.5 : 0.62))} color={color ?? t.primary} />
     </View>
   );
 }

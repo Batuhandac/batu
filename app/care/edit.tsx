@@ -3,7 +3,7 @@ import { View, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-na
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen, Header, Text, Field, Button, Chip, Segmented, DateField, Icon, useToast } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
-import { useTheme, radius } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 import { loadPets } from '@/lib/data/localStore';
 import { CARE_KINDS, REPEAT_OPTIONS, kindMeta, loadCare, saveCareItem, removeCareItem, completeCare, type CareKind } from '@/lib/data/care';
 import { formatDate, todayISO, addDays } from '@/lib/utils/dates';
@@ -113,7 +113,7 @@ export default function CareEditScreen() {
     <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Screen scroll edges={[]}>
-          <Header title={editing ? 'Bakımı düzenle' : 'Bakım ekle'} subtitle="Zamanı gelince sabah 10:00'da hatırlatırız." onBack={() => router.back()} />
+          <Header title={editing ? 'Bakımı düzenle' : 'Bakım ekle'} subtitle="Bir gün önce ve gününde hatırlatırız." onBack={() => router.back()} />
           <View style={{ paddingHorizontal: 20 }}>
             {pets.length > 1 ? (
               <>
@@ -136,10 +136,10 @@ export default function CareEditScreen() {
                           paddingLeft: 4,
                           paddingRight: 14,
                           height: 44,
-                          borderRadius: radius.pill,
+                          borderRadius: 22,
                           borderWidth: 1.5,
-                          borderColor: on ? t.primary : t.border,
-                          backgroundColor: on ? t.primarySoft : t.surface,
+                          borderColor: on ? t.primary : 'transparent',
+                          backgroundColor: t.surface,
                         }}
                       >
                         <PetAvatar pet={p} size={34} />

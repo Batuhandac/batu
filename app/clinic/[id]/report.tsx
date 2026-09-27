@@ -65,10 +65,8 @@ export default function ReportScreen() {
                   alignItems: 'center',
                   gap: 12,
                   padding: 14,
-                  borderRadius: radius.md,
-                  borderWidth: 1.5,
-                  borderColor: on ? t.primary : t.border,
-                  backgroundColor: on ? t.primarySoft : t.surface,
+                  borderRadius: radius.lg,
+                  backgroundColor: t.surface,
                 }}
               >
                 <Icon name={on ? 'radio-button-on' : 'radio-button-off'} size={20} color={on ? t.primary : t.textSubtle} />

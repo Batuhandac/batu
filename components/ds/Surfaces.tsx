@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Pressable, Modal, ScrollView, type ViewStyle, type StyleProp } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
-import { useTheme, radius, shadow } from '@/lib/theme';
+import { useTheme, radius, hairline } from '@/lib/theme';
 import { Text } from './Text';
-import { Icon, IconBadge, type IconName } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { IconButton } from './Button';
 
 export function Screen({
@@ -54,21 +54,14 @@ export function Card({
   const t = useTheme();
   const bg =
     tone === 'primary' ? t.primarySoft : tone === 'sos' ? t.sosSoft : tone === 'honey' ? t.honeySoft : tone === 'alt' ? t.surfaceAlt : t.surface;
-  const base: ViewStyle = {
-    backgroundColor: bg,
-    borderRadius: radius.lg,
-    borderWidth: tone === 'surface' ? 1 : 0,
-    borderColor: t.border,
-    padding: padded ? 16 : 0,
-    ...(tone === 'surface' ? shadow(t, 1) : {}),
-  };
+  const base: ViewStyle = { backgroundColor: bg, borderRadius: radius.lg, padding: padded ? 16 : 0 };
   if (!onPress) return <View style={[base, style]}>{children}</View>;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [base, { opacity: pressed ? 0.92 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}
+      style={({ pressed }) => [base, pressed && { opacity: 0.7 }, style]}
     >
       {children}
     </Pressable>
@@ -81,28 +74,55 @@ export function Header({
   onBack,
   right,
   large = true,
+  backLabel = 'Geri',
 }: {
   title: string;
   subtitle?: string;
   onBack?: () => void;
   right?: React.ReactNode;
   large?: boolean;
+  backLabel?: string;
 }) {
   return (
-    <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
+    <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 }}>
       {(onBack || right) && (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: large ? 12 : 0 }}>
-          {onBack ? <IconButton icon="chevron-back" onPress={onBack} accessibilityLabel="Geri" size={40} /> : <View />}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 44, marginBottom: large && title ? 4 : 0 }}>
+          {onBack ? (
+            <BackButton onPress={onBack} label={backLabel} />
+          ) : (
+            <View />
+          )}
           {right}
         </View>
       )}
-      <Text variant={large ? 'title' : 'headline'}>{title}</Text>
+      {title ? <Text variant={large ? 'title' : 'headline'}>{title}</Text> : null}
       {subtitle ? (
         <Text variant="callout" tone="muted" style={{ marginTop: 4 }}>
           {subtitle}
         </Text>
       ) : null}
     </View>
+  );
+}
+
+/** iOS gezinme çubuğundaki gibi "‹ Geri" bağlantısı. */
+export function BackButton({ onPress, label = 'Geri' }: { onPress: () => void; label?: string }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={label || 'Geri'}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', marginLeft: -8, minHeight: 44, opacity: pressed ? 0.5 : 1 })}
+    >
+      <Icon name="chevron-back" size={26} color={t.primary} />
+      {label ? (
+        <Text variant="body" tone="primary">
+          {label}
+        </Text>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -121,10 +141,10 @@ export function Section({
 }) {
   return (
     <View style={[{ marginTop: 28, paddingHorizontal: 20 }, style]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
         <Text variant="headline">{title}</Text>
         {action ? (
-          <Pressable onPress={onAction} hitSlop={10}>
+          <Pressable onPress={onAction} hitSlop={10} accessibilityRole="button">
             <Text variant="callout" tone="primary">
               {action}
             </Text>
@@ -143,7 +163,6 @@ export function ListRow({
   onPress,
   right,
   iconColor,
-  iconBg,
   last,
   danger,
 }: {
@@ -153,7 +172,6 @@ export function ListRow({
   onPress?: () => void;
   right?: React.ReactNode;
   iconColor?: string;
-  iconBg?: string;
   last?: boolean;
   danger?: boolean;
 }) {
@@ -166,33 +184,41 @@ export function ListRow({
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
+        paddingLeft: 16,
         backgroundColor: pressed ? t.surfaceAlt : 'transparent',
-        borderBottomWidth: last ? 0 : 1,
-        borderBottomColor: t.border,
       })}
     >
       {icon ? (
-        <IconBadge
-          name={icon}
-          size={36}
-          color={iconColor ?? (danger ? t.danger : t.primary)}
-          background={iconBg ?? (danger ? t.dangerSoft : t.primarySoft)}
-        />
+        <View style={{ width: 28, marginRight: 12, alignItems: 'center' }}>
+          <Icon name={icon} size={22} color={iconColor ?? (danger ? t.danger : t.primary)} />
+        </View>
       ) : null}
-      <View style={{ flex: 1 }}>
-        <Text variant="bodyStrong" tone={danger ? 'danger' : 'default'}>
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>
-            {subtitle}
+      {/* Ayırıcı çizgi ikondan sonra başlar (iOS listeleri gibi) */}
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          minHeight: 52,
+          paddingVertical: 11,
+          paddingRight: 16,
+          borderBottomWidth: last ? 0 : hairline,
+          borderBottomColor: t.border,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text variant="body" tone={danger ? 'danger' : 'default'}>
+            {title}
           </Text>
-        ) : null}
+          {subtitle ? (
+            <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        {right ?? (onPress ? <Icon name="chevron-forward" size={17} color={t.textSubtle} /> : null)}
       </View>
-      {right ?? (onPress ? <Icon name="chevron-forward" size={18} color={t.textSubtle} /> : null)}
     </Pressable>
   );
 }
@@ -202,7 +228,7 @@ export function Group({ children, style }: { children: React.ReactNode; style?: 
   return (
     <View
       style={[
-        { backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.border, overflow: 'hidden', ...shadow(t, 1) },
+        { backgroundColor: t.surface, borderRadius: radius.lg, overflow: 'hidden' },
         style,
       ]}
     >
@@ -225,8 +251,8 @@ export function EmptyState({
   const t = useTheme();
   return (
     <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 28 }}>
-      <IconBadge name={icon} size={64} background={t.surfaceAlt} color={t.textMuted} />
-      <Text variant="headline" center style={{ marginTop: 16 }}>
+      <Icon name={icon} size={44} color={t.textSubtle} />
+      <Text variant="headline" center style={{ marginTop: 12 }}>
         {title}
       </Text>
       {text ? (
@@ -261,16 +287,17 @@ export function Sheet({
           backgroundColor: t.bg,
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
+          overflow: 'hidden',
           paddingTop: 10,
           paddingBottom: Math.max(insets.bottom, 16) + 8,
           maxHeight: '85%',
         }}
       >
-        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: t.borderStrong, marginBottom: 12 }} />
+        <View style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: t.borderStrong, marginBottom: 12 }} />
         {title ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 8 }}>
             <Text variant="headline">{title}</Text>
-            <IconButton icon="close" onPress={onClose} accessibilityLabel="Kapat" size={36} variant="plain" />
+            <IconButton icon="close" onPress={onClose} accessibilityLabel="Kapat" size={30} variant="secondary" color={t.textMuted} />
           </View>
         ) : null}
         {children}
@@ -281,10 +308,10 @@ export function Sheet({
 
 export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
   const t = useTheme();
-  return <View style={[{ height: 1, backgroundColor: t.border }, style]} />;
+  return <View style={[{ height: hairline, backgroundColor: t.border }, style]} />;
 }
 
-/** Baş harfli yuvarlak avatar (pet, klinik). */
+/** Baş harfli yuvarlak avatar (pet, kişi, klinik). */
 export function Avatar({ label, size = 48, color, background }: { label: string; size?: number; color?: string; background?: string }) {
   const t = useTheme();
   const initial = label.trim().charAt(0).toLocaleUpperCase('tr-TR') || '?';
@@ -293,13 +320,13 @@ export function Avatar({ label, size = 48, color, background }: { label: string;
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.36,
-        backgroundColor: background ?? t.primarySoft,
+        borderRadius: size / 2,
+        backgroundColor: background ?? t.surfaceAlt,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text variant="title" color={color ?? t.primary} style={{ fontSize: size * 0.42, lineHeight: size * 0.52 }}>
+      <Text variant="headline" color={color ?? t.textMuted} style={{ fontSize: size * 0.42, lineHeight: size * 0.52 }}>
         {initial}
       </Text>
     </View>

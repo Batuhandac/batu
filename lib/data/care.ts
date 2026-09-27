@@ -1,5 +1,5 @@
 // Bakım takvimi (aşı, parazit, kontrol, ilaç, bakım) ve kilo takibi.
-// Cihazda saklanır (AsyncStorage); zamanı gelen bakım için yerel bildirim kurulur.
+// Cihazda saklanır (AsyncStorage); bir gün önce ve gününde yerel bildirim kurulur.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -40,7 +40,7 @@ export interface CareItem {
   repeat_days: number | null;
   note: string | null;
   done_at: string | null; // YYYY-MM-DD
-  notif_id: string | null;
+  notif_id: string | null; // planlı bildirim kimlikleri, virgülle ayrılmış
   created_at: string;
 }
 
@@ -74,28 +74,36 @@ async function canNotify(): Promise<boolean> {
   }
 }
 
+// Her bakım için iki hatırlatma: bir gün önce 20:00'de ve gününde 10:00'da.
+// Geçmişte kalan zaman için bildirim kurulmaz. Kimlikler virgülle ayrılıp saklanır.
 async function schedule(item: CareItem, petName: string): Promise<string | null> {
-  // Zamanı gelen günün sabahı 10:00'da; geçmişte kalan zaman için bildirim kurulmaz
-  const when = fromISODate(item.due);
-  when.setHours(10, 0, 0, 0);
-  if (when.getTime() <= Date.now() || !(await canNotify())) return null;
-  try {
-    return await Notifications.scheduleNotificationAsync({
-      content: {
-        title: `${petName}: ${item.title}`,
-        body: 'Bugün zamanı. Yapınca uygulamada işaretle, sonrakini biz hatırlatalım.',
-        data: { type: 'care', petId: item.pet_id, careId: item.id },
-      },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when },
-    });
-  } catch {
-    return null;
+  const onDay = fromISODate(item.due);
+  onDay.setHours(10, 0, 0, 0);
+  const dayBefore = fromISODate(item.due);
+  dayBefore.setDate(dayBefore.getDate() - 1);
+  dayBefore.setHours(20, 0, 0, 0);
+  const plan = [
+    { when: dayBefore, title: `Yarın: ${petName}, ${item.title}`, body: 'Hatırlatmak istedik. Ürün ya da randevu hazır mı?' },
+    { when: onDay, title: `${petName}: ${item.title}`, body: 'Bugün zamanı. Yapınca uygulamada işaretle, sonrakini biz hatırlatalım.' },
+  ].filter((p) => p.when.getTime() > Date.now());
+  if (plan.length === 0 || !(await canNotify())) return null;
+  const ids: string[] = [];
+  for (const p of plan) {
+    try {
+      ids.push(
+        await Notifications.scheduleNotificationAsync({
+          content: { title: p.title, body: p.body, data: { type: 'care', petId: item.pet_id, careId: item.id } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.when },
+        })
+      );
+    } catch {}
   }
+  return ids.length ? ids.join(',') : null;
 }
 
-async function cancel(id: string | null) {
-  if (!id || Platform.OS === 'web') return;
-  await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+async function cancel(ids: string | null) {
+  if (!ids || Platform.OS === 'web') return;
+  for (const id of ids.split(',')) await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
 }
 
 // ─── Bakım ───────────────────────────────────────────────────────────────────

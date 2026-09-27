@@ -7,8 +7,8 @@ import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Screen, Text, Icon, IconBadge, IconButton, Button, Card, Badge, Checkbox } from '@/components/ds';
-import { useTheme, radius } from '@/lib/theme';
+import { Screen, Text, Icon, IconButton, Button, Card, Badge, Checkbox, Chip, Group } from '@/components/ds';
+import { useTheme, radius, hairline } from '@/lib/theme';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { usePets } from '@/lib/hooks/usePets';
@@ -85,14 +85,14 @@ export default function EmergencyScreen() {
           <Text variant="overline" tone="sos">
             Acil mod
           </Text>
-          <Text variant="display" style={{ marginTop: 4 }}>
-            Yanındayız.
+          <Text variant="title" style={{ marginTop: 2 }}>
+            En yakın açık veteriner
           </Text>
           <Text variant="body" tone="muted" style={{ marginTop: 4 }}>
-            Derin bir nefes al. En hızlı yolu birlikte bulalım.
+            Derin bir nefes al. Önce ara, sonra yola çık.
           </Text>
         </View>
-        <IconButton icon="close" onPress={() => router.back()} accessibilityLabel="Acil modu kapat" />
+        <IconButton icon="close" onPress={() => router.back()} accessibilityLabel="Acil modu kapat" size={32} color={t.textMuted} />
       </View>
 
       <Pressable onPress={() => setPicker(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 20, marginTop: 14 }} accessibilityRole="button">
@@ -120,7 +120,7 @@ export default function EmergencyScreen() {
         ) : best ? (
           <BestClinicCard clinic={best} onDirections={() => setDirClinic(best)} />
         ) : lat != null ? (
-          <Card tone="honey">
+          <Card>
             <Text variant="bodyStrong">Şu an açık olduğunu bildiğimiz bir klinik yok</Text>
             <Text variant="callout" tone="muted" style={{ marginTop: 4 }}>
               Aşağıdaki klinikleri aramayı dene; birçoğu mesai dışında acil hattına yönlendirir. Kimse
@@ -132,43 +132,26 @@ export default function EmergencyScreen() {
 
       {others.length > 0 && (
         <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
-          <Text variant="overline" tone="subtle" style={{ marginBottom: 10 }}>
+          <Text variant="overline" tone="muted" style={{ marginBottom: 8, marginLeft: 16 }}>
             {best ? 'Açmazsa sıradaki' : 'Aranabilecek klinikler'}
           </Text>
-          {others.map((c) => (
-            <AltRow key={c.id} clinic={c} onDirections={() => setDirClinic(c)} />
-          ))}
-          <Button title="Tüm yakın klinikler" variant="ghost" icon="list" onPress={() => router.push('/(tabs)/nearby')} style={{ alignSelf: 'flex-start' }} />
+          <Group>
+            {others.map((c, i) => (
+              <AltRow key={c.id} clinic={c} onDirections={() => setDirClinic(c)} last={i === others.length - 1} />
+            ))}
+          </Group>
+          <Button title="Tüm yakın klinikler" variant="ghost" onPress={() => router.push('/(tabs)/nearby')} style={{ alignSelf: 'flex-start', paddingHorizontal: 16 }} />
         </View>
       )}
 
       {/* 2 — Ararken söyle */}
       <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
         <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <IconBadge name="chatbubble-ellipses-outline" size={36} />
-            <Text variant="headline">Ararken şunları söyle</Text>
-          </View>
+          <Text variant="headline">Ararken şunları söyle</Text>
           {pets.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
               {pets.map((p) => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => setPetId(p.id)}
-                  style={{
-                    paddingHorizontal: 14,
-                    height: 34,
-                    borderRadius: radius.pill,
-                    justifyContent: 'center',
-                    borderWidth: 1.5,
-                    borderColor: pet?.id === p.id ? t.primary : t.border,
-                    backgroundColor: pet?.id === p.id ? t.primarySoft : 'transparent',
-                  }}
-                >
-                  <Text variant="caption" color={pet?.id === p.id ? t.primary : t.text}>
-                    {p.name}
-                  </Text>
-                </Pressable>
+                <Chip key={p.id} label={p.name} active={pet?.id === p.id} onPress={() => setPetId(p.id)} />
               ))}
             </ScrollView>
           )}
@@ -179,10 +162,9 @@ export default function EmergencyScreen() {
       {/* 3 — Yola çıkmadan önce */}
       <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
         <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <IconBadge name="bag-handle-outline" size={36} />
-            <Text variant="headline">Yola çıkmadan önce</Text>
-          </View>
+          <Text variant="headline" style={{ marginBottom: 12 }}>
+            Yola çıkmadan önce
+          </Text>
           <View style={{ gap: 12 }}>
             {BEFORE_YOU_GO.map((item, i) => {
               const done = checked.includes(i);
@@ -240,18 +222,18 @@ function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections
   const s = clinicStatus(clinic);
   const target = phoneOf(clinic);
   return (
-    <View style={{ borderRadius: radius.xl, backgroundColor: t.surface, borderWidth: 2, borderColor: t.primary, padding: 20 }}>
-      <Text variant="overline" tone="primary">
+    <View style={{ borderRadius: radius.lg, backgroundColor: t.surface, padding: 18 }}>
+      <Text variant="overline" tone="muted">
         En uygun seçenek
       </Text>
-      <Text variant="title" style={{ marginTop: 6 }} numberOfLines={2}>
+      <Text variant="title" style={{ marginTop: 4 }} numberOfLines={2}>
         {clinic.name}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 8 }}>
         <Badge label={s.label} tone="open" dot />
-        {clinic.distance_km > 0 ? <Badge label={formatDistance(clinic.distance_km)} tone="neutral" icon="navigate-outline" /> : null}
-        {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" icon="time-outline" /> : null}
-        {clinic.is_verified ? <Badge label="Klinik onaylı" tone="primary" icon="shield-checkmark" /> : null}
+        {clinic.distance_km > 0 ? <Badge label={formatDistance(clinic.distance_km)} tone="neutral" /> : null}
+        {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" /> : null}
+        {clinic.is_verified ? <Badge label="Klinik onaylı" tone="primary" icon="checkmark-circle" /> : null}
       </View>
       {clinic.address ? (
         <Text variant="caption" tone="muted" numberOfLines={1} style={{ marginTop: 10 }}>
@@ -275,41 +257,49 @@ function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections
         accessibilityLabel={`${clinic.name} şimdi ara`}
       />
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-        <Button title="Yol tarifi" icon="navigate-outline" variant="secondary" onPress={onDirections} style={{ flex: 1 }} />
-        <Button title="Detaylar" icon="information-circle-outline" variant="secondary" onPress={() => router.push(`/clinic/${clinic.id}`)} style={{ flex: 1 }} />
+        <Button title="Yol tarifi" variant="secondary" onPress={onDirections} style={{ flex: 1 }} />
+        <Button title="Detaylar" variant="secondary" onPress={() => router.push(`/clinic/${clinic.id}`)} style={{ flex: 1 }} />
       </View>
     </View>
   );
 }
 
-function AltRow({ clinic, onDirections }: { clinic: Clinic; onDirections: () => void }) {
+function AltRow({ clinic, onDirections, last }: { clinic: Clinic; onDirections: () => void; last?: boolean }) {
   const t = useTheme();
   const s = clinicStatus(clinic);
   return (
-    <Card style={{ marginBottom: 8, paddingVertical: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/clinic/${clinic.id}`)} accessibilityRole="button">
-          <Text variant="bodyStrong" numberOfLines={1}>
-            {clinic.name}
-          </Text>
-          <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
-            {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
-          </Text>
-        </Pressable>
-        {canCall(clinic) ? (
-          <Button
-            title="Ara"
-            icon="call"
-            size="sm"
-            variant={s.tone === 'open' ? 'primary' : 'soft'}
-            onPress={() => callClinic(phoneOf(clinic), 'emergency_alt')}
-            accessibilityLabel={`${clinic.name} ara`}
-          />
-        ) : (
-          <Button title="Git" icon="navigate-outline" size="sm" variant="secondary" onPress={onDirections} />
-        )}
-      </View>
-    </Card>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderBottomWidth: last ? 0 : hairline,
+        borderBottomColor: t.border,
+      }}
+    >
+      <Pressable style={{ flex: 1 }} onPress={() => router.push(`/clinic/${clinic.id}`)} accessibilityRole="button">
+        <Text variant="body" numberOfLines={1}>
+          {clinic.name}
+        </Text>
+        <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>
+          {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
+        </Text>
+      </Pressable>
+      {canCall(clinic) ? (
+        <Button
+          title="Ara"
+          icon="call"
+          size="sm"
+          variant={s.tone === 'open' ? 'primary' : 'secondary'}
+          onPress={() => callClinic(phoneOf(clinic), 'emergency_alt')}
+          accessibilityLabel={`${clinic.name} ara`}
+        />
+      ) : (
+        <Button title="Git" size="sm" variant="secondary" onPress={onDirections} />
+      )}
+    </View>
   );
 }
 
@@ -334,8 +324,8 @@ function PetScript({ pet }: { pet: Pet }) {
       <Text variant="body">
         "Merhaba, acil bir durum için arıyorum. <Text variant="bodyStrong">{intro}.</Text>"
       </Text>
-      <View style={{ borderRadius: radius.md, padding: 12, marginTop: 12, backgroundColor: t.sosSoft }}>
-        <Text variant="bodyStrong" tone="sos">
+      <View style={{ borderRadius: radius.md, padding: 12, marginTop: 12, backgroundColor: t.surfaceAlt }}>
+        <Text variant="bodyStrong">
           Sen ekle: ne oldu, ne zaman başladı?
         </Text>
         <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>

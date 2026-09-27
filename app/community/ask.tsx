@@ -185,10 +185,8 @@ export default function AskScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
-                borderWidth: 1.5,
-                borderStyle: 'dashed',
-                borderColor: t.borderStrong,
-                borderRadius: radius.md,
+                backgroundColor: t.surface,
+                borderRadius: radius.lg,
                 padding: 14,
                 marginBottom: 18,
               }}

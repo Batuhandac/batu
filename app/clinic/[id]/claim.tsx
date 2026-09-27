@@ -110,7 +110,7 @@ export default function ClaimScreen() {
           </Card>
         )}
 
-        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+        <Text variant="overline" tone="muted" style={{ marginBottom: 12 }}>
           Başvuran
         </Text>
         <Field label="Adınız soyadınız" value={name} onChangeText={setName} placeholder="Vet. Hek. Ad Soyad" />
@@ -138,7 +138,7 @@ export default function ClaimScreen() {
         <Field label="E-posta (isteğe bağlı)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="ornek@klinik.com" />
 
         <Divider style={{ marginVertical: 12 }} />
-        <Text variant="overline" tone="subtle" style={{ marginBottom: 12 }}>
+        <Text variant="overline" tone="muted" style={{ marginBottom: 12 }}>
           Hasta sahiplerinin göreceği bilgiler
         </Text>
         <Field label="Klinik telefonu" value={clinicPhone} onChangeText={setClinicPhone} keyboardType="phone-pad" placeholder="0312 xxx xx xx" />

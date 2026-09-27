@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, Text, Card, IconBadge, Field, Group, ListRow, Button, type IconName } from '@/components/ds';
-import { useTheme } from '@/lib/theme';
 import { searchClinicsByName, trFold } from '@/lib/data/query';
 import { allRegisteredClinics } from '@/lib/data/registry';
 
@@ -22,7 +21,6 @@ const POINTS: { icon: IconName; title: string; text: string }[] = [
 // Veteriner hekimler Türkiye'de reklam veremiyor. Bu ekran onlara reklam değil,
 // doğru bilgiyle bulunabilirlik sunar: ücretsiz, sıralaması satın alınamaz.
 export default function VetsScreen() {
-  const t = useTheme();
   const [q, setQ] = useState('');
 
   const results = useMemo(() => {
