@@ -27,30 +27,64 @@ area["ISO3166-1"="TR"][admin_level=2]->.tr;
 out center tags;`;
 // Veri kaybını önle: Overpass eksik yanıt verirse mevcut dosyanın üzerine yazma
 const MIN_EXPECTED = 200;
+// Aynalar ana sunucunun gerisinde kalabiliyor (yeni eklenen klinikler eksik
+// gelir). Mevcut dosyadan daha eski ya da %5'ten fazla küçük sonucu kabul etme.
+const MAX_SHRINK = 0.95;
 
-async function download() {
-  let lastErr;
-  for (const url of MIRRORS) {
-    try {
-      const res = await fetch(url, {
+function currentFileInfo() {
+  try {
+    const src = fs.readFileSync(OUT, 'utf8');
+    const base = src.match(/^\/\/ osm_base: (\S+)/m)?.[1] ?? null;
+    const count = src.split('\n').filter((l) => l.startsWith('  {')).length;
+    return { base, count };
+  } catch {
+    return { base: null, count: 0 };
+  }
+}
+
+async function fetchMirror(url) {
+  const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'pati-sos-data/1.0 (https://github.com/Batuhandac/pati-sos)',
         },
-        body: 'data=' + encodeURIComponent(QUERY),
-      });
-      if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
-      const json = await res.json();
-      if (json.remark && /error|timed out/i.test(json.remark)) throw new Error(`${url} → ${json.remark}`);
-      console.log(`✓ ${url}: ${json.elements?.length ?? 0} öğe`);
-      return json;
+    body: 'data=' + encodeURIComponent(QUERY),
+    // Yavaş bir sunucuda takılıp kalma; sıradaki aynaya geç
+    signal: AbortSignal.timeout(240000),
+  });
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.remark && /error|timed out/i.test(json.remark)) throw new Error(`${url} → ${json.remark}`);
+  return json;
+}
+
+// Ana sunucuyu (bir kez tekrar deneyerek) sonra aynaları dener; mevcut
+// veriden eski ya da belirgin şekilde eksik sonucu reddeder.
+async function download(current) {
+  const attempts = [MIRRORS[0], MIRRORS[0], ...MIRRORS.slice(1)];
+  for (let i = 0; i < attempts.length; i++) {
+    const url = attempts[i];
+    if (i === 1) await new Promise((r) => setTimeout(r, Number(process.env.OSM_RETRY_WAIT_MS ?? 30000)));
+    try {
+      const json = await fetchMirror(url);
+      const base = json.osm3s?.timestamp_osm_base ?? null;
+      const clinics = buildClinics(json);
+      console.log(`✓ ${url}: ${clinics.length} klinik (veri tarihi ${base ?? '?'})`);
+      if (current.base && base && base < current.base) {
+        console.warn(`✗ ${url}: veri mevcut dosyadan eski (${base} < ${current.base}) — atlandı`);
+        continue;
+      }
+      if (clinics.length < current.count * MAX_SHRINK) {
+        console.warn(`✗ ${url}: ${clinics.length} klinik, mevcut ${current.count} — eksik görünüyor, atlandı`);
+        continue;
+      }
+      return { clinics, base };
     } catch (e) {
-      lastErr = e;
       console.warn(`✗ ${e.message}`);
     }
   }
-  throw lastErr;
+  return null;
 }
 
 const clean = (v) => (typeof v === 'string' && v.trim() ? v.trim().replace(/\s+/g, ' ') : null);
@@ -105,11 +139,21 @@ function toSeed(el) {
   };
 }
 
-function render(clinics) {
+function buildClinics(json) {
+  const byId = new Map();
+  for (const el of json.elements || []) {
+    const c = toSeed(el);
+    if (c && !byId.has(c.id)) byId.set(c.id, c);
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function render(clinics, base) {
   const lines = clinics.map((c) => '  ' + JSON.stringify(c) + ',');
   return `// OTOMATİK ÜRETİLDİ — elle düzenleme. Yeniden üret: node scripts/gen-clinics-osm.js
 // Veri: © OpenStreetMap katkıcıları, ODbL 1.0 — https://www.openstreetmap.org/copyright
 // ${clinics.length} veteriner kliniği (Türkiye, amenity=veterinary)
+// osm_base: ${base ?? 'bilinmiyor'}
 import type { SeedClinic } from './types';
 
 export const CLINICS: SeedClinic[] = [
@@ -120,20 +164,27 @@ ${lines.join('\n')}
 
 async function main() {
   const i = process.argv.indexOf('--input');
-  const json = i > -1 ? JSON.parse(fs.readFileSync(process.argv[i + 1], 'utf8')) : await download();
-
-  const byId = new Map();
-  for (const el of json.elements || []) {
-    const c = toSeed(el);
-    if (c && !byId.has(c.id)) byId.set(c.id, c);
+  let clinics;
+  let base = null;
+  if (i > -1) {
+    const json = JSON.parse(fs.readFileSync(process.argv[i + 1], 'utf8'));
+    clinics = buildClinics(json);
+    base = json.osm3s?.timestamp_osm_base ?? null;
+  } else {
+    const current = currentFileInfo();
+    const result = await download(current);
+    if (!result) {
+      // Hiçbir sunucu güvenilir sonuç vermedi — mevcut veriyi koru
+      console.warn('ℹ Güncel ve eksiksiz veri alınamadı; mevcut dosya korunuyor.');
+      return;
+    }
+    ({ clinics, base } = result);
+    if (clinics.length < MIN_EXPECTED) {
+      throw new Error(`Sadece ${clinics.length} klinik geldi (beklenen ≥ ${MIN_EXPECTED}) — dosya değiştirilmedi.`);
+    }
   }
-  const clinics = [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
 
-  if (i === -1 && clinics.length < MIN_EXPECTED) {
-    throw new Error(`Sadece ${clinics.length} klinik geldi (beklenen ≥ ${MIN_EXPECTED}) — dosya değiştirilmedi.`);
-  }
-
-  fs.writeFileSync(OUT, render(clinics));
+  fs.writeFileSync(OUT, render(clinics, base));
   const withPhone = clinics.filter((c) => c.phone).length;
   const withHours = clinics.filter((c) => c.opening_hours).length;
   console.log(`✓ ${OUT}: ${clinics.length} klinik · telefonlu ${withPhone} · saatli ${withHours}`);
