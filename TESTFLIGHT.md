@@ -56,13 +56,14 @@ da çalışır. Canlı ve daha zengin veri için:
 
 ## Mağaza Görselleri
 
-`store/screenshots/` içinde 6 adet 1290×2796 (6.7") App Store görseli hazır:
-- `01_acil.png` — "Acil anında en yakın açık veteriner."
-- `02_arama.png` — "Ne söyleyeceğin hazır."
-- `03_liste.png` — "Açık ve yakın olan önce."
-- `04_kart.png` — "Dostunun acil kartı cebinde."
-- `05_ilkyardim.png` — "Veterinere ulaşana kadar."
-- `06_gece.png` — "Gece 03:00'te de yanında." (koyu tema)
+`store/screenshots/` içinde 7 adet 1290×2796 (6.7") App Store görseli hazır:
+- `01_acil.png` — "Acilde en yakın açık veteriner."
+- `02_bakim.png` — "Aşı ve parazit gününü unutma."
+- `03_kart.png` — "Dostunun sağlık kartı cebinde."
+- `04_sor.png` — "Aklına takılanı veterinere sor."
+- `05_liste.png` — "Açık ve yakın olan önce."
+- `06_ilkyardim.png` — "Veterinere ulaşana kadar."
+- `07_gece.png` — "Gece 03:00'te de göz yormaz." (koyu tema)
 
-Görseller uygulamanın gerçek ekranlarından üretildi. App Store Connect →
+Görseller uygulamanın gerçek ekranlarından, örnek verilerle üretildi. App Store Connect →
 uygulaman → 6.7" Display bölümüne bu sırayla yükle.
