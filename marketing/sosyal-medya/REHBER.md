@@ -34,12 +34,16 @@ Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zama
 
 ## 3. Görsel kurallar
 
-- Renkler uygulamayla aynı: zemin `#F2F2F7` ya da beyaz, yazı `#111214`, marka yeşili `#1F6B52`.
-  Kırmızı (`#D92D20`) yalnızca uyarı gönderilerinde.
+- Renkler uygulamayla aynı: pastel zeminler (şeftali `#FFE4D6`, tereyağı `#FFF0C7`, nane `#D9F2E3`,
+  gökyüzü `#D9EAFB`, lila `#E9E1FA`, gül `#FBE0E8`) ya da beyaz, yazı `#111214`, marka yeşili
+  `#1F6B52`. Kırmızı (`#D92D20`) yalnızca uyarı gönderilerinde.
+- **Maskotlar:** tombul kedi, köpek ve tavşan (`lib/art/faces.ts`). Telefonun ya da kartın
+  kenarından bakarlar ya da köşede dururlar. Bilgi sayfalarında (5 durum dizisinin iç sayfaları)
+  maskot kullanılmaz; ciddi bilgi sade kalır.
 - Yazı tipi: **Inter** (Canva'da var). iPhone'daki SF Pro'ya en yakın açık yazı tipi.
   Başlık kalın, açıklama orta kalınlıkta. Bir görselde en fazla iki yazı boyutu.
 - Görselde tek fikir: bir başlık, en fazla iki satır açıklama, gerekiyorsa bir uygulama ekranı.
-- Gradyan, parıltı, gölge, çıkartma ve emoji yok.
+- Gradyan, parıltı, gölge ve emoji yok. Sevimlilik maskotlardan gelir.
 - Yapay zekâyla üretilmiş hayvan fotoğrafı ya da stok fotoğraf yok. Fotoğraf gerekirse
   yalnızca izin alınmış gerçek dost fotoğrafları.
 - Logo sol üstte küçük. Logonun rengi değiştirilmez.
@@ -48,7 +52,8 @@ Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zama
 
 | Dosya | Boyut | Ne için |
 | --- | --- | --- |
-| `profil.png` | 1080×1080 | Profil fotoğrafı (tüm platformlar) |
+| `profil.png` | 1080×1080 | Profil fotoğrafı (logo; tüm platformlar) |
+| `profil-maskot.png` | 1080×1080 | Profil fotoğrafı seçeneği (maskot; TikTok ve Instagram için daha sıcak) |
 | `kapak-1500x500.png` | 1500×500 | X ve LinkedIn kapak görseli |
 | `one-cikan-acil.png`, `-bakim`, `-sor`, `-ilkyardim` | 1080×1920 | Instagram öne çıkan hikâye kapakları |
 | `01_tanitim.png` | 1080×1350 | Tanıtım gönderisi |

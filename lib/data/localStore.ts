@@ -41,7 +41,7 @@ export async function upsertPet(pet: Partial<Pet> & { name: string }): Promise<P
     }
   }
   const newPet: Pet = {
-    id: genId(),
+    id: pet.id ?? genId(),
     user_id: 'local',
     name: pet.name,
     species: pet.species ?? null,
@@ -61,6 +61,7 @@ export async function upsertPet(pet: Partial<Pet> & { name: string }): Promise<P
     sex: pet.sex ?? null,
     neutered: pet.neutered ?? null,
     chip_no: pet.chip_no ?? null,
+    fur: pet.fur ?? null,
     is_primary: pets.length === 0 ? true : (pet.is_primary ?? false), // ilk pet otomatik ana
     created_at: now,
     updated_at: now,

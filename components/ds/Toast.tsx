@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
-import { useTheme, radius, shadow } from '@/lib/theme';
+import { useTheme, radius, shadow, palette } from '@/lib/theme';
 
 interface ToastState {
   message: string | null;
@@ -52,7 +52,7 @@ export function ToastHost() {
           ...shadow(t, 2),
         }}
       >
-        <Icon name={icon} size={20} color={t.dark ? t.primary : '#8FD9C9'} />
+        <Icon name={icon} size={20} color={palette.pine[400]} />
         <Text variant="callout" color={t.dark ? t.text : t.bg} style={{ flexShrink: 1 }}>
           {message}
         </Text>

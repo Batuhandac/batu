@@ -60,14 +60,27 @@ uygulamalarına benzemek güven veriyor ve öğrenme yükünü azaltıyor.
 | Konu | Önce | Sonra |
 | --- | --- | --- |
 | Yazı tipi | Nunito (yüklenen font) | Sistem yazı tipi (iOS'ta SF Pro, Android'de Roboto). |
-| Renk | Turkuaz, mercan, bal, krem | Nötr gri zemin, beyaz yüzey. Tek marka rengi (çam yeşili). Kırmızı yalnızca acil durum ve silme için. Turuncu yalnızca "zamanı geçti / bugün" uyarısı için. |
-| Kartlar | Çerçeve, gölge, 20–28 px köşe | Gölgesiz, çerçevesiz beyaz gruplar, 12 px köşe, ince ayırıcılar (iOS "inset grouped" düzeni). |
+| Renk | Turkuaz, mercan, bal, krem | Sıcak açık zemin, beyaz yüzey. Tek marka rengi (çam yeşili); pasteller yalnızca dost kartları ve duyurularda. Kırmızı yalnızca acil durum ve silme için. Turuncu yalnızca "zamanı geçti / bugün" uyarısı için. |
+| Kartlar | Çerçeve, gölge, 20–28 px köşe | Gölgesiz, çerçevesiz beyaz gruplar, 18 px yumuşak köşe, ince ayırıcılar (iOS "inset grouped" düzeni). |
 | İkonlar | Renkli daire içinde ikon | Daire yok. Satır başında sade ikon, yalnızca gerektiği yerde. |
 | Etiketler | Her bilgi renkli hapta | Düz renkli metin. Durumlar için küçük bir nokta. |
-| Görseller | Parıltılı SVG çizimler | Kaldırıldı. Boş ekranlarda tek ikon ve iki satır metin. |
-| Karşılama | Üç slayt | Tek ekran: ne işe yaradığı üç satırda, sonra giriş. |
-| Ana sayfa | Karşılama sloganı, doğum günü kartı, yatay pet kartları, topluluk önizlemesi | Selam, duyuru kaydırıcısı, dostlar listesi (doğum günü satırın içinde), yaklaşan bakım, en yakın açık klinik, en altta acil. |
+| Görseller | Parıltılı SVG sahne çizimleri | Tek maskot ailesi (tombul kedi, köpek, tavşan); acil ekranında yok. |
+| Karşılama | Üç slayt | Tek ekran: kenardan bakan kedi ve köpek, ne işe yaradığı üç satırda, sonra giriş. |
+| Ana sayfa | Karşılama sloganı, doğum günü kartı, yatay pet kartları, topluluk önizlemesi | Selam ve dostların adı, maskotlu duyurular, pastel dost kartları (doğum günü kartın içinde), yaklaşan bakım, en yakın açık klinik, en altta acil. |
 | Logo | Pin, pati, mercan kalp, iki renkli "patisos" | Pin ve pati, tek renk. "Pati SOS" yazısı sistem yazı tipinde. |
+
+### Geri bildirimden sonra denge
+
+İlk sadeleştirmeden sonra gelen geri bildirim: "Şimdi de aşırı düz; biraz hayvan
+sevimliliği olmalı." Sadelikten vazgeçmeden sıcaklık geri getirildi:
+
+- Parıltılı sahne çizimleri yerine tek bir tutarlı maskot ailesi (kedi, köpek, tavşan).
+  Tombul yüzler, yanaklar ve ifadeler var; süs yok.
+- Maskot kullanıcının kendi dostunu temsil eder: fotoğraf yoksa seçtiği tüy rengiyle görünür.
+- Pastel zeminler yalnızca dost kartlarında, duyurularda ve boş ekranlarda kullanılır.
+  Listeler ve formlar sade kalır.
+- Acil ekranında maskot yoktur. Panik anındaki kullanıcı için sakinlik önce gelir.
+- Küçük ödüller: bakım yapıldığında pati damgası ve "Aferin" mesajı.
 
 ## 4. Sonraki adımlar (bu PR'ın dışında)
 

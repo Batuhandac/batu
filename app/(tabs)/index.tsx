@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Text, Icon, Card, Section, Avatar, Button, IconButton, Badge, Group, ListRow, Carousel, useToast } from '@/components/ds';
 import { BannerCard } from '@/components/home/BannerCard';
 import { PetAvatar } from '@/components/pets/PetAvatar';
+import { PetFace, usePastel } from '@/components/art';
+import { pastelOf } from '@/lib/art/faces';
 import { CareRow } from '@/components/care/CareRow';
-import { useTheme, hairline } from '@/lib/theme';
+import { useTheme, radius } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { useClinics } from '@/lib/hooks/useClinics';
@@ -15,7 +17,7 @@ import { upcomingCare, completeCare, type CareItem } from '@/lib/data/care';
 import { clinicStatus, formatDistance, pickBestClinic } from '@/lib/utils/status';
 import { dueLabel, formatDate } from '@/lib/utils/dates';
 import { callClinic } from '@/lib/utils/call';
-import { speciesLabel, upcomingBirthday, genitive } from '@/lib/utils/pets';
+import { speciesLabel, upcomingBirthday } from '@/lib/utils/pets';
 import { track } from '@/lib/analytics';
 import { useSession } from '@/stores/session';
 import type { Clinic, Pet } from '@/types';
@@ -87,7 +89,7 @@ export default function HomeScreen() {
   const done = async (c: CareItem) => {
     const next = await completeCare(c.id);
     track('care_done', { kind: c.kind, from: 'home' });
-    toast(next ? `Yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Yapıldı olarak kaydedildi');
+    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
     loadCare();
     loadPets();
   };
@@ -105,13 +107,16 @@ export default function HomeScreen() {
           <Text variant="display" numberOfLines={1}>
             {firstName ? `Merhaba ${firstName}` : greeting()}
           </Text>
+          <Text variant="callout" tone="muted" style={{ marginTop: 2 }} numberOfLines={1}>
+            {petLine(pets)}
+          </Text>
         </View>
         <Pressable
           onPress={() => router.push(role === 'guest' ? '/auth' : '/account')}
           accessibilityRole="button"
           accessibilityLabel={role === 'guest' ? 'Giriş yap' : 'Hesabım'}
           hitSlop={10}
-          style={({ pressed }) => ({ marginBottom: 4, opacity: pressed ? 0.6 : 1 })}
+          style={({ pressed }) => ({ marginBottom: 30, opacity: pressed ? 0.6 : 1 })}
         >
           {role === 'guest' ? (
             <Text variant="body" tone="primary">
@@ -141,20 +146,35 @@ export default function HomeScreen() {
       ) : null}
 
       {/* Dostlar */}
-      <Section title="Dostların" style={{ marginTop: 24 }}>
-        <Group>
-          {pets.map((p) => (
-            <PetRow key={p.id} pet={p} next={nextByPet[p.id]} />
-          ))}
-          <ListRow
-            icon="add-circle-outline"
-            title={pets.length > 0 ? 'Dost ekle' : 'İlk dostunu ekle'}
-            subtitle={pets.length > 0 ? undefined : 'Aşı takvimi, kilo ve acil sağlık kartı tek yerde'}
-            onPress={() => router.push('/pets/create')}
-            right={<View />}
-            last
-          />
-        </Group>
+      <Section title="Dostların" action={pets.length > 0 ? 'Tümü' : undefined} onAction={() => router.push('/pets')} style={{ marginTop: 24 }}>
+        {pets.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 20 }} style={{ marginHorizontal: -20 }}>
+            {pets.map((p) => (
+              <PetCard key={p.id} pet={p} next={nextByPet[p.id]} />
+            ))}
+            <Pressable
+              onPress={() => router.push('/pets/create')}
+              accessibilityRole="button"
+              accessibilityLabel="Dost ekle"
+              style={({ pressed }) => ({
+                width: 116,
+                borderRadius: radius.lg,
+                backgroundColor: t.surface,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Icon name="add-circle-outline" size={30} color={t.primary} />
+              <Text variant="callout" tone="primary">
+                Dost ekle
+              </Text>
+            </Pressable>
+          </ScrollView>
+        ) : (
+          <FirstPetCard />
+        )}
       </Section>
 
       {/* Yaklaşan bakım */}
@@ -250,20 +270,30 @@ export default function HomeScreen() {
   );
 }
 
-/** Dost satırı: yakında doğum günü varsa onu, yoksa sıradaki bakımı gösterir. */
-function PetRow({ pet, next }: { pet: Pet; next?: CareItem }) {
+/** "Boncuk ve Minnoş bugün nasıl?" */
+function petLine(pets: Pet[]): string {
+  if (pets.length === 0) return 'Dostunu ekle, bakımını birlikte takip edelim.';
+  const names = pets.map((p) => p.name);
+  const who = names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} ve ${names[1]}` : `${names[0]}, ${names[1]} ve ${names.length - 2} dostun`;
+  return `${who} bugün nasıl?`;
+}
+
+/** Dost kartı: kendi pastel renginde, yakında doğum günü varsa onu, yoksa sıradaki bakımı gösterir. */
+function PetCard({ pet, next }: { pet: Pet; next?: CareItem }) {
   const t = useTheme();
+  const bg = usePastel(pastelOf(pet.id));
   const bday = upcomingBirthday(pet);
   const due = next ? dueLabel(next.due) : null;
-  let sub: React.ReactNode = pet.breed ?? speciesLabel(pet.species);
-  if (bday && bday.days <= 7) {
-    sub = bday.days === 0 ? `Bugün ${genitive(pet.name)} doğum günü, ${bday.turns} yaşında` : `${bday.days} gün sonra ${bday.turns} yaşında`;
+  const soon = bday && bday.days <= 7;
+  let line: React.ReactNode = pet.breed ?? speciesLabel(pet.species);
+  if (soon && bday) {
+    line = bday.days === 0 ? `Bugün doğum günü` : `${bday.days} gün sonra ${bday.turns} yaşında`;
   } else if (next && due) {
-    const c = due.tone === 'sos' ? t.sos : due.tone === 'honey' ? t.honey : undefined;
-    sub = (
+    const c = due.tone === 'sos' ? t.sos : due.tone === 'honey' ? t.honey : t.textMuted;
+    line = (
       <>
         {next.title} ·{' '}
-        <Text variant="caption" color={c ?? t.textMuted} style={c ? { fontWeight: '600' } : undefined}>
+        <Text variant="caption" color={c} style={due.tone === 'sos' || due.tone === 'honey' ? { fontWeight: '600' } : undefined}>
           {due.label.toLocaleLowerCase('tr-TR')}
         </Text>
       </>
@@ -274,31 +304,40 @@ function PetRow({ pet, next }: { pet: Pet; next?: CareItem }) {
       onPress={() => router.push(`/pets/${pet.id}`)}
       accessibilityRole="button"
       accessibilityLabel={pet.name}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingLeft: 14, backgroundColor: pressed ? t.surfaceAlt : 'transparent' })}
+      style={({ pressed }) => ({ width: 156, padding: 14, borderRadius: radius.lg, backgroundColor: bg, opacity: pressed ? 0.8 : 1 })}
     >
-      <PetAvatar pet={pet} size={40} />
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginLeft: 12,
-          paddingVertical: 10,
-          paddingRight: 16,
-          minHeight: 60,
-          borderBottomWidth: hairline,
-          borderBottomColor: t.border,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text variant="body" numberOfLines={1}>
-            {pet.name}
-          </Text>
-          <Text variant="caption" tone="muted" numberOfLines={1} style={{ marginTop: 1 }}>
-            {sub}
-          </Text>
-        </View>
-        <Icon name="chevron-forward" size={17} color={t.textSubtle} />
+      <PetAvatar pet={pet} size={76} plain mood={soon ? 'wink' : 'happy'} />
+      <Text variant="headline" numberOfLines={1} style={{ marginTop: 8 }}>
+        {pet.name}
+      </Text>
+      <Text variant="caption" tone="muted" numberOfLines={2} style={{ marginTop: 2 }}>
+        {soon ? <Icon name="gift-outline" size={12} color={t.textMuted} /> : null}
+        {soon ? ' ' : ''}
+        {line}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Henüz dost yokken: kenardan bakan iki maskotla davet. */
+function FirstPetCard() {
+  const bg = usePastel('peach');
+  return (
+    <Pressable
+      onPress={() => router.push('/pets/create')}
+      accessibilityRole="button"
+      accessibilityLabel="İlk dostunu ekle"
+      style={({ pressed }) => ({ borderRadius: radius.lg, backgroundColor: bg, padding: 18, paddingRight: 150, minHeight: 124, overflow: 'hidden', opacity: pressed ? 0.8 : 1 })}
+    >
+      <Text variant="headline">İlk dostunu ekle</Text>
+      <Text variant="callout" tone="muted" style={{ marginTop: 4 }}>
+        Aşı takvimi, kilo ve acil sağlık kartı tek yerde.
+      </Text>
+      <View style={{ position: 'absolute', right: 70, bottom: -14 }}>
+        <PetFace species="cat" seed="ilk-kedi" fur="ginger" size={92} />
+      </View>
+      <View style={{ position: 'absolute', right: 4, bottom: -20 }}>
+        <PetFace species="dog" seed="ilk-kopek" fur="cream" mood="wink" size={92} />
       </View>
     </Pressable>
   );

@@ -1,7 +1,8 @@
 // Pati SOS tasarım dili: renk, tipografi, köşe değerleri.
-// Telefonun kendi uygulamaları gibi sade: sistem yazı tipi, nötr gri zemin,
-// beyaz gruplar ve tek marka rengi. Kırmızı yalnızca acil durum ve silme için.
-// Açık/koyu tema cihaz ayarını izler. Gerekçeler: docs/ARASTIRMA.md
+// Sade ama sıcak: sistem yazı tipi, sıcak açık zemin, beyaz yumuşak gruplar ve tek
+// marka rengi. Sevimlilik maskotlar ve pastel zeminlerden gelir (lib/art/faces.ts).
+// Kırmızı yalnızca acil durum ve silme için. Açık/koyu tema cihaz ayarını izler.
+// Gerekçeler: docs/ARASTIRMA.md
 import { useColorScheme, StyleSheet, type TextStyle } from 'react-native';
 
 export const palette = {
@@ -45,11 +46,11 @@ export interface Theme {
 
 export const lightTheme: Theme = {
   dark: false,
-  bg: palette.gray[50],
+  bg: '#F5F3EF',
   surface: '#FFFFFF',
-  surfaceAlt: palette.gray[100],
-  border: palette.gray[200],
-  borderStrong: palette.gray[300],
+  surfaceAlt: '#ECE9E3',
+  border: '#DEDAD2',
+  borderStrong: '#BDB7AD',
   text: palette.gray[900],
   textMuted: '#5E5E63',
   textSubtle: palette.gray[500],
@@ -128,7 +129,7 @@ export const type = {
 
 export type TypeVariant = keyof typeof type;
 
-export const radius = { sm: 8, md: 10, lg: 12, xl: 16, pill: 999 } as const;
+export const radius = { sm: 10, md: 12, lg: 18, xl: 24, pill: 999 } as const;
 
 /** Yalnızca zeminden ayrılması gereken yüzen öğeler için (bildirim, harita kartı). */
 export function shadow(t: Theme, level: 1 | 2 = 1) {

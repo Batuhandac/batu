@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Alert, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Screen, Header, Text, Field, Segmented, Button, DateField, SwitchRow, IconBadge } from '@/components/ds';
+import { Screen, Header, Text, Field, Segmented, Button, DateField, SwitchRow, Icon } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
 import { usePets } from '@/lib/hooks/usePets';
-import { getPet } from '@/lib/data/localStore';
+import { getPet, genId } from '@/lib/data/localStore';
 import { savePetPhoto } from '@/lib/data/petPhoto';
 import { useTheme } from '@/lib/theme';
+import { FURS, furOf } from '@/lib/art/faces';
 import { track } from '@/lib/analytics';
 
 type Species = 'dog' | 'cat' | 'other';
@@ -42,6 +43,9 @@ export default function PetFormScreen() {
   const [sex, setSex] = useState<'female' | 'male' | null>(null);
   const [neutered, setNeutered] = useState(false);
   const [chipNo, setChipNo] = useState('');
+  const [fur, setFur] = useState<string | null>(null);
+  // Yeni dostun kimliği baştan belli olsun: önizlemedeki maskot kayıttan sonra da aynı kalır
+  const [petId] = useState(() => id ?? genId());
   const t = useTheme();
 
   const pickPhoto = async () => {
@@ -76,6 +80,7 @@ export default function PetFormScreen() {
       setSex(p.sex ?? null);
       setNeutered(!!p.neutered);
       setChipNo(p.chip_no ?? '');
+      setFur(p.fur ?? null);
     });
   }, [id]);
 
@@ -87,10 +92,10 @@ export default function PetFormScreen() {
     setSaving(true);
     try {
       const existing = id ? await getPet(id) : null;
-      const photoUri = photo && photo !== existing?.photo_uri ? await savePetPhoto(photo, id ?? 'new') : photo;
+      const photoUri = photo && photo !== existing?.photo_uri ? await savePetPhoto(photo, petId) : photo;
       if (photoUri && photoUri !== existing?.photo_uri) track('pet_photo_added');
       const pet = await upsert({
-        ...(id ? { id } : {}),
+        id: petId,
         name: name.trim(),
         species,
         breed: breed.trim() || null,
@@ -109,6 +114,7 @@ export default function PetFormScreen() {
         sex,
         neutered: sex ? neutered : null,
         chip_no: chipNo.trim() || null,
+        fur,
       });
       if (!editing) track('pet_card_created', { pet_id: pet.id });
       router.back();
@@ -129,16 +135,46 @@ export default function PetFormScreen() {
             onBack={() => router.back()}
           />
           <View style={{ paddingHorizontal: 20 }}>
-            <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Fotoğraf seç" style={{ alignSelf: 'center', alignItems: 'center', marginBottom: 20 }}>
-              {photo || name.trim() ? (
-                <PetAvatar pet={{ name: name.trim() || ' ', photo_uri: photo }} size={96} />
-              ) : (
-                <IconBadge name="camera-outline" size={96} color={t.textSubtle} background={t.surfaceAlt} />
-              )}
+            <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Fotoğraf seç" style={{ alignSelf: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <PetAvatar pet={{ id: petId, species: species ?? 'cat', photo_uri: photo, fur }} size={112} />
               <Text variant="callout" tone="primary" style={{ marginTop: 8 }}>
                 {photo ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle'}
               </Text>
             </Pressable>
+            {!photo ? (
+              <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
+                  Fotoğraf yoksa tüy rengini seç
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {FURS.map((f) => {
+                    const on = (fur ?? furOf(null, petId).key) === f.key;
+                    return (
+                      <Pressable
+                        key={f.key}
+                        onPress={() => setFur(f.key)}
+                        accessibilityRole="radio"
+                        accessibilityLabel={f.label}
+                        accessibilityState={{ selected: on }}
+                        hitSlop={4}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          backgroundColor: f.fur,
+                          borderWidth: on ? 3 : 1,
+                          borderColor: on ? t.primary : t.border,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {on ? <Icon name="checkmark" size={16} color={f.key === 'black' || f.key === 'choco' ? '#FFFFFF' : t.text} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
             <Field
               label="Adı"
               value={name}

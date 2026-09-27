@@ -3,6 +3,7 @@ import { View, FlatList, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, Text, Avatar, Button, Icon } from '@/components/ds';
 import { useTheme, hairline } from '@/lib/theme';
+import { PetFace } from '@/components/art';
 import { subscribeMyConversations, subscribeClinicConversations, type Conversation } from '@/lib/data/messages';
 import { getBlockedUsers } from '@/lib/data/safety';
 import { useSession } from '@/stores/session';
@@ -87,8 +88,8 @@ export default function MessagesScreen() {
         ListEmptyComponent={
           list === null ? null : (
             <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 24 }}>
-              <Icon name="chatbubbles-outline" size={44} color={t.textSubtle} />
-              <Text variant="headline" center style={{ marginTop: 12 }}>
+              <PetFace species="cat" mood="sleepy" seed="mesaj-yok" fur="grey" size={112} background="lilac" />
+              <Text variant="headline" center style={{ marginTop: 14 }}>
                 {vet ? 'Henüz mesaj yok' : 'Henüz mesajın yok'}
               </Text>
               <Text variant="callout" tone="muted" center style={{ marginTop: 6 }}>

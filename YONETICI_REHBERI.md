@@ -151,7 +151,9 @@ yeni banner eklemek için `app_banners` koleksiyonuna belge ekle:
 | `starts_at` / `ends_at` | string | `2026-12-25` biçiminde tarih aralığı (isteğe bağlı) |
 | `months` | array | `[6,7,8]` gibi aylar (isteğe bağlı) |
 
-Bannerlar sade metin kartı olarak görünür; görsel ya da renk seçilmez (eski `art` ve
-`tone` alanları yok sayılır). Uygulamayla gelen bir bannerı kapatmak için **aynı kimlikle** (`sicak` gibi) `active: false`
+İsteğe bağlı görünüm alanları: `color` pastel zemin (`peach`, `butter`, `mint`, `sky`,
+`lilac`, `rose`), `mascot` köşeden bakan maskot (`cat`, `dog`, `other`), `mood` ifadesi
+(`happy`, `sleepy`, `wink`, `surprised`). Eski `art` ve `tone` alanları yok sayılır.
+Uygulamayla gelen bir bannerı kapatmak için **aynı kimlikle** (`sicak` gibi) `active: false`
 olan bir belge oluştur. Bannerlar reklam değildir: ücretli tanıtım, klinik övgüsü ya da
 ürün satışı koyma (hem klinikler reklam veremez hem de uygulama "reklamsız" sözü veriyor).

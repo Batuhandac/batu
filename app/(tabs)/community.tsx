@@ -149,14 +149,14 @@ export default function CommunityScreen() {
       />
     ) : filter === 'mine' ? (
       <EmptyState
-        icon="chatbubble-ellipses-outline"
+        mascot={{ species: 'other', mood: 'surprised' }}
         title="Henüz soru sormadın"
         text="Sorduğun sorular ve gelen yanıtlar burada görünür."
         action={<Button title="İlk sorunu sor" onPress={() => router.push('/community/ask')} full />}
       />
     ) : (
       <EmptyState
-        icon="chatbubbles-outline"
+        mascot={{ species: 'cat', mood: filter === 'all' ? 'surprised' : 'sleepy' }}
         title={filter === 'all' ? 'İlk soruyu sen sor' : 'Bu filtrede soru yok'}
         text={filter === 'all' ? 'Sorun, senden sonra gelen pati sahiplerine de yol gösterecek.' : 'Başka bir filtre seçebilir ya da yeni bir soru sorabilirsin.'}
         action={<Button title="Soru sor" onPress={() => router.push('/community/ask')} full />}

@@ -59,7 +59,7 @@ export function ReviewsSection({ clinicId, clinicName }: { clinicId: string; cli
       ) : reviews.length === 0 ? (
         <Card tone="alt" padded={false}>
           <EmptyState
-            icon="chatbubbles-outline"
+            mascot={{ species: 'dog', mood: 'happy' }}
             title="Henüz deneyim paylaşılmamış"
             text="Telefona çıktılar mı, acil kabul ettiler mi? Kısa bir not başka bir pati sahibine yol gösterir."
           />

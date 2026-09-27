@@ -36,7 +36,8 @@ içinde yakındaki açık kliniği bul, tek dokunuşla ara.
 - **Tek ekranlık karşılama ve ana sayfa duyuruları** — duyurular
   `lib/content/banners.ts` (mevsime göre; Firestore `app_banners` ile uygulama
   güncellemeden yönetilir).
-- **Sade, yerel görünüm** — sistem yazı tipi, nötr zemin, tek marka rengi; gerekçeler
+- **Sade ama sevimli görünüm** — sistem yazı tipi, tek marka rengi; tombul kedi, köpek ve
+  tavşan maskotları (`lib/art/faces.ts`, `components/art`), pastel dost kartları. Gerekçeler
   `docs/ARASTIRMA.md`, kurallar `brand/BRAND.md`.
 - Güvenlik kuralları `firestore.rules` Firestore emülatöründe 63 senaryoyla
   (kötüye kullanım denemeleri dahil) test edildi. Yönetim: `YONETICI_REHBERI.md`.

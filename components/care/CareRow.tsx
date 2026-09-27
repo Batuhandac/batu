@@ -7,7 +7,7 @@ import { REPEAT_OPTIONS, type CareItem } from '@/lib/data/care';
 import { dueLabel } from '@/lib/utils/dates';
 
 /**
- * Bakım satırı. Soldaki yuvarlak "yapıldı" düğmesi (iOS Anımsatıcılar gibi);
+ * Bakım satırı. Soldaki yuvarlak "yapıldı" düğmesine basınca pati damgası basılır;
  * satırın kendisine dokununca düzenleme açılır.
  */
 export function CareRow({
@@ -44,9 +44,9 @@ export function CareRow({
         accessibilityRole="button"
         accessibilityLabel={`${item.title} yapıldı olarak işaretle`}
         style={({ pressed }) => ({
-          width: 26,
-          height: 26,
-          borderRadius: 13,
+          width: 30,
+          height: 30,
+          borderRadius: 15,
           borderWidth: 1.5,
           borderColor: pressed ? t.primary : t.borderStrong,
           backgroundColor: pressed ? t.primary : 'transparent',
@@ -55,7 +55,7 @@ export function CareRow({
           marginRight: 12,
         })}
       >
-        {({ pressed }) => (pressed ? <Icon name="checkmark" size={17} color={t.onPrimary} /> : null)}
+        {({ pressed }) => <Icon name="paw" size={15} color={pressed ? t.onPrimary : t.border} />}
       </Pressable>
       <View
         style={{

@@ -109,6 +109,7 @@ export interface Pet {
   sex?: 'female' | 'male' | null;
   neutered?: boolean | null;
   chip_no?: string | null;
+  fur?: string | null;         // fotoğraf yoksa maskot tüy rengi (lib/art/faces.ts)
   is_primary: boolean;
   created_at: string;
   updated_at: string;

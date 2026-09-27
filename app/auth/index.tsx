@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Text, Icon, IconButton, type IconName } from '@/components/ds';
 import { useTheme, radius, hairline } from '@/lib/theme';
 import { useAuthFlow } from '@/lib/hooks/useAuthFlow';
+import { Peek, peekOffset } from '@/components/art';
 
 function RoleRow({ icon, title, text, onPress, last }: { icon: IconName; title: string; text: string; onPress: () => void; last?: boolean }) {
   const t = useTheme();
@@ -53,27 +54,30 @@ export default function AuthRoleScreen() {
           {!onboarding ? <IconButton icon="close" onPress={continueAsGuest} accessibilityLabel="Kapat" size={30} color={t.textMuted} /> : null}
         </View>
 
-        <Text variant="display" style={{ marginTop: 12 }}>
+        <Text variant="display" style={{ marginTop: 4 }}>
           Seni tanıyalım
         </Text>
         <Text variant="body" tone="muted" style={{ marginTop: 8 }}>
           Hesabınla acil kartların güvende kalır, toplulukta soru sorar ve kliniklerle mesajlaşırsın.
         </Text>
 
-        <View style={{ marginTop: 28, borderRadius: radius.lg, backgroundColor: t.surface, overflow: 'hidden' }}>
-          <RoleRow
-            icon="paw-outline"
-            title="Evcil hayvan sahibiyim"
-            text="Acil kart, bakım takvimi, veterinere soru"
-            onPress={() => router.push(`/auth/owner${q}` as never)}
-          />
-          <RoleRow
-            icon="medkit-outline"
-            title="Veteriner hekimim"
-            text="Kliniğini doğrula, sorulara yanıt ver, mesajları yönet"
-            onPress={() => router.push(`/auth/vet${q}` as never)}
-            last
-          />
+        <View style={{ marginTop: 72 }}>
+          <View style={{ borderRadius: radius.lg, backgroundColor: t.surface, overflow: 'hidden' }}>
+            <RoleRow
+              icon="paw-outline"
+              title="Evcil hayvan sahibiyim"
+              text="Acil kart, bakım takvimi, veterinere soru"
+              onPress={() => router.push(`/auth/owner${q}` as never)}
+            />
+            <RoleRow
+              icon="medkit-outline"
+              title="Veteriner hekimim"
+              text="Kliniğini doğrula, sorulara yanıt ver, mesajları yönet"
+              onPress={() => router.push(`/auth/vet${q}` as never)}
+              last
+            />
+          </View>
+          <Peek species="dog" fur="choco" seed="rol-kopek" width={104} style={{ position: 'absolute', right: 24, top: -peekOffset(104) }} />
         </View>
 
         <View style={{ flex: 1, minHeight: 24 }} />

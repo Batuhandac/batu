@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
+import { PASTEL_KEYS, type PastelKey, type FaceMood } from '@/lib/art/faces';
 
 export interface Banner {
   id: string;
@@ -14,6 +15,9 @@ export interface Banner {
   cta: string;
   route?: string; // uygulama içi yol, ör. /community
   url?: string; // https bağlantısı
+  mascot?: 'cat' | 'dog' | 'other'; // kartın köşesinden bakan maskot
+  mood?: FaceMood;
+  color?: PastelKey; // pastel zemin
   months?: number[]; // 1–12; yoksa her ay
   when?: 'no_pets' | 'has_pets';
   order?: number;
@@ -22,6 +26,9 @@ export interface Banner {
 export const LOCAL_BANNERS: Banner[] = [
   {
     id: 'takvim',
+    mascot: 'cat',
+    mood: 'happy',
+    color: 'mint',
     tag: 'Yeni',
     title: 'Aşı ve parazit günlerini unutma',
     text: 'Bakım takvimine ekle, zamanı gelince hatırlatalım.',
@@ -31,6 +38,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'profil',
+    mascot: 'dog',
+    mood: 'happy',
+    color: 'peach',
     tag: 'Başlarken',
     title: 'Dostunu tanıt',
     text: 'Fotoğrafı, yaşı ve sağlık bilgileriyle profilini oluştur.',
@@ -40,6 +50,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'sor',
+    mascot: 'other',
+    mood: 'surprised',
+    color: 'lilac',
     tag: 'Topluluk',
     title: 'Aklına takılanı veterinere sor',
     text: 'Onaylı hekimler ve pati sahipleri yanıtlıyor.',
@@ -48,6 +61,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'sicak',
+    mascot: 'dog',
+    mood: 'sleepy',
+    color: 'butter',
     tag: 'Yaz',
     title: 'Sıcak çarpmasına dikkat',
     text: 'Arabada asla bırakma, yürüyüşleri serin saatlere al.',
@@ -57,6 +73,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'antifriz',
+    mascot: 'cat',
+    mood: 'surprised',
+    color: 'sky',
     tag: 'Kış',
     title: 'Antifriz tatlıdır, zehirlidir',
     text: 'Dökülen antifrizi hemen sil; birkaç yalamak bile tehlikeli.',
@@ -66,6 +85,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'parazit',
+    mascot: 'dog',
+    mood: 'wink',
+    color: 'mint',
     tag: 'Mevsim',
     title: 'Kene ve pire sezonu',
     text: 'Pire ve kene damlasının gününü takvime ekle.',
@@ -76,6 +98,9 @@ export const LOCAL_BANNERS: Banner[] = [
   },
   {
     id: 'hekim',
+    mascot: 'cat',
+    mood: 'wink',
+    color: 'rose',
     tag: 'Hekimler için',
     title: 'Veteriner hekim misiniz?',
     text: 'Kliniğinizi ücretsiz doğrulayın, sorulara yanıt verin.',
@@ -101,6 +126,9 @@ function parseRemote(id: string, x: any): RemoteBanner | null {
     cta: x.cta.slice(0, 20),
     route,
     url,
+    mascot: x.mascot === 'cat' || x.mascot === 'dog' || x.mascot === 'other' ? x.mascot : undefined,
+    mood: ['happy', 'sleepy', 'wink', 'surprised'].includes(x.mood) ? x.mood : undefined,
+    color: PASTEL_KEYS.includes(x.color) ? x.color : undefined,
     months: Array.isArray(x.months) ? x.months.filter((m: unknown) => typeof m === 'number') : undefined,
     when: x.when === 'no_pets' || x.when === 'has_pets' ? x.when : undefined,
     order: typeof x.order === 'number' ? x.order : 100,

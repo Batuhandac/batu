@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { Screen, Text, Group, ListRow, LogoMark, Wordmark, Card, Avatar, IconBadge, Icon } from '@/components/ds';
 import { useTheme } from '@/lib/theme';
+import { PetFace } from '@/components/art';
 import { Disclaimer } from '@/components/ui/Disclaimer';
 import { RulesSheet } from '@/components/community/Safety';
 import { unblockAll } from '@/lib/data/safety';
@@ -116,7 +117,8 @@ export default function SettingsScreen() {
       <Disclaimer />
 
       <View style={{ alignItems: 'center', marginTop: 28, gap: 6 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <PetFace species="cat" mood="sleepy" fur="grey" seed="ayarlar" size={72} background="lilac" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
           <LogoMark size={22} />
           <Wordmark size={15} />
         </View>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Text, Button, Checkbox, Icon, LogoMark, type IconName } from '@/components/ds';
-import { useTheme } from '@/lib/theme';
+import { Peek, peekOffset, usePastel } from '@/components/art';
+import { useTheme, radius } from '@/lib/theme';
 
-// Tek ekran: uygulamanın üç işi ve sorumluluk onayı (iOS "Yenilikler" ekranı düzeni).
+// Tek ekran: üstte kenardan bakan maskotlar, altta uygulamanın üç işi ve sorumluluk onayı.
 const FEATURES: { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'medkit-outline',
@@ -24,25 +25,36 @@ const FEATURES: { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
+const PEEK_W = 128;
+
 export default function WelcomeScreen() {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
+  const peach = usePastel('peach');
   const [accepted, setAccepted] = useState(false);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.surface }} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 24 }} showsVerticalScrollIndicator={false}>
-        <View style={{ alignItems: 'center' }}>
-          <LogoMark size={64} />
-          <Text variant="display" center style={{ marginTop: 12 }}>
-            Pati SOS'a hoş geldin
-          </Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: peach }} edges={['top']}>
+      <View style={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 64 }}>
+        <LogoMark size={44} />
+        <Text variant="display" style={{ marginTop: 12 }}>
+          Pati SOS'a{'\n'}hoş geldin
+        </Text>
+        <Text variant="body" tone="muted" style={{ marginTop: 6 }}>
+          Dostun için en yakın açık veteriner, aşı hatırlatması ve veterinere soru.
+        </Text>
+      </View>
 
-        <View style={{ marginTop: 36, gap: 24 }}>
+      <View style={{ flex: 1, backgroundColor: t.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }}>
+        {/* Kenardan bakan maskotlar: patileri kartın üstünde */}
+        <Peek species="cat" fur="ginger" seed="hosgeldin-kedi" width={PEEK_W} style={{ position: 'absolute', right: 150, top: -peekOffset(PEEK_W) }} />
+        <Peek species="dog" fur="cream" seed="hosgeldin-kopek" mood="wink" width={PEEK_W} style={{ position: 'absolute', right: 24, top: -peekOffset(PEEK_W) }} />
+
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 36, paddingBottom: 12, gap: 22 }} showsVerticalScrollIndicator={false}>
           {FEATURES.map((f) => (
             <View key={f.title} style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
-              <View style={{ width: 36, alignItems: 'center', paddingTop: 2 }}>
-                <Icon name={f.icon} size={30} color={t.primary} />
+              <View style={{ width: 32, alignItems: 'center', paddingTop: 2 }}>
+                <Icon name={f.icon} size={28} color={t.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="bodyStrong">{f.title}</Text>
@@ -52,20 +64,20 @@ export default function WelcomeScreen() {
               </View>
             </View>
           ))}
-        </View>
-      </ScrollView>
+        </ScrollView>
 
-      <View style={{ paddingHorizontal: 24, paddingBottom: 12 }}>
-        <Checkbox checked={accepted} onPress={() => setAccepted(!accepted)}>
-          <Text variant="caption" tone="muted" style={{ lineHeight: 18 }}>
-            Pati SOS'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve gitmeden önce kliniği
-            aramam gerektiğini anlıyorum.
+        <View style={{ paddingHorizontal: 24, paddingBottom: Math.max(insets.bottom, 12) + 4 }}>
+          <Checkbox checked={accepted} onPress={() => setAccepted(!accepted)}>
+            <Text variant="caption" tone="muted" style={{ lineHeight: 18 }}>
+              Pati SOS'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve gitmeden önce kliniği
+              aramam gerektiğini anlıyorum.
+            </Text>
+          </Checkbox>
+          <Button title="Devam" size="lg" full disabled={!accepted} onPress={() => router.push('/auth?from=onboarding')} style={{ marginTop: 16 }} />
+          <Text variant="caption" tone="subtle" center style={{ marginTop: 10 }}>
+            Ücretsiz · Üyelik gerekmez · Reklamsız
           </Text>
-        </Checkbox>
-        <Button title="Devam" size="lg" full disabled={!accepted} onPress={() => router.push('/auth?from=onboarding')} style={{ marginTop: 16 }} />
-        <Text variant="caption" tone="subtle" center style={{ marginTop: 10 }}>
-          Ücretsiz · Üyelik gerekmez · Reklamsız
-        </Text>
+        </View>
       </View>
     </SafeAreaView>
   );

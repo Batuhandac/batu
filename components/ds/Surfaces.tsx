@@ -5,6 +5,7 @@ import { useTheme, radius, hairline } from '@/lib/theme';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 import { IconButton } from './Button';
+import { PetFace, type FaceMood } from '@/components/art';
 
 export function Screen({
   children,
@@ -239,11 +240,14 @@ export function Group({ children, style }: { children: React.ReactNode; style?: 
 
 export function EmptyState({
   icon,
+  mascot,
   title,
   text,
   action,
 }: {
-  icon: IconName;
+  icon?: IconName;
+  /** İkon yerine sevimli bir maskot (günlük ekranlarda; hata ekranlarında ikon kullan) */
+  mascot?: { species: 'cat' | 'dog' | 'other'; mood?: FaceMood; fur?: string };
   title: string;
   text?: string;
   action?: React.ReactNode;
@@ -251,8 +255,12 @@ export function EmptyState({
   const t = useTheme();
   return (
     <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 28 }}>
-      <Icon name={icon} size={44} color={t.textSubtle} />
-      <Text variant="headline" center style={{ marginTop: 12 }}>
+      {mascot ? (
+        <PetFace species={mascot.species} mood={mascot.mood} fur={mascot.fur} seed={title} size={112} background="auto" />
+      ) : icon ? (
+        <Icon name={icon} size={44} color={t.textSubtle} />
+      ) : null}
+      <Text variant="headline" center style={{ marginTop: 14 }}>
         {title}
       </Text>
       {text ? (

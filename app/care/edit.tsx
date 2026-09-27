@@ -78,7 +78,7 @@ export default function CareEditScreen() {
   const markDone = async () => {
     if (!params.id) return;
     const next = await completeCare(params.id);
-    toast(next ? `Yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Yapıldı olarak kaydedildi');
+    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
     router.back();
   };
 

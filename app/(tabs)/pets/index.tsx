@@ -3,6 +3,7 @@ import { View, FlatList, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Text, Card, Button, Icon, IconButton } from '@/components/ds';
 import { PetAvatar } from '@/components/pets/PetAvatar';
+import { PetFace } from '@/components/art';
 import { useTheme, hairline } from '@/lib/theme';
 import { usePets } from '@/lib/hooks/usePets';
 import { upcomingCare, type CareItem } from '@/lib/data/care';
@@ -89,8 +90,13 @@ export default function PetsScreen() {
           contentContainerStyle={{ paddingBottom: 24 }}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 32 }}>
-              <Icon name="paw-outline" size={44} color={t.textSubtle} />
-              <Text variant="headline" center style={{ marginTop: 12 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <PetFace species="cat" seed="bos-kedi" fur="ginger" size={104} background="peach" />
+                <View style={{ marginLeft: -18 }}>
+                  <PetFace species="dog" seed="bos-kopek" fur="cream" mood="wink" size={104} background="mint" />
+                </View>
+              </View>
+              <Text variant="headline" center style={{ marginTop: 14 }}>
                 İlk dostunu ekle
               </Text>
               <Text variant="callout" tone="muted" center style={{ marginTop: 6 }}>

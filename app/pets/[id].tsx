@@ -5,7 +5,8 @@ import { Screen, Header, Text, Card, Button, Badge, Icon, Group, Section, Chip, 
 import { PetAvatar } from '@/components/pets/PetAvatar';
 import { CareRow } from '@/components/care/CareRow';
 import { WeightCard } from '@/components/care/WeightCard';
-import { useTheme, hairline } from '@/lib/theme';
+import { useTheme, hairline, radius } from '@/lib/theme';
+import { PASTELS, pastelOf } from '@/lib/art/faces';
 import { getPet, removePet, setPrimaryPet } from '@/lib/data/localStore';
 import { upcomingCare, doneCare, completeCare, loadWeights, removePetCare, kindMeta, type CareItem, type WeightEntry } from '@/lib/data/care';
 import { deletePetPhoto } from '@/lib/data/petPhoto';
@@ -62,11 +63,12 @@ export default function PetDetailScreen() {
   const done = async (item: CareItem) => {
     const next = await completeCare(item.id);
     track('care_done', { kind: item.kind });
-    toast(next ? `Yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Yapıldı olarak kaydedildi');
+    toast(next ? `Aferin, yapıldı. Sonraki: ${formatDate(next.due, false)}` : 'Aferin, yapıldı.', 'paw');
     load();
   };
 
   const age = petAge(pet);
+  const heroBg = PASTELS[t.dark ? 'dark' : 'light'][pastelOf(pet.id)];
   const emergencyRows = (
     [
       { label: 'Alerji', value: pet.allergies, alert: true },
@@ -101,9 +103,9 @@ export default function PetDetailScreen() {
       />
 
       {/* Profil */}
-      <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
-        <PetAvatar pet={pet} size={112} />
-        <Text variant="title" center style={{ marginTop: 14 }}>
+      <View style={{ alignItems: 'center', marginHorizontal: 20, paddingVertical: 20, paddingHorizontal: 16, borderRadius: radius.xl, backgroundColor: heroBg }}>
+        <PetAvatar pet={pet} size={120} plain={!pet.photo_uri} />
+        <Text variant="title" center style={{ marginTop: 10 }}>
           {pet.name}
         </Text>
         {facts ? (
@@ -120,10 +122,10 @@ export default function PetDetailScreen() {
 
       {bday && bday.days <= 14 ? (
         <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
-          <Card>
+          <Card style={{ backgroundColor: PASTELS[t.dark ? 'dark' : 'light'].butter }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Icon name="gift-outline" size={22} color={t.primary} />
-              <Text variant="body" style={{ flex: 1 }}>
+              <Icon name="gift-outline" size={22} color={t.text} />
+              <Text variant="bodyStrong" style={{ flex: 1 }}>
                 {bday.days === 0 ? `Bugün ${genitive(pet.name)} doğum günü! ${bday.turns} yaşında.` : `${pet.name} ${bday.days} gün sonra ${bday.turns} yaşında.`}
               </Text>
             </View>
