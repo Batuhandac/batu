@@ -1,0 +1,47 @@
+name: Klinik verisini güncelle (OpenStreetMap)
+
+# Uygulamanın çevrimdışı klinik listesini (lib/data/clinics.ts) OpenStreetMap'ten
+# yeniler ve değişiklik varsa aynı branch'e commit'ler.
+# - Manuel: Actions → bu workflow → Run workflow
+# - Otomatik: her ayın 1'i (main), ya da üretici script değişince (her branch)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 1 * *"
+  push:
+    paths:
+      - scripts/gen-clinics-osm.js
+      - .github/workflows/update-clinic-data.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clinic-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: OpenStreetMap'ten klinikleri indir
+        run: node scripts/gen-clinics-osm.js
+
+      - name: Değişiklik varsa commit'le
+        run: |
+          if git diff --quiet -- lib/data/clinics.ts; then
+            echo "Klinik verisinde değişiklik yok."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/data/clinics.ts
+          git commit -m "data: OpenStreetMap veteriner verisi güncellendi"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

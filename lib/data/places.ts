@@ -13,8 +13,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { haversine } from '@/lib/utils/geo';
-import { isAlwaysOpen, statusFromPeriods } from '@/lib/utils/openingHours';
+import { isAlwaysOpen, withLiveStatus } from '@/lib/utils/openingHours';
 import type { Clinic, OpeningPeriod } from '@/types';
 
 const KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? '';
@@ -156,17 +155,6 @@ export function toPlaceClinic(p: any): Clinic | null {
   };
 }
 
-/** Açık/kapalı durumunu (ve konum verildiyse mesafeyi) şu ana göre yeniler. */
-export function refreshPlaceStatus(c: Clinic, lat?: number, lng?: number): Clinic {
-  const status = c.is_24_7 ? 'open' : statusFromPeriods(c.opening_periods);
-  return {
-    ...c,
-    status,
-    is_open_now: status === 'open',
-    distance_km: lat != null && lng != null ? haversine(lat, lng, c.lat, c.lng) : c.distance_km,
-  };
-}
-
 // ─── Cihaz önbelleği ─────────────────────────────────────────────────────────
 
 interface CacheShape {
@@ -275,7 +263,7 @@ export async function fetchPlacesClinics(lat: number, lng: number): Promise<Clin
     }
     base = await pending;
   }
-  return base.map((c) => refreshPlaceStatus(c, lat, lng));
+  return base.map((c) => withLiveStatus(c, lat, lng));
 }
 
 /** Tek Google kliniği (detay ekranı): önce önbellek, yoksa Place Details. */
@@ -283,11 +271,11 @@ export async function fetchPlaceClinic(clinicId: string): Promise<Clinic | null>
   if (!clinicId.startsWith('gp-')) return null;
   const cache = await loadCache();
   const cached = cache.places[clinicId];
-  if (cached) return refreshPlaceStatus(cached);
+  if (cached) return withLiveStatus(cached);
   if (!isPlacesConfigured) return null;
 
   const placeId = encodeURIComponent(clinicId.slice(3));
   const p = await request(`places/${placeId}?languageCode=tr&regionCode=TR`, DETAILS_MASK);
   const c = toPlaceClinic(p);
-  return c ? refreshPlaceStatus(c) : null;
+  return c ? withLiveStatus(c) : null;
 }

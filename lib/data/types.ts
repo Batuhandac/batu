@@ -1,8 +1,8 @@
-// Yerel (offline) klinik veri tipi. last_verified_at burada "kaç gün önce
-// doğrulandı" olarak saklanır (null = hiç doğrulanmadı); açık-mı ve skor
-// hesabı çalışma anında lib/data/query.ts içinde yapılır.
+// Gömülü (çevrimdışı) klinik kaydı — scripts/gen-clinics-osm.js üretir.
+// Kaynak OpenStreetMap; çalışma saatleri OSM opening_hours metni olarak
+// saklanır, açık/kapalı durumu çalışma anında cihazda hesaplanır.
 export interface SeedClinic {
-  id: string;
+  id: string; // "osm-n123" (node), "osm-w456" (way), "osm-r789" (relation)
   name: string;
   address: string | null;
   district: string | null;
@@ -10,11 +10,6 @@ export interface SeedClinic {
   lat: number;
   lng: number;
   phone: string | null;
-  is_24_7: boolean;
-  accepts_emergency: boolean;
-  has_night_shift: boolean;
-  is_verified: boolean;
-  verification_status: string;
-  verified_days_ago: number | null;
-  rating: number | null;
+  opening_hours: string | null;
+  emergency: boolean; // OSM emergency=yes ya da adında acil/7/24/nöbetçi
 }

@@ -12,15 +12,15 @@ import { PhotosSection } from '@/components/clinic/PhotosSection';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { GoogleAttribution } from '@/components/ui/GoogleAttribution';
-import { getClinicById, getClinicHours, seedToClinic } from '@/lib/data/query';
+import { getClinicById, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { ReviewsSection } from '@/components/clinic/ReviewsSection';
-import { fetchPlaceClinic, refreshPlaceStatus } from '@/lib/data/places';
+import { fetchPlaceClinic } from '@/lib/data/places';
+import { withLiveStatus } from '@/lib/utils/openingHours';
 import { track } from '@/lib/analytics';
 import { scheduleCallFeedback } from '@/lib/notifications';
-import type { Clinic, ClinicHours } from '@/types';
+import type { Clinic } from '@/types';
 
-const DOW = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
 function Stat({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
@@ -34,7 +34,6 @@ function Stat({ label, value, valueColor }: { label: string; value: string; valu
 export default function ClinicDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [clinic, setClinic] = useState<Clinic | null>(null);
-  const [hours, setHours] = useState<ClinicHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDirections, setShowDirections] = useState(false);
   const { isFav, isPrimaryVet, toggle, setPrimaryVet, load: loadFavs } = useFavorites();
@@ -44,7 +43,6 @@ export default function ClinicDetailScreen() {
     loadClinic().then((c) => {
       if (!alive) return;
       setClinic(c);
-      setHours(c && getClinicById(id) ? getClinicHours(id) : []);
       setLoading(false);
     });
     loadFavs();
@@ -60,7 +58,7 @@ export default function ClinicDetailScreen() {
   const loadClinic = async (): Promise<Clinic | null> => {
     setLoading(true);
     const reg = getRegisteredClinic(id);
-    if (reg) return reg.source === 'google' ? refreshPlaceStatus(reg) : reg;
+    if (reg) return withLiveStatus(reg);
     const seed = getClinicById(id);
     if (seed) return seedToClinic(seed);
     return fetchPlaceClinic(id).catch(() => null);
@@ -123,7 +121,7 @@ export default function ClinicDetailScreen() {
   const open = clinic.status === 'open' || clinic.is_24_7;
   const statusLabel = open ? 'Açık' : clinic.status === 'closed' ? 'Kapalı' : 'Bilinmiyor';
   const statusColor = open ? '#68D391' : clinic.status === 'closed' ? '#FC8181' : '#c4c6cc';
-  const weekdayText = hours.length === 0 ? clinic.weekday_text ?? [] : [];
+  const weekdayText = clinic.weekday_text ?? [];
   const initial = clinic.name.trim().charAt(0).toUpperCase();
 
   return (
@@ -229,19 +227,6 @@ export default function ClinicDetailScreen() {
             <View>
               <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide">Telefon</Text>
               <Text className="text-white text-sm mt-1">{clinic.phone}</Text>
-            </View>
-          )}
-          {hours.length > 0 && (
-            <View>
-              <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Çalışma Saatleri</Text>
-              {hours.map(h => (
-                <View key={h.id} className="flex-row justify-between py-0.5">
-                  <Text className="text-gray-text text-sm w-10">{DOW[h.weekday]}</Text>
-                  <Text className="text-white text-sm">
-                    {h.is_closed ? 'Kapalı' : h.is_overnight ? '00:00 – 00:00 (gece)' : `${h.open_time?.slice(0,5)} – ${h.close_time?.slice(0,5)}`}
-                  </Text>
-                </View>
-              ))}
             </View>
           )}
           {weekdayText.length > 0 && (
