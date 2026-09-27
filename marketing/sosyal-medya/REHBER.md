@@ -1,5 +1,7 @@
 # Pati SOS — Sosyal medya rehberi
 
+> Instagram için hazır açılış paketi (sıra, metinler, Reels, kurulum): `INSTAGRAM.md`.
+
 Uygulamadaki sade dilin sosyal medyadaki karşılığı. Amaç takipçi toplamak değil,
 insanların acil anında Pati SOS'u hatırlaması ve her gün bakım takvimi için açması.
 Tasarım ve dil kuralları `brand/BRAND.md`, arka plandaki araştırma `docs/ARASTIRMA.md`.
@@ -63,6 +65,8 @@ Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zama
 | `05_4-ekim.png` | 1080×1350 | 4 Ekim Hayvanları Koruma Günü |
 | `06a` … `06g` | 1080×1350 | Kaydırmalı gönderi: beklemeden veterinere gitmen gereken 5 durum (7 sayfa) |
 | `07_hikaye-acil.png`, `08_hikaye-bakim.png` | 1080×1920 | Hikâye |
+| `00_merhaba.png`, `09_maskotunu-sec.png`, `10_kim-patron.png` | 1080×1350 | Açılış gönderileri (tanışma, maskot, etkileşim) |
+| `../reels/*.mp4` | 1080×1920 | Reels: Gece 03:00, aşı 10 saniyede, maskotunu seç (sessiz; müzik Instagram'da eklenir) |
 
 App Store ekran görüntüleri aynı dille yenilendi: `store/screenshots/01_acil.png` … `07_gece.png`.
 
