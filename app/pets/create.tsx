@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Alert, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Screen, Header, Text, Field, Segmented, Button } from '@/components/ds';
+import * as ImagePicker from 'expo-image-picker';
+import { Screen, Header, Text, Field, Segmented, Button, DateField, SwitchRow, Icon } from '@/components/ds';
+import { PetAvatar } from '@/components/pets/PetAvatar';
 import { usePets } from '@/lib/hooks/usePets';
 import { getPet } from '@/lib/data/localStore';
+import { savePetPhoto } from '@/lib/data/petPhoto';
+import { useTheme } from '@/lib/theme';
 import { track } from '@/lib/analytics';
 
 type Species = 'dog' | 'cat' | 'other';
@@ -33,6 +37,22 @@ export default function PetFormScreen() {
   const [ownerPhone, setOwnerPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState<string | undefined>();
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState<string | null>(null);
+  const [sex, setSex] = useState<'female' | 'male' | null>(null);
+  const [neutered, setNeutered] = useState(false);
+  const [chipNo, setChipNo] = useState('');
+  const t = useTheme();
+
+  const pickPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Galeri izni gerekli', 'Fotoğraf eklemek için Ayarlar’dan galeri erişimine izin ver.');
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
+    if (!res.canceled && res.assets?.[0]) setPhoto(res.assets[0].uri);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -51,6 +71,11 @@ export default function PetFormScreen() {
       setEmergencyNote(p.emergency_note ?? '');
       setOwnerName(p.owner_name ?? '');
       setOwnerPhone(p.owner_phone ?? '');
+      setPhoto(p.photo_uri ?? null);
+      setBirthDate(p.birth_date ?? null);
+      setSex(p.sex ?? null);
+      setNeutered(!!p.neutered);
+      setChipNo(p.chip_no ?? '');
     });
   }, [id]);
 
@@ -61,6 +86,9 @@ export default function PetFormScreen() {
     }
     setSaving(true);
     try {
+      const existing = id ? await getPet(id) : null;
+      const photoUri = photo && photo !== existing?.photo_uri ? await savePetPhoto(photo, id ?? 'new') : photo;
+      if (photoUri && photoUri !== existing?.photo_uri) track('pet_photo_added');
       const pet = await upsert({
         ...(id ? { id } : {}),
         name: name.trim(),
@@ -76,6 +104,11 @@ export default function PetFormScreen() {
         emergency_note: emergencyNote.trim() || null,
         owner_name: ownerName.trim() || null,
         owner_phone: ownerPhone.trim() || null,
+        photo_uri: photoUri,
+        birth_date: birthDate,
+        sex,
+        neutered: sex ? neutered : null,
+        chip_no: chipNo.trim() || null,
       });
       if (!editing) track('pet_card_created', { pet_id: pet.id });
       router.back();
@@ -91,11 +124,31 @@ export default function PetFormScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <Screen scroll edges={[]}>
           <Header
-            title={editing ? 'Kartı düzenle' : 'Acil kart oluştur'}
-            subtitle="Acil anında veterinere söylemen gerekenler burada durur ve Acil Mod'da otomatik gösterilir. Bilgiler yalnızca telefonunda saklanır."
+            title={editing ? 'Profili düzenle' : 'Dost ekle'}
+            subtitle="Profil, bakım takvimi ve acil kart için. Bilgiler yalnızca telefonunda saklanır."
             onBack={() => router.back()}
           />
           <View style={{ paddingHorizontal: 20 }}>
+            <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Fotoğraf seç" style={{ alignSelf: 'center', marginBottom: 20 }}>
+              <PetAvatar pet={{ name: name || '?', photo_uri: photo }} size={104} />
+              <View
+                style={{
+                  position: 'absolute',
+                  right: -4,
+                  bottom: -4,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: t.primary,
+                  borderWidth: 3,
+                  borderColor: t.bg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="camera" size={17} color={t.onPrimary} />
+              </View>
+            </Pressable>
             <Field
               label="Adı"
               value={name}
@@ -120,14 +173,37 @@ export default function PetFormScreen() {
               ]}
             />
             <Field label="Irkı" value={breed} onChangeText={setBreed} placeholder="Örn. Golden Retriever" />
+            <DateField
+              label="Doğum tarihi (biliyorsan)"
+              value={birthDate}
+              onChange={setBirthDate}
+              maximumToday
+              optional
+              hint="Yaşını otomatik hesaplar, doğum gününü hatırlatırız."
+            />
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Field label="Yaşı" value={ageYears} onChangeText={setAgeYears} placeholder="3" keyboardType="decimal-pad" />
-              </View>
+              {!birthDate ? (
+                <View style={{ flex: 1 }}>
+                  <Field label="Yaşı (yaklaşık)" value={ageYears} onChangeText={setAgeYears} placeholder="3" keyboardType="decimal-pad" />
+                </View>
+              ) : null}
               <View style={{ flex: 1 }}>
                 <Field label="Kilosu (kg)" value={weightKg} onChangeText={setWeightKg} placeholder="25" keyboardType="decimal-pad" />
               </View>
             </View>
+            <Text variant="caption" tone="muted" style={{ marginBottom: 6 }}>
+              Cinsiyeti
+            </Text>
+            <Segmented
+              value={sex}
+              onChange={setSex}
+              options={[
+                { key: 'female', label: 'Dişi' },
+                { key: 'male', label: 'Erkek' },
+              ]}
+            />
+            {sex ? <SwitchRow label="Kısırlaştırıldı" value={neutered} onValueChange={setNeutered} /> : null}
+            <Field label="Çip numarası" value={chipNo} onChangeText={setChipNo} placeholder="15 haneli numara" keyboardType="number-pad" maxLength={20} hint="Kaybolursa bulan kişi ya da klinik seni bununla bulur." />
 
             <Text variant="overline" tone="subtle" style={{ marginTop: 8, marginBottom: 12 }}>
               Sağlık bilgileri · isteğe bağlı
@@ -151,7 +227,7 @@ export default function PetFormScreen() {
             <Field label="Adın" value={ownerName} onChangeText={setOwnerName} placeholder="Adın soyadın" />
             <Field label="Telefonun" value={ownerPhone} onChangeText={setOwnerPhone} placeholder="05xx xxx xx xx" keyboardType="phone-pad" />
 
-            <Button title={editing ? 'Değişiklikleri kaydet' : 'Kartı kaydet'} size="lg" full loading={saving} onPress={save} style={{ marginTop: 8 }} />
+            <Button title={editing ? 'Değişiklikleri kaydet' : 'Kaydet'} size="lg" full loading={saving} onPress={save} style={{ marginTop: 8 }} />
           </View>
         </Screen>
       </KeyboardAvoidingView>

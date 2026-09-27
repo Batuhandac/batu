@@ -1,13 +1,16 @@
 import { Share, Linking } from 'react-native';
 import type { Pet } from '@/types';
-import { speciesLabel } from '@/lib/utils/pets';
+import { speciesLabel, petAge, sexLabel } from '@/lib/utils/pets';
 
 export function buildPetCardText(pet: Pet): string {
   const lines: string[] = ['PATİ SOS · ACİL SAĞLIK KARTI', '', pet.name];
   const meta: string[] = [];
   if (pet.species) meta.push(speciesLabel(pet.species));
   if (pet.breed) meta.push(pet.breed);
-  if (pet.age_years) meta.push(`${pet.age_years} yaş`);
+  const age = petAge(pet);
+  if (age) meta.push(age);
+  const sex = sexLabel(pet);
+  if (sex) meta.push(sex);
   if (pet.weight_kg) meta.push(`${pet.weight_kg} kg`);
   if (meta.length) lines.push(meta.join(' / '));
   if (pet.allergies) lines.push(`Alerji: ${pet.allergies}`);
@@ -15,6 +18,7 @@ export function buildPetCardText(pet: Pet): string {
   if (pet.medications) lines.push(`İlaçlar: ${pet.medications}`);
   if (pet.last_vaccine_date) lines.push(`Son aşı: ${pet.last_vaccine_date}`);
   if (pet.last_parasite_date) lines.push(`Son parazit: ${pet.last_parasite_date}`);
+  if (pet.chip_no) lines.push(`Çip no: ${pet.chip_no}`);
   if (pet.emergency_note) lines.push(`ACİL NOT: ${pet.emergency_note}`);
   if (pet.owner_name || pet.owner_phone) {
     lines.push(`Sahip: ${[pet.owner_name, pet.owner_phone].filter(Boolean).join(' — ')}`);

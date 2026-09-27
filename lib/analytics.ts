@@ -16,7 +16,8 @@ type EventName =
   | 'community_clinic_added' | 'review_added' | 'clinic_photo_added'
   | 'banner_tap' | 'question_posted' | 'answer_posted' | 'message_sent'
   | 'conversation_started' | 'whatsapp_tap' | 'vet_login' | 'review_reply'
-  | 'sign_up' | 'sign_in' | 'account_deleted';
+  | 'sign_up' | 'sign_in' | 'account_deleted'
+  | 'care_saved' | 'care_done' | 'weight_added' | 'pet_photo_added';
 
 interface EventProps {
   clinic_id?: string;

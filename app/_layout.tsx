@@ -18,7 +18,7 @@ import { useOnboardingStore } from '@/stores/onboarding';
 import { useSession } from '@/stores/session';
 import { track } from '@/lib/analytics';
 import { useTheme } from '@/lib/theme';
-import { LogoMark } from '@/components/ds';
+import { LogoMark, ToastHost } from '@/components/ds';
 
 const HANDLED_KEY = 'patisos:handled_notification';
 
@@ -28,7 +28,7 @@ const HANDLED_KEY = 'patisos:handled_notification';
 async function openNotification(response: Notifications.NotificationResponse | null) {
   if (!response) return;
   const data = response.notification.request.content.data as
-    | { type?: string; clinicId?: string; conversationId?: string }
+    | { type?: string; clinicId?: string; conversationId?: string; petId?: string }
     | undefined;
   const key = response.notification.request.identifier;
   try {
@@ -39,6 +39,8 @@ async function openNotification(response: Notifications.NotificationResponse | n
     router.push({ pathname: '/clinic/[id]', params: { id: data.clinicId, feedback: '1' } });
   } else if (data?.type === 'message' && data.conversationId) {
     router.push({ pathname: '/messages/[id]', params: { id: data.conversationId } });
+  } else if (data?.type === 'care' && data.petId) {
+    router.push({ pathname: '/pets/[id]', params: { id: data.petId } });
   }
 }
 
@@ -105,7 +107,9 @@ export default function RootLayout() {
         <Stack.Screen name="auth/owner" options={{ presentation: 'card' }} />
         <Stack.Screen name="auth/vet" options={{ presentation: 'card' }} />
         <Stack.Screen name="account/index" options={{ presentation: 'card' }} />
+        <Stack.Screen name="care/edit" options={{ presentation: 'modal' }} />
       </Stack>
+      <ToastHost />
     </GestureHandlerRootView>
   );
 }

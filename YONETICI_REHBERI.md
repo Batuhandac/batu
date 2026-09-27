@@ -134,8 +134,8 @@ uygular; kullanıcılar birbirini engelleyebilir. Tıbbi açıdan tehlikeli bir 
 
 ## 8. Ana sayfa bannerları (`app_banners`)
 
-Uygulamayla gelen bannerlar (`lib/content/banners.ts`): `sor`, `kart`, `sicak` (Haz–Eyl),
-`antifriz` (Kas–Mar), `parazit` (Nis–Eki), `ara`, `hekim`. Uygulamayı güncellemeden
+Uygulamayla gelen bannerlar (`lib/content/banners.ts`): `takvim`, `profil`, `sor`, `sicak`
+(Haz–Eyl), `antifriz` (Kas–Mar), `parazit` (Nis–Eki), `hekim`. Uygulamayı güncellemeden
 yeni banner eklemek için `app_banners` koleksiyonuna belge ekle:
 
 | Alan | Tür | Açıklama |
@@ -143,7 +143,7 @@ yeni banner eklemek için `app_banners` koleksiyonuna belge ekle:
 | `title` | string | En çok 60 karakter |
 | `text` | string | En çok 90 karakter |
 | `cta` | string | Düğme yazısı, en çok 20 karakter |
-| `route` | string | Uygulama içi sayfa: `/community`, `/first-aid`, `/pets/create`, `/nearby`, `/vets` |
+| `route` | string | Uygulama içi sayfa: `/community`, `/first-aid`, `/pets/create`, `/care/edit`, `/nearby`, `/vet` |
 | `url` | string | Ya da `https://` ile başlayan bağlantı |
 | `tag` | string | Küçük etiket: `Yeni`, `Bayram`, `İpucu` |
 | `art` | string | `emergency`, `petcard`, `community`, `vet`, `heat`, `vaccine`, `shield`, `chat` |

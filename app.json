@@ -56,7 +56,8 @@
           "color": "#13695E",
           "sounds": []
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "patisos",
     "experiments": {

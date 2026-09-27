@@ -56,6 +56,11 @@ export async function upsertPet(pet: Partial<Pet> & { name: string }): Promise<P
     emergency_note: pet.emergency_note ?? null,
     owner_name: pet.owner_name ?? null,
     owner_phone: pet.owner_phone ?? null,
+    photo_uri: pet.photo_uri ?? null,
+    birth_date: pet.birth_date ?? null,
+    sex: pet.sex ?? null,
+    neutered: pet.neutered ?? null,
+    chip_no: pet.chip_no ?? null,
     is_primary: pets.length === 0 ? true : (pet.is_primary ?? false), // ilk pet otomatik ana
     created_at: now,
     updated_at: now,

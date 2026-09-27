@@ -103,6 +103,12 @@ export interface Pet {
   emergency_note: string | null;
   owner_name: string | null;
   owner_phone: string | null;
+  // Profil (isteğe bağlı; eski kayıtlarda olmayabilir)
+  photo_uri?: string | null;   // cihazdaki fotoğraf
+  birth_date?: string | null;  // YYYY-MM-DD
+  sex?: 'female' | 'male' | null;
+  neutered?: boolean | null;
+  chip_no?: string | null;
   is_primary: boolean;
   created_at: string;
   updated_at: string;

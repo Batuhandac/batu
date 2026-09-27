@@ -73,7 +73,10 @@ export default function NearbyScreen() {
             {clinics.length > 0 ? `${openCount} açık · toplam ${clinics.length} klinik` : 'Açık ve yakın olanlar önce gösterilir'}
           </Text>
         </View>
-        <Button title="Harita" icon="map-outline" variant="secondary" size="sm" onPress={() => router.push('/map')} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Button title="Harita" icon="map-outline" variant="secondary" size="sm" onPress={() => router.push('/map')} />
+          <Button title="Acil" icon="medkit" variant="sos" size="sm" onPress={() => router.push('/emergency')} accessibilityLabel="Acil mod" />
+        </View>
       </View>
       <LocationBar />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 14 }}>
