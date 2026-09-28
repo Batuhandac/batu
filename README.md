@@ -54,17 +54,45 @@ içinde yakındaki açık kliniği bul, tek dokunuşla ara.
 2. **Google Places (canlı)** — `EXPO_PUBLIC_GOOGLE_PLACES_KEY` tanımlıysa konumun
    çevresindeki en yakın veterinerler + 7/24/acil veterinerler. Telefon ve saat
    bilgisi OSM'den çok daha dolu. Kurulum: `.github/SECRETS_SETUP.md`.
-3. **Topluluk** — kullanıcıların eklediği klinikler (Firestore); yönetici onayından sonra görünür.
-4. **Klinik onaylı profiller** — veteriner hekimlerin "Bu klinik benim" başvurusu
+   Anahtar yoksa listede yalnızca OSM'deki klinikler olur.
+3. **Apple Haritalar (canlı, iOS, anahtarsız)** — `lib/data/apple.ts`, yerel Expo
+   modülü `modules/apple-poi` (MapKit `MKLocalSearch`). Ad, adres, telefon; saat yok.
+4. **Topluluk** — kullanıcıların eklediği klinikler (Firestore); yönetici onayından sonra görünür.
+5. **Klinik onaylı profiller** — veteriner hekimlerin "Bu klinik benim" başvurusu
    telefonla doğrulanınca yönetici `clinic_profiles` belgesini oluşturur; bu bilgiler
    diğer kaynakların üzerine yazılır. Süreç: `YONETICI_REHBERI.md`.
 
 Aynı klinik birden çok kaynakta varsa tek kayıt gösterilir (onaylı > Google > OSM >
-topluluk), eksik telefon/saat diğer kaynaktan tamamlanır. Açık/kapalı durumu her
+Apple > topluluk), eksik telefon/saat diğer kaynaktan tamamlanır. Açık/kapalı durumu her
 zaman çalışma saatlerinden cihazda hesaplanır; saat bilinmiyorsa "bilinmiyor" yazar.
 
 Sıralama satın alınamaz: yalnızca şu an açık olma, acil kabul, 7/24, doğrulanmış
 bilgi, telefonun olması, mesafe ve puan (`rankClinics`, `lib/data/query.ts`).
+Klinikler ekranında kullanıcı "Önerilen / En yakın / En yüksek puan" sıralamasını
+seçebilir ve ada, semte ya da ilçeye göre arayabilir (`useClinicSearch`).
+
+## Hekim paneli (web)
+
+Veteriner hekimler için tarayıcıdan hasta takibi: `app/panel`, `components/panel`,
+`lib/data/panel.ts`. Adres: `https://batuhandac.github.io/batu/hekim/panel` (GitHub
+Pages; `site-pages.yml` uygulamanın web sürümünü `/batu/hekim` altına derler).
+
+- Onaylı hekim hesabıyla giriş (uygulamadaki hekim hesabıyla aynı).
+- Hasta kartı: tür, ırk, doğum tarihi, kilo, çip, alerji, sahip bilgisi.
+- Kayıtlar: aşı, kuduz, iç/dış parazit, kontrol, ilaç, kilo, muayene notu. Türe göre
+  sonraki tarih önerilir (karma aşı 1 yıl, iç parazit 3 ay…); hekim değiştirebilir.
+- "Bu hafta": gecikmiş ve 7 gün içinde gelen aşı/kontroller; telefonu olan sahibe
+  WhatsApp ile hazır hatırlatma metni.
+- **Sahip bağlantısı:** sahip dostunun sayfasında "Veterinerime bağla" ile 24 saatlik
+  6 haneli kod alır (`lib/data/vetLink.ts`). Hekim kodu panele yazınca hasta kartı
+  dolu gelir. Hekimin girdiği kayıtlar sahip uygulamayı açınca takvime işlenir: aynı
+  türdeki bekleyen bakım "yapıldı" olur, sonraki tarih hekimin yazdığı olur ve bir gün
+  önce/gününde hatırlatma kurulur (`applyVetRecord`, `lib/data/care.ts`).
+- Firestore: `pet_links/{kod}`, `clinic_patients/{klinik}/patients/{hasta}/records`.
+  Kurallar ve emülatör testleri: `firestore.rules` (klinik yalnızca kendi hastalarını,
+  sahip yalnızca kendi dostunun kaydını görür).
+
+Sırada: randevu, tahsilat kaydı ve e-Arşiv, yazarkasa POS'a tutar gönderme (GMP3).
 
 ## App Store
 

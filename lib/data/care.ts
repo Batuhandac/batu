@@ -180,6 +180,31 @@ export async function completeCare(id: string, doneOn = todayISO()): Promise<Car
   return next;
 }
 
+/**
+ * Veterinerin panelden girdiği kaydı takvime işler: bekleyen aynı türdeki bakım
+ * (yoksa yeni bir geçmiş kaydı) o tarihte yapıldı sayılır; hekim sonraki tarihi
+ * yazdıysa bir sonraki bakım o gün olur ve hatırlatmaları kurulur.
+ */
+export async function applyVetRecord(
+  petId: string,
+  r: { kind: CareKind; title: string; date: string; next_due: string | null; note: string | null }
+): Promise<void> {
+  const pending = (await upcomingCare(petId)).filter((c) => c.kind === r.kind);
+  const target = pending[0] ?? (await saveCareItem({ pet_id: petId, kind: r.kind, title: r.title, due: r.date, repeat_days: null, note: r.note }));
+  const next = await completeCare(target.id, r.date);
+  if (r.next_due) {
+    await saveCareItem({
+      id: next?.id,
+      pet_id: petId,
+      kind: r.kind,
+      title: next?.title ?? r.title,
+      due: r.next_due,
+      repeat_days: next?.repeat_days ?? kindMeta(r.kind).repeat,
+      note: next?.note ?? null,
+    });
+  }
+}
+
 export async function removePetCare(petId: string): Promise<void> {
   const all = await readJSON<CareItem>(CARE_KEY);
   for (const c of all.filter((x) => x.pet_id === petId)) await cancel(c.notif_id);

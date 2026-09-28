@@ -9,11 +9,14 @@ export function Chip({
   active,
   onPress,
   icon,
+  onSurface,
 }: {
   label: string;
   active?: boolean;
   onPress?: () => void;
   icon?: IconName;
+  /** Beyaz kartın içindeyse gri zemin: yoksa seçili olmayan hap kaybolur */
+  onSurface?: boolean;
 }) {
   const t = useTheme();
   return (
@@ -28,7 +31,7 @@ export function Chip({
         paddingHorizontal: 14,
         height: 36,
         borderRadius: radius.pill,
-        backgroundColor: active ? t.primary : t.surface,
+        backgroundColor: active ? t.primary : onSurface ? t.surfaceAlt : t.surface,
         opacity: pressed ? 0.6 : 1,
       })}
     >

@@ -1,16 +1,14 @@
 name: Site → GitHub Pages
 
-# Gizlilik, kullanım koşulları ve destek sayfalarını (site/) yayınlar. App Store bu
-# adresleri ister. Yalnızca herkese açık Batuhandac/batu deposunda çalışır; bir kez
-# Settings → Pages → Source: "GitHub Actions" seçilmesi gerekir (store/APP_STORE.md).
+# Gizlilik, kullanım koşulları ve destek sayfalarını (site/) ve hekim panelini
+# (uygulamanın web sürümü, /hekim/panel) yayınlar. Yalnızca herkese açık
+# Batuhandac/batu deposunda çalışır; bir kez Settings → Pages → Source:
+# "GitHub Actions" seçilmesi gerekir (store/APP_STORE.md).
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths:
-      - "site/**"
-      - ".github/workflows/site-pages.yml"
 
 permissions:
   contents: read
@@ -30,6 +28,20 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Hekim panelini derle (web)
+        run: |
+          npm install --legacy-peer-deps --no-audit --no-fund
+          EXPO_BASE_URL=/batu/hekim npx expo export --platform web --output-dir dist-web
+          mkdir -p site/hekim
+          cp -R dist-web/. site/hekim/
+          # Tek sayfalık uygulama: /hekim/panel/hasta/… gibi adresler yenilenince
+          # GitHub Pages 404.html'i sunar; o da uygulamayı açıp doğru ekrana gider.
+          cp dist-web/index.html site/404.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

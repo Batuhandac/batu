@@ -115,6 +115,15 @@ iste; ya da Authentication → Users → Add user ile hesabı sen aç ve oluşan
 Yeni mesajlar hekimin telefonuna bildirim olarak gider (Expo Push; sunucu gerekmez).
 Hekim ayrılırsa: Authentication'da kullanıcıyı **Disable** et, `vets` belgesini sil.
 
+## 6b. Hekim paneli (web)
+
+Onaylı hekimler (6. bölüm) `https://batuhandac.github.io/batu/hekim/panel` adresinden
+aynı e-posta ve şifreyle girer; ayrıca hesap açmaya gerek yok. Panelde hasta kartları ve
+aşı/muayene kayıtları tutulur (`clinic_patients/{clinic_id}/patients`). Sahip,
+uygulamada "Veterinerime bağla" ile kod alır; hekim kodu girince kayıtlar sahibin
+takvimine düşer. Yönetici olarak yapman gereken bir şey yok; bir kliniğin kayıtlarını
+silmek gerekirse Firestore'da `clinic_patients/{clinic_id}` altını sil.
+
 ## 7. Topluluk ve şikayetler (`content_reports`)
 
 Kullanıcılar soru, yanıt, yorum ve mesajları **Bildir** ile şikayet edebilir. Her şikayet

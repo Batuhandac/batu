@@ -7,6 +7,8 @@ export const LINKS = {
   privacy: `${SITE}/gizlilik`,
   terms: `${SITE}/kosullar`,
   support: `${SITE}/destek`,
+  // Hekim paneli (web): hasta takibi, aşı kayıtları
+  panel: `${SITE}/hekim/panel`,
 };
 
 export const SUPPORT_EMAIL = 'destek@patiport.app';

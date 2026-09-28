@@ -13,6 +13,7 @@ import { useLocation } from '@/lib/hooks/useLocation';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useMyQuestions, useUnreadMessages } from '@/lib/hooks/useCommunity';
 import { loadCachedRemoteBanners, fetchRemoteBanners, selectBanners } from '@/lib/content/banners';
+import { syncVetRecordsSometimes } from '@/lib/data/vetLink';
 import { upcomingCare, completeCare, type CareItem } from '@/lib/data/care';
 import { clinicStatus, formatDistance, pickBestClinic } from '@/lib/utils/status';
 import { dueLabel, formatDate, todayISO } from '@/lib/utils/dates';
@@ -77,6 +78,13 @@ export default function HomeScreen() {
       game.reload();
       myQuestions.reload();
       refreshNearest();
+      // Veterinerin panelden girdiği yeni kayıtlar takvime düşsün
+      syncVetRecordsSometimes().then((added) => {
+        if (!added.length) return;
+        toast(`${added[0].clinic_name} ${added.length} kayıt ekledi: ${added.map((x) => x.title).join(', ')}`, 'medkit');
+        loadCare();
+        game.reload();
+      });
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loadPets, loadCare, game.reload, myQuestions.reload, refreshNearest])
   );

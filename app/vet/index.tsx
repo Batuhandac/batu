@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, Text, Field, Button, Card, Group, ListRow, SwitchRow, Icon } from '@/components/ds';
 import { useTheme } from '@/lib/theme';
 import { useSession } from '@/stores/session';
 import { vetDisplayName } from '@/lib/auth';
-import { SUPPORT_EMAIL } from '@/lib/links';
+import { LINKS, SUPPORT_EMAIL } from '@/lib/links';
 import { fetchInbox, setInboxOpen, registerVetDevice, unregisterVetDevice, type ClinicInbox } from '@/lib/data/messages';
 import { useUnreadMessages } from '@/lib/hooks/useCommunity';
 
@@ -186,6 +186,7 @@ function Panel() {
       )}
 
       <Group>
+        <ListRow icon="people-outline" tint="mint" title="Hasta takibi" subtitle="Web paneli: aşılar, sonraki tarihler, hatırlatmalar" onPress={() => Linking.openURL(LINKS.panel)} />
         <ListRow icon="chatbubbles-outline" title="Gelen mesajlar" subtitle={unread > 0 ? `${unread} okunmamış konuşma` : 'Hasta sahipleriyle yazışmalar'} onPress={() => router.push('/messages')} />
         <ListRow icon="help-circle-outline" title="Yanıt bekleyen sorular" subtitle="Topluluktaki soruları yanıtlayın" onPress={() => router.push('/community')} />
         <ListRow icon="business-outline" title="Klinik sayfanız" onPress={() => router.push(`/clinic/${vet.clinic_id}`)} last />

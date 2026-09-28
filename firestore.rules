@@ -299,5 +299,79 @@ service cloud.firestore {
                     && stamped();
       allow update, delete: if false;
     }
+
+    // ── Hekim paneli: sahip ile klinik arasında eşleştirme kodu ─────────────
+    // Sahip dostunun kartından en fazla 2 gün geçerli 6 haneli bir kod üretir.
+    // Kodu giren hekim hasta kaydını açar ve kodu bir kez "bağlandı" işaretler;
+    // sahibin uygulaması böylece kliniğin kayıtlarını bulur. Kodlar listelenemez.
+    match /pet_links/{code} {
+      allow get: if signedIn()
+                 && (resource.data.owner_uid == me() || (isVet() && resource.data.expires_at > request.time));
+      allow list: if false;
+      allow create: if signedIn() && data().owner_uid == me()
+                    && code.matches('^[A-HJ-NP-Z2-9]{6}$')
+                    && str(data().pet_local_id, 1, 80)
+                    && data().pet is map && str(data().pet.name, 1, 60)
+                    && data().pet.species in ['dog', 'cat', 'other']
+                    && optStr('owner_name', 80) && optStr('owner_push', 200)
+                    && data().expires_at is timestamp
+                    && data().expires_at <= request.time + duration.value(2, 'd')
+                    && data().clinic_id == null && data().patient_id == null
+                    && stamped();
+      allow update: if isVet() && resource.data.clinic_id == null
+                    && resource.data.expires_at > request.time
+                    && onlyChanged(['clinic_id', 'patient_id', 'clinic_name', 'linked_at'])
+                    && data().clinic_id == vetDoc().clinic_id
+                    && str(data().patient_id, 1, 80) && str(data().clinic_name, 1, 120)
+                    && data().linked_at == request.time;
+      allow delete: if signedIn() && resource.data.owner_uid == me();
+    }
+
+    // ── Hekim paneli: klinik hasta kartları ve kayıtları ────────────────────
+    // Yalnızca o kliniğin hekimleri yazar. Kodla bağlanan hastanın sahibi kendi
+    // dostunun kartını ve kayıtlarını okuyabilir (uygulama takvimine aktarır).
+    match /clinic_patients/{clinicId}/patients/{pid} {
+      function patientDoc() { return get(/databases/$(database)/documents/clinic_patients/$(clinicId)/patients/$(pid)).data; }
+      function validPatient() {
+        return str(data().name, 1, 60) && data().species in ['dog', 'cat', 'other']
+          && optStr('breed', 60) && optStr('sex', 10) && optStr('birth_date', 10) && optStr('chip_no', 20)
+          && (!('weight_kg' in data()) || data().weight_kg == null || data().weight_kg is number)
+          && optStr('allergies', 300) && optStr('owner_name', 80) && optStr('owner_phone', 30)
+          && optStr('note', 500) && optStr('owner_push', 200) && optStr('pet_local_id', 80)
+          && optStr('next_due', 10) && optStr('next_due_title', 80)
+          && data().updated_at == request.time;
+      }
+      // Sahip, ancak kendi ürettiği kod üzerinden bağlanabilir
+      function ownerFromLink() {
+        return data().owner_uid == null
+          || (str(data().link_code, 6, 6)
+              && get(/databases/$(database)/documents/pet_links/$(data().link_code)).data.owner_uid == data().owner_uid);
+      }
+
+      allow read: if isClinicVet(clinicId) || (signedIn() && resource.data.owner_uid == me());
+      allow create: if isClinicVet(clinicId) && validPatient() && ownerFromLink()
+                    && data().created_at == request.time;
+      allow update: if isClinicVet(clinicId) && validPatient()
+                    && data().created_at == resource.data.created_at
+                    && data().owner_uid == resource.data.owner_uid;
+      allow delete: if isClinicVet(clinicId);
+
+      match /records/{rid} {
+        function validRecord() {
+          return data().kind in ['vaccine', 'rabies', 'internal_parasite', 'external_parasite', 'checkup',
+                                 'medication', 'grooming', 'other', 'weight', 'note']
+            && str(data().title, 1, 80) && str(data().date, 10, 10)
+            && optStr('next_due', 10) && optStr('note', 1000)
+            && (!('weight_kg' in data()) || data().weight_kg == null
+                || (data().weight_kg is number && data().weight_kg > 0 && data().weight_kg < 200))
+            && str(data().vet_name, 1, 80) && str(data().clinic_name, 1, 120)
+            && data().vet_uid == me();
+        }
+        allow read: if isClinicVet(clinicId) || (signedIn() && patientDoc().owner_uid == me());
+        allow create: if isClinicVet(clinicId) && validRecord() && data().created_at == request.time;
+        allow update: if isClinicVet(clinicId) && validRecord() && data().created_at == resource.data.created_at;
+        allow delete: if isClinicVet(clinicId);
+      }
+    }
   }
 }

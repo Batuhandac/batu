@@ -5,6 +5,7 @@ import { Screen, Header, Text, Card, Button, Badge, Icon, Group, Section, Chip, 
 import { PetAvatar } from '@/components/pets/PetAvatar';
 import { CareRow } from '@/components/care/CareRow';
 import { WeightCard } from '@/components/care/WeightCard';
+import { VetLinkSection } from '@/components/pets/VetLinkSection';
 import { useTheme, hairline, radius } from '@/lib/theme';
 import { PASTELS, pastelOf } from '@/lib/art/faces';
 import { cardFields, POINTS } from '@/lib/game';
@@ -186,6 +187,9 @@ export default function PetDetailScreen() {
           </Card>
         )}
       </Section>
+
+      {/* Veterinerin: kodla kliniğe bağlama, klinikten gelen kayıtlar */}
+      <VetLinkSection pet={pet} onChanged={load} />
 
       {/* Kilo */}
       <Section title="Kilo">
