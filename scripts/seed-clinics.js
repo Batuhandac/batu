@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pati SOS — Seed Script
+ * Patiport — Seed Script
  * Pulls Ankara vet clinics from Google Places API and upserts into Supabase.
  * Requires: GOOGLE_MAPS_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in env.
  *

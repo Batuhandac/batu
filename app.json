@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Pati SOS",
+    "name": "Patiport",
     "slug": "pati-sos",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -59,7 +59,7 @@
       ],
       "@react-native-community/datetimepicker"
     ],
-    "scheme": "patisos",
+    "scheme": "patiport",
     "experiments": {
       "typedRoutes": true
     },

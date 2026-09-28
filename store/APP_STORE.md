@@ -8,14 +8,20 @@ sayıldı. Emoji yok (marka dili).
 
 Bunları yalnızca hesap sahibi yapabilir. Sırayla:
 
-1. **Ad çakışmasını çöz.** App Store'da "PatiSOS - Pet Emergency" adlı, başka bir
-   geliştiriciye ait yayında bir uygulama var. www.patisos.app alan adı ve @patisosapp
-   Instagram hesabı o uygulamanın. Bizim adımız ona çok yakın. Apple bunu taklit
-   (4.1) ya da marka ihlali (5.2) sayarak reddedebilir, karşı taraf da şikâyet edebilir.
-   Karar verilene kadar gönderme.
-2. **Destek e-postası.** Uygulama ve sayfalar `support@patisos.app` diyor, ama bu alan
-   adı bizim değil. Sahip olduğumuz bir adresi seç. Uygulamada tek satır:
-   `lib/links.ts` → `SUPPORT_EMAIL`. Sayfalarda: `site/*.html` içinde aynı adres.
+1. **Adı App Store Connect'te değiştir.** Yeni ad **Patiport** ("PatiSOS - Pet Emergency"
+   başka bir geliştiricinin olduğu için değişti). App Store Connect → uygulama → App
+   Information → Name: `Patiport: Açık Veteriner, Aşı` (29). Bundle ID (`com.patisos.app`)
+   kullanıcıya görünmez, aynı kalır.
+2. **patiport.app alan adını al ve e-postayı kur.** Alan adı bugün boş; biri almadan al
+   (Cloudflare, Namecheap ya da Squarespace, yıllık yaklaşık 15 USD). Sonra:
+   - E-posta yönlendirme (Cloudflare Email Routing ücretsiz):
+     `destek@patiport.app` → kendi e-postan. Uygulama ve sayfalar bu adresi yazıyor
+     (`lib/links.ts` → `SUPPORT_EMAIL`, `site/*.html`).
+   - İstersen GitHub Pages'e özel alan adı olarak bağla (batu → Settings → Pages →
+     Custom domain). Eski `batuhandac.github.io/batu/...` bağlantıları kendiliğinden yeni
+     adrese yönlenir; uygulamayı yeniden derlemek gerekmez.
+   - Marka tescili için TÜRKPATENT'te "Patiport" araması yap; boşsa 44. ve 9. sınıflarda
+     başvurmayı düşün.
 3. **Gizlilik ve destek sayfalarını yayınla.** `site/` klasörü herkese açık
    `Batuhandac/batu` deposundan GitHub Pages ile yayınlanır:
    - github.com/Batuhandac/batu → Settings → Pages → Source: **GitHub Actions**.
@@ -46,8 +52,8 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
 | Alan | Değer |
 | --- | --- |
 | Birincil dil | Türkçe |
-| Ad (30) | `Pati SOS` (1. maddedeki karara göre değişebilir) |
-| Alt başlık (30) | `Açık veteriner, aşı takvimi` (27) |
+| Ad (30) | `Patiport: Açık Veteriner, Aşı` (29) |
+| Alt başlık (30) | `Aşı takvimi, sağlık kartı` (25) |
 | Birincil kategori | Yaşam Tarzı (Lifestyle) |
 | İkincil kategori | Yardımcı Araçlar (Utilities) |
 | Fiyat | Ücretsiz |
@@ -59,7 +65,7 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
 | Şifreleme | Yok (`ITSAppUsesNonExemptEncryption: false`) |
 
 Tıbbi kategori seçilmedi: Apple bu kategoride insan sağlığına yönelik ek belge ister,
-Pati SOS evcil hayvan uygulaması.
+Patiport evcil hayvan uygulaması.
 
 ### Tanıtım metni (170)
 
@@ -69,17 +75,17 @@ Yeni: Pati karnen! Aşıyı zamanında yap, dostunun kartını doldur, pati puan
 
 ### Anahtar kelimeler (100)
 
-Ad ve alt başlıktaki kelimeler (veteriner, aşı, takvim) tekrar edilmez; virgülden sonra
+Ad ve alt başlıktaki kelimeler (açık, veteriner, aşı, takvim, sağlık, kart) tekrar edilmez; virgülden sonra
 boşluk yok.
 
 ```
-acil,kedi,köpek,klinik,nöbetçi,hatırlatma,parazit,kuduz,karma,evcil,hayvan,sağlık,kilo,çip,pet
+acil,kedi,köpek,klinik,nöbetçi,hatırlatma,parazit,kuduz,karma,evcil,hayvan,kilo,çip,pet,bakım,rozet
 ```
 
 ### Açıklama
 
 ```
-Dostun hastalandığında ilk soru: hangi veteriner şu an açık? Pati SOS en yakın açık kliniği bulur, tek dokunuşla aratır. Aşı ve parazit günlerini hatırlatır, dostunun sağlık kartını cebinde taşır. Ücretsiz, üyelik gerekmez, reklamsız.
+Dostun hastalandığında ilk soru: hangi veteriner şu an açık? Patiport en yakın açık kliniği bulur, tek dokunuşla aratır. Aşı ve parazit günlerini hatırlatır, dostunun sağlık kartını cebinde taşır. Ücretsiz, üyelik gerekmez, reklamsız.
 
 ACİL ANINDA
 - En yakın açık klinik, uzaklığı ve telefonuyla ekranında. Tek dokunuşla ara, yol tarifini al.
@@ -105,7 +111,7 @@ GİZLİLİĞİN SENDE
 - Dostlarının kartları, bakım takvimin ve konumun yalnızca telefonunda durur.
 - Hesap açmadan kullanabilirsin. Reklam yok, seni izlemiyoruz.
 
-Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten ve kliniklerin kendisinden gelir. Pati SOS veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
+Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten ve kliniklerin kendisinden gelir. Patiport veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
 ```
 
 ### Ekran görüntüleri
@@ -167,7 +173,7 @@ telefonda kalır; Apple'ın tanımına göre "toplanan" veri değildir.
 ## İnceleme notları (App Review Information → Notes)
 
 ```
-Pati SOS, evcil hayvan sahipleri için ücretsiz bir uygulamadır. Hesap gerekmez: açılışta "Şimdilik hesapsız devam et" ile tüm sahip özellikleri kullanılabilir.
+Patiport, evcil hayvan sahipleri için ücretsiz bir uygulamadır. Hesap gerekmez: açılışta "Şimdilik hesapsız devam et" ile tüm sahip özellikleri kullanılabilir.
 
 - Acil: Ana sayfanın altındaki "Acil veteriner bul" konuma göre en yakın açık klinikleri gösterir. Konum izni verilmezse ilçe seçilebilir.
 - Bakım takvimi: Dostlarım sekmesinde bir dost ekleyip aşı tarihi girin; bir gün önce ve gününde yerel bildirim gelir.
@@ -184,7 +190,7 @@ Pati SOS, evcil hayvan sahipleri için ücretsiz bir uygulamadır. Hesap gerekme
 ## Gönderme
 
 1. `main` dalına push → iOS iş akışı build alır ve TestFlight'a yükler (`TESTFLIGHT.md`).
-2. App Store Connect → Pati SOS → iOS App → **1.0 Prepare for Submission**.
+2. App Store Connect → Patiport → iOS App → **1.0 Prepare for Submission**.
 3. Yukarıdaki metinleri, ekran görüntülerini, yaş derecelendirmesini, App Privacy
    yanıtlarını ve inceleme notlarını gir.
 4. **Build** bölümünden TestFlight'taki son build'i seç.

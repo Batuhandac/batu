@@ -1,4 +1,4 @@
-// Pati SOS maskotları: tombul kedi, köpek ve tavşan yüzleri.
+// Patiport maskotları: tombul kedi, köpek ve tavşan yüzleri.
 // Çizim burada şekil listesi olarak tanımlanır; uygulama (components/art) ve
 // pazarlama görselleri aynı kaynaktan çizer. Tuval 100×100, yüz ortada.
 // Kural: süs yok (parıltı, gradyan); sevimlilik yuvarlak hatlardan, yanaklardan

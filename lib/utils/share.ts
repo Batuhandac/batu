@@ -3,7 +3,7 @@ import type { Pet } from '@/types';
 import { speciesLabel, petAge, sexLabel } from '@/lib/utils/pets';
 
 export function buildPetCardText(pet: Pet): string {
-  const lines: string[] = ['PATİ SOS · ACİL SAĞLIK KARTI', '', pet.name];
+  const lines: string[] = ['PATİPORT · ACİL SAĞLIK KARTI', '', pet.name];
   const meta: string[] = [];
   if (pet.species) meta.push(speciesLabel(pet.species));
   if (pet.breed) meta.push(pet.breed);

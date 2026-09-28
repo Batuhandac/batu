@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Pati SOS — Firebase Storage kuralları (klinik ve topluluk fotoğrafları)
+// Patiport — Firebase Storage kuralları (klinik ve topluluk fotoğrafları)
 // Firebase Console → Storage → Rules sekmesine yapıştırıp Publish et.
 service firebase.storage {
   match /b/{bucket}/o {

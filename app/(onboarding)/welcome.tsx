@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
       <View style={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 64 }}>
         <LogoMark size={44} />
         <Text variant="display" style={{ marginTop: 12 }}>
-          Pati SOS'a{'\n'}hoş geldin!
+          Patiport'a{'\n'}hoş geldin!
         </Text>
         <Text variant="body" tone="muted" style={{ marginTop: 6 }}>
           Dostun için en yakın açık veteriner, aşı hatırlatması ve veterinere soru.
@@ -74,7 +74,7 @@ export default function WelcomeScreen() {
         <View style={{ paddingHorizontal: 24, paddingBottom: Math.max(insets.bottom, 12) + 4 }}>
           <Checkbox checked={accepted} onPress={() => setAccepted(!accepted)}>
             <Text variant="caption" tone="muted" style={{ lineHeight: 18 }}>
-              Pati SOS'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve gitmeden önce kliniği
+              Patiport'un teşhis ya da tedavi önermediğini, klinik bilgilerinin değişebileceğini ve gitmeden önce kliniği
               aramam gerektiğini anlıyorum.
             </Text>
           </Checkbox>

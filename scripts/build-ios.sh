@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pati SOS — iOS Build + TestFlight (tek seferlik)
+# Patiport — iOS Build + TestFlight (tek seferlik)
 set -e
 
 BRANCH="${BRANCH:-main}"
@@ -8,7 +8,7 @@ DIR="$HOME/pati-sos-build"
 
 echo ""
 echo "╔══════════════════════════════════════════╗"
-echo "║     Pati SOS → TestFlight Setup          ║"
+echo "║     Patiport → TestFlight Setup          ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 

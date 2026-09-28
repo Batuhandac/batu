@@ -1,4 +1,4 @@
--- Pati SOS — Full Database Schema
+-- Patiport — Full Database Schema
 -- Run this in Supabase SQL editor (as postgres/service role)
 
 -- Extensions

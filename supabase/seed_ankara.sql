@@ -1,7 +1,7 @@
 -- ⚠️ UYDURMA DEMO VERİSİ — GERÇEK KLİNİK DEĞİL. İsimler, telefonlar ve saatler
 -- örnek amaçlı üretildi. Gerçek kullanıcıya gösterilecek hiçbir ortama yükleme.
 -- Uygulamanın gerçek çevrimdışı verisi: lib/data/clinics.ts (OpenStreetMap).
--- ─── Pati SOS — Ankara Kapsamlı Klinik Verisi ────────────────────────────────
+-- ─── Patiport — Ankara Kapsamlı Klinik Verisi ────────────────────────────────
 -- 150+ klinik, 25 ilçe, gerçekçi çalışma saatleri
 -- Supabase SQL editöründe çalıştır (service role olarak)
 -- NOT: Bu dosyayı çalıştırmadan önce mevcut demo verisini temizlemek için:

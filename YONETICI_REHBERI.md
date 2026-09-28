@@ -18,7 +18,7 @@ Console** üzerinden yönetilir. Günde bir kez bakman yeterli; **şikayetlere
 
 ## 1. Veteriner hekim başvuruları (`clinic_claims`)
 
-Klinikler reklam veremediği için Pati SOS onlara **ücretsiz, doğru bilgi** ile
+Klinikler reklam veremediği için Patiport onlara **ücretsiz, doğru bilgi** ile
 görünürlük sunar. Başvuru gelince:
 
 1. `clinic_claims` koleksiyonunda `status: "pending"` olan belgeyi aç.

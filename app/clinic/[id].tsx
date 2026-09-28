@@ -79,7 +79,7 @@ export default function ClinicDetailScreen() {
   const handleWhatsApp = async () => {
     const digits = whatsappNumber(clinic?.phone ?? null);
     if (!digits) return;
-    const msg = encodeURIComponent('Merhaba, Pati SOS üzerinden ulaşıyorum.');
+    const msg = encodeURIComponent('Merhaba, Patiport üzerinden ulaşıyorum.');
     track('whatsapp_tap', { clinic_id: id });
     const url = `whatsapp://send?phone=${digits}&text=${msg}`;
     try {

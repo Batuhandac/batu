@@ -8,14 +8,15 @@ metnin sonunda, 3–5 tane.
 
 ## Hesap kurulumu
 
-1. Kullanıcı adı: [@patisos.app](https://www.instagram.com/patisos.app/) (alındı).
+1. Kullanıcı adı: `@patiport.app`. Mevcut `@patisos.app` hesabında Ayarlar → Profili düzenle →
+   Kullanıcı adı'ndan değiştir; takipçiler ve gönderiler korunur.
 2. Profesyonel hesaba geç (Ayarlar → Hesap türü ve araçlar → Profesyonel hesaba geç → İşletme).
    Kategori olarak uygulamaya en yakın kategoriyi seç.
 3. Profil fotoğrafı: `gorseller/profil.png` (logo) ya da `gorseller/profil-maskot.png`.
-4. Ad: `Pati SOS`
+4. Ad: `Patiport`
 5. Biyografi:
    > Acilde en yakın açık veteriner. Aşı ve bakım takvimi, sağlık kartı, veterinere soru. Ücretsiz, reklamsız.
-6. İletişim e-postası: `support@patisos.app`
+6. İletişim e-postası: `destek@patiport.app`
 7. Bağlantı: App Store sayfası yayına girince (`?ct=instagram` ekiyle). O zamana kadar boş.
 8. Öne çıkanlar: `one-cikan-acil`, `-bakim`, `-sor`, `-ilkyardim`. İlk hikâyeleri bu başlıklara ekle.
 
@@ -44,26 +45,26 @@ Kapak olarak `reels/*_kapak.png` dosyasını seç.
 ## Metinler
 
 **1 · Merhaba**
-> Merhaba! Biz Pati SOS.
+> Merhaba! Biz Patiport.
 > Dostun hastalandığında en yakın açık veterineri bulmak, aşı gününü unutmamak ve aklına takılanı bir veterinere sormak için bir uygulama yapıyoruz.
 > Ücretsiz, üyelik gerekmeden, reklamsız. Yakında App Store'da. Takip et, ilk kullananlardan ol.
-> #patisos #kedi #köpek #veteriner
+> #patiport #kedi #köpek #veteriner
 
-Alternatif metin: Pembe zeminde turuncu kedi, krem köpek ve beyaz tavşan maskotları; "Merhaba! Biz Pati SOS." yazısı.
+Alternatif metin: Pembe zeminde turuncu kedi, krem köpek ve beyaz tavşan maskotları; "Merhaba! Biz Patiport." yazısı.
 
 **2 · Tanıtım**
 > Gece 03:00'te dostun hastalandığında ilk soru: hangi veteriner şu an açık?
-> Pati SOS yakınındaki açık klinikleri bulur, tek dokunuşla aratır. Saatini bilmediğimiz bir kliniği açık göstermeyiz.
+> Patiport yakınındaki açık klinikleri bulur, tek dokunuşla aratır. Saatini bilmediğimiz bir kliniği açık göstermeyiz.
 > Ücretsiz, üyelik gerekmez, reklamsız.
-> #veteriner #acilveteriner #kedi #köpek #patisos
+> #veteriner #acilveteriner #kedi #köpek #patiport
 
 Alternatif metin: Uygulamanın acil ekranı: en uygun açık klinik ve "Şimdi ara" düğmesi; telefonun üstünden bakan kedi ve köpek.
 
 **R1 · Gece 03:00 (Reels)**
 > Gece 03:00. Dostun hasta, hangi veteriner açık?
-> Pati SOS'ta "Acil veteriner bul"a dokun: en yakın açık kliniği ve ararken ne söyleyeceğini gösterir.
+> Patiport'ta "Acil veteriner bul"a dokun: en yakın açık kliniği ve ararken ne söyleyeceğini gösterir.
 > Kaydet, lazım olabilir.
-> #acilveteriner #kedi #köpek #patisos
+> #acilveteriner #kedi #köpek #patiport
 
 **3 · Beklemeden veterinere gitmen gereken 5 durum (kaydırmalı)**
 > Kaydet, bir gün lazım olabilir.
@@ -73,13 +74,13 @@ Alternatif metin: Uygulamanın acil ekranı: en uygun açık klinik ve "Şimdi a
 
 **4 · 4 Ekim**
 > Bugün 4 Ekim, Hayvanları Koruma Günü. Dostun için küçük bir iş: aşı karnesindeki tarihleri takvime ekle.
-> Pati SOS zamanı gelince bir gün önce ve gününde hatırlatır.
+> Patiport zamanı gelince bir gün önce ve gününde hatırlatır.
 > #4ekim #hayvanlarıkorumagünü #kedi #köpek
 
 **5 · Aşı takvimi**
 > Karma aşı, kuduz, iç ve dış parazit. Hangisi ne zaman?
 > Tarihi bir kez gir; bir gün önce ve gününde hatırlatalım. Yapınca işaretle, sonrakini biz kuralım.
-> #aşıtakvimi #kedi #köpek #patisos
+> #aşıtakvimi #kedi #köpek #patiport
 
 **6 · İnsan ilacı verme**
 > Parasetamol ve ibuprofen gibi ağrı kesiciler kedi ve köpekler için zehirlidir. Kediler parasetamole özellikle hassastır.
@@ -89,8 +90,8 @@ Alternatif metin: Uygulamanın acil ekranı: en uygun açık klinik ve "Şimdi a
 
 **R2 · Aşı 10 saniyede (Reels)**
 > Aşı gününü unutan tek sen değilsin.
-> Pati SOS'ta aşıyı 10 saniyede takvime ekle; bir gün önce ve gününde hatırlatalım. Yapınca işaretle, sonrakini biz kuralım.
-> #aşıtakvimi #kedi #köpek #patisos
+> Patiport'ta aşıyı 10 saniyede takvime ekle; bir gün önce ve gününde hatırlatalım. Yapınca işaretle, sonrakini biz kuralım.
+> #aşıtakvimi #kedi #köpek #patiport
 
 **7 · Evde patron kim?**
 > Evde patron kim: kedi mi, köpek mi?
@@ -99,9 +100,9 @@ Alternatif metin: Uygulamanın acil ekranı: en uygun açık klinik ve "Şimdi a
 
 **8 · Maskotunu seç**
 > Dostunun fotoğrafı yok mu? Sorun değil.
-> Pati SOS'ta dostunu eklerken tüy rengini seç: turuncu, krem, gri, kahve, beyaz ya da siyah. Kedi, köpek ya da tavşan.
+> Patiport'ta dostunu eklerken tüy rengini seç: turuncu, krem, gri, kahve, beyaz ya da siyah. Kedi, köpek ya da tavşan.
 > Seninki hangisine benziyor? Yorumlara yaz.
-> #kedi #köpek #patisos
+> #kedi #köpek #patiport
 
 **9 · Veterinere sor**
 > Acil olmayan soruların için: beslenme, davranış, aşı, bakım.
@@ -111,7 +112,7 @@ Alternatif metin: Uygulamanın acil ekranı: en uygun açık klinik ve "Şimdi a
 **R3 · Maskotunu seç (Reels)**
 > Fotoğrafı yok mu? Maskotunu seç!
 > Tüy rengini değiştir, maskot anında değişsin. Seninki hangisi? Yorumlara yaz.
-> #kedi #köpek #patisos
+> #kedi #köpek #patiport
 
 ## İlk 1.000 takipçi için
 

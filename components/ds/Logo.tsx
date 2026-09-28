@@ -20,7 +20,7 @@ export function LogoMark({ size = 40, inverse = false }: { size?: number; invers
   const pin = inverse ? '#FFFFFF' : t.primary;
   const paw = inverse ? t.primary : t.dark ? t.bg : '#FFFFFF';
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100" accessibilityLabel="Pati SOS logosu">
+    <Svg width={size} height={size} viewBox="0 0 100 100" accessibilityLabel="Patiport logosu">
       <Path d={PIN_PATH} fill={pin} />
       <G fill={paw}>
         {TOES.map((e) => (
@@ -39,9 +39,9 @@ export function Wordmark({ size = 22, inverse = false }: { size?: number; invers
       variant="title"
       color={inverse ? '#FFFFFF' : t.text}
       style={{ fontSize: size, lineHeight: size * 1.2, letterSpacing: -size * 0.02 }}
-      accessibilityLabel="Pati SOS"
+      accessibilityLabel="Patiport"
     >
-      Pati SOS
+      Patiport
     </Text>
   );
 }

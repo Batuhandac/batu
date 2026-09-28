@@ -88,7 +88,7 @@ export default function VetsScreen() {
         <Button title="Kliniğim listede yok" icon="add-circle-outline" variant="secondary" full onPress={() => router.push('/clinic/new/claim')} style={{ marginTop: 18 }} />
 
         <Text variant="caption" tone="subtle" style={{ marginTop: 20 }}>
-          Pati SOS tıbbi hizmet sunmaz ve klinikler arasında tavsiyede bulunmaz. Gösterilen bilgiler
+          Patiport tıbbi hizmet sunmaz ve klinikler arasında tavsiyede bulunmaz. Gösterilen bilgiler
           yalnızca hasta sahiplerinin açık bir kliniğe ulaşmasını kolaylaştırmak içindir.
         </Text>
       </View>

@@ -67,7 +67,7 @@ uygulamalarına benzemek güven veriyor ve öğrenme yükünü azaltıyor.
 | Görseller | Parıltılı SVG sahne çizimleri | Tek maskot ailesi (tombul kedi, köpek, tavşan); acil ekranında yok. |
 | Karşılama | Üç slayt | Tek ekran: kenardan bakan kedi ve köpek, ne işe yaradığı üç satırda, sonra giriş. |
 | Ana sayfa | Karşılama sloganı, doğum günü kartı, yatay pet kartları, topluluk önizlemesi | Selam ve dostların adı, maskotlu duyurular, pastel dost kartları (doğum günü kartın içinde), yaklaşan bakım, en yakın açık klinik, en altta acil. |
-| Logo | Pin, pati, mercan kalp, iki renkli "patisos" | Pin ve pati, tek renk. "Pati SOS" yazısı sistem yazı tipinde. |
+| Logo | Pin, pati, mercan kalp, iki renkli "patisos" | Pin ve pati, tek renk. "Patiport" yazısı sistem yazı tipinde. |
 
 ### Geri bildirimden sonra denge
 

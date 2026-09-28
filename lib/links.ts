@@ -9,4 +9,4 @@ export const LINKS = {
   support: `${SITE}/destek`,
 };
 
-export const SUPPORT_EMAIL = 'support@patisos.app';
+export const SUPPORT_EMAIL = 'destek@patiport.app';

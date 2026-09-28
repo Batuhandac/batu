@@ -1,4 +1,4 @@
-# Pati SOS → TestFlight (Tek Seferlik Kılavuz)
+# Patiport → TestFlight (Tek Seferlik Kılavuz)
 
 > ⚠️ TestFlight'a yükleme **senin Apple Developer + Expo (EAS) hesabınla** yapılır.
 > Bu adımlar senin bilgisayarında, senin oturumunla çalıştırılır — kimlik bilgileri

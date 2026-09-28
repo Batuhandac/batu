@@ -1,6 +1,6 @@
 // Klinik onaylı profiller — Firestore: clinic_profiles/{clinicId}
 //
-// Veteriner hekimler Türkiye'de reklam veremiyor; Pati SOS onlara reklam değil,
+// Veteriner hekimler Türkiye'de reklam veremiyor; Patiport onlara reklam değil,
 // DOĞRU BİLGİ ile görünürlük sunar: "Bu klinik benim" başvurusu telefonla
 // doğrulanınca yönetici bu belgeyi oluşturur (uygulama yazamaz, sadece okur).
 // Uygulama bu bilgileri Google/OpenStreetMap verisinin üzerine uygular ve

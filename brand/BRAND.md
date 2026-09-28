@@ -1,9 +1,23 @@
-# Pati SOS — Marka Rehberi
+# Patiport — Marka Rehberi
 
-Pati SOS, evcil hayvanı olan birinin hem her gün hem de acil anında açtığı uygulamadır.
+Patiport, evcil hayvanı olan birinin hem her gün hem de acil anında açtığı uygulamadır.
 Tasarım sade ve tanıdık ama soğuk değil: günlük ekranlarda tombul maskotlar ve pastel
 renkler sevimlilik katar, acil ekranları sakin ve ciddi kalır. Gerekçeler ve kaynaklar:
 `docs/ARASTIRMA.md`.
+
+## İsim
+
+**Patiport** = pati + port. "Port" hem kapı ve merkez demek, hem de kulağa "pasaport" gibi
+gelir: dostunun sağlık pasaportu, açık veterinere açılan kapı ve bakımla ilgili her şey tek
+yerde. Türkçe karakter içermez; Türkiye'de ve yurt dışında aynı yazılır, aynı okunur
+(pa-ti-port). Konum iğnesi içindeki pati logosu bu anlamı taşır.
+
+- Yazımı her zaman **Patiport**: tek kelime, yalnızca ilk harf büyük. "PatiPort", "Pati Port"
+  ya da "PATIPORT" yazılmaz (sağlık kartı başlığı gibi büyük harfli yerlerde "PATİPORT").
+- Ekler kesme işaretiyle: Patiport'a, Patiport'ta, Patiport'u, Patiport'un.
+- Eski adı "Pati SOS"tu. App Store'da başka bir geliştiricinin benzer adlı uygulaması olduğu
+  için değişti. Cihazdaki kayıt anahtarları (`patisos:*`) ve bundle ID (`com.patisos.app`)
+  kullanıcı verisi kaybolmasın diye aynı kaldı.
 
 ## İlkeler
 
@@ -36,13 +50,13 @@ Konum iğnesinin içinde pati: *yakınındaki veteriner*. Tek renk.
 | Dosya | Kullanım |
 | --- | --- |
 | `logo-mark.svg` | Uygulama içi işaret (`components/ds/Logo.tsx` ile aynı çizim) |
-| `logo-lockup.svg` | İşaret ve "Pati SOS" yazısı; web, basın, sosyal medya |
+| `logo-lockup.svg` | İşaret ve "Patiport" yazısı; web, basın, sosyal medya |
 | `app-icon.svg` | iOS ikon kaynağı → `assets/icon.png` |
 | `adaptive-icon.svg` | Android adaptive ön plan → `assets/adaptive-icon.png` |
 | `splash.svg` | Açılış ekranı → `assets/splash.png` |
 | `notification-icon.svg` | Tek renk bildirim ikonu |
 
-- Yazı: **Pati SOS**, sistem yazı tipinde kalın, tek renk.
+- Yazı: **Patiport**, sistem yazı tipinde kalın, tek renk.
 - İşaretin çevresinde en az iğne genişliğinin %25'i kadar boşluk bırakılır.
 - Logo döndürülmez; gölge ya da efekt eklenmez; renkleri değiştirilmez.
 

@@ -1,4 +1,4 @@
-# Pati SOS — Lansman Kiti 🐾🆘
+# Patiport — Lansman Kiti 🐾🆘
 
 > Mağaza metinlerinin güncel hali ve gönderim adımları: [store/APP_STORE.md](store/APP_STORE.md). Aşağıdaki mağaza bölümü eskidir.
 
@@ -10,7 +10,7 @@ Ankara'da evcil hayvanın için **en yakın açık veteriner kliniğini saniyele
 > Gece 3'te köpeğin hastalandığında, panik yapmadan en yakın **açık** veterineri bulup tek dokunuşla ara.
 
 ## 💡 Ana Vaat (Elevator Pitch)
-Pati SOS, acil bir durumda kaybedecek vaktin olmadığını bilir. Konumuna göre **açık olan, acil kabul eden ve 7/24** klinikleri öncelik sırasıyla listeler. Aramadan gitme uyarısı, yol tarifi, ve petinin acil sağlık kartı hep cebinde. İnternet olmasa bile çalışır.
+Patiport, acil bir durumda kaybedecek vaktin olmadığını bilir. Konumuna göre **açık olan, acil kabul eden ve 7/24** klinikleri öncelik sırasıyla listeler. Aramadan gitme uyarısı, yol tarifi, ve petinin acil sağlık kartı hep cebinde. İnternet olmasa bile çalışır.
 
 ---
 
@@ -30,19 +30,19 @@ Pati SOS, acil bir durumda kaybedecek vaktin olmadığını bilir. Konumuna gör
 
 ## 📱 App Store / Play Store Açıklaması
 
-**Başlık:** Pati SOS — Acil Veteriner Bulucu
+**Başlık:** Patiport — Acil Veteriner Bulucu
 
 **Alt başlık:** En yakın açık veterineri saniyede bul
 
 **Açıklama:**
 ```
-Evcil hayvanın için acil bir durum mu? Pati SOS yanında.
+Evcil hayvanın için acil bir durum mu? Patiport yanında.
 
-Gece yarısı, hafta sonu ya da tatilde — fark etmez. Pati SOS konumuna göre
+Gece yarısı, hafta sonu ya da tatilde — fark etmez. Patiport konumuna göre
 en yakın AÇIK veteriner kliniğini saniyeler içinde bulur ve tek dokunuşla
 aramanı sağlar.
 
-NEDEN PATİ SOS?
+NEDEN PATİPORT?
 • Açık/kapalı durumunu görürsün — boşuna yola çıkmazsın
 • 7/24 ve acil kabul eden klinikler önce listelenir
 • Haritada tüm klinikleri görürsün
@@ -67,7 +67,7 @@ Bildiğin bir kliniği ekleyerek sen de topluluğa katıl.
 ### Lansman duyurusu (X/Instagram)
 > 🆘🐾 Gece 3'te köpeğin hastalandı, hangi veteriner açık bilmiyorsun?
 >
-> **Pati SOS** ile bitti.
+> **Patiport** ile bitti.
 > Konumuna en yakın AÇIK veterineri saniyede bul, tek tuşla ara.
 >
 > ✅ Ücretsiz
@@ -79,22 +79,22 @@ Bildiğin bir kliniği ekleyerek sen de topluluğa katıl.
 ### Hikaye / Reels senaryosu
 1. (Gece, telefon ışığı) "Saat 03:00. Kedim kusuyor. 😰"
 2. "Hangi veteriner açık? Hepsini tek tek mi arayacağım?"
-3. (Pati SOS açılır) "ACİL'e bastım…"
+3. (Patiport açılır) "ACİL'e bastım…"
 4. "En yakın açık klinik + telefon + yol tarifi. 12 saniyede."
-5. "Pati SOS. Çünkü her saniye önemli. 🐾 — Ücretsiz indir."
+5. "Patiport. Çünkü her saniye önemli. 🐾 — Ücretsiz indir."
 
 ### Topluluk çağrısı
 > Ankara'da veteriner kliniği işletiyor musun ya da bir tane biliyor musun? 🏥
-> Pati SOS'a ekle, acil anında birinin hayvanını kurtar. Eklemesi 1 dakika. 🐾
+> Patiport'a ekle, acil anında birinin hayvanını kurtar. Eklemesi 1 dakika. 🐾
 
 ### Etkileşim sorusu
 > Evcil hayvanın için en son ne zaman acil veteriner aradın? 😟
-> O panik anını bir daha yaşamamak için: Pati SOS. (link)
+> O panik anını bir daha yaşamamak için: Patiport. (link)
 
 ---
 
 ## 🏷️ Hashtag Seti
-`#PatiSOS #VeterinerAcil #AnkaraVeteriner #KöpekSahibi #KediSahibi #PetSahibi #HayvanSever #7/24Veteriner #EvcilHayvan #PatiDostu`
+`#Patiport #VeterinerAcil #AnkaraVeteriner #KöpekSahibi #KediSahibi #PetSahibi #HayvanSever #7/24Veteriner #EvcilHayvan #PatiDostu`
 
 ---
 

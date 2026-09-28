@@ -1,4 +1,4 @@
-// Pati SOS tasarım dili: renk, tipografi, köşe değerleri.
+// Patiport tasarım dili: renk, tipografi, köşe değerleri.
 // Sade ama sıcak: sistem yazı tipi, sıcak açık zemin, beyaz yumuşak gruplar ve tek
 // marka rengi. Sevimlilik maskotlar ve pastel zeminlerden gelir (lib/art/faces.ts).
 // Kırmızı yalnızca acil durum ve silme için. Açık/koyu tema cihaz ayarını izler.

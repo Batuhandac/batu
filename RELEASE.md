@@ -1,4 +1,4 @@
-# Pati SOS — Release Kılavuzu
+# Patiport — Release Kılavuzu
 
 ## Ön Koşullar (İnsan Adımları)
 

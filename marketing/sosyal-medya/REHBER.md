@@ -1,9 +1,9 @@
-# Pati SOS — Sosyal medya rehberi
+# Patiport — Sosyal medya rehberi
 
 > Instagram için hazır açılış paketi (sıra, metinler, Reels, kurulum): `INSTAGRAM.md`.
 
 Uygulamadaki sade dilin sosyal medyadaki karşılığı. Amaç takipçi toplamak değil,
-insanların acil anında Pati SOS'u hatırlaması ve her gün bakım takvimi için açması.
+insanların acil anında Patiport'u hatırlaması ve her gün bakım takvimi için açması.
 Tasarım ve dil kuralları `brand/BRAND.md`, arka plandaki araştırma `docs/ARASTIRMA.md`.
 
 ## 1. Kime konuşuyoruz?
@@ -16,8 +16,9 @@ Tasarım ve dil kuralları `brand/BRAND.md`, arka plandaki araştırma `docs/ARA
 
 ## 2. Hesaplar
 
-Instagram hesabı: [@patisos.app](https://www.instagram.com/patisos.app/). Diğer platformlarda da
-aynı adı kullan (TikTok: `patisos.app`); alınmışsa `patisosapp`.
+Instagram hesabı: `@patiport.app`. Açılan `@patisos.app` hesabının kullanıcı adını
+Ayarlar → Profili düzenle → Kullanıcı adı'ndan `patiport.app` yap; takipçiler korunur. Diğer
+platformlarda da aynı adı kullan (TikTok: `patiport.app`); alınmışsa `patiportapp`.
 
 **Instagram biyografisi** (150 karakter sınırı):
 
@@ -29,10 +30,10 @@ aynı adı kullan (TikTok: `patisos.app`); alınmışsa `patisosapp`.
 
 **LinkedIn / X**:
 
-> Pati SOS, evcil hayvan sahipleri için acil veteriner bulucu ve bakım takvimi. Veteriner hekimlere ücretsiz ve reklamsız doğrulanmış klinik profili sunar.
+> Patiport, evcil hayvan sahipleri için acil veteriner bulucu ve bakım takvimi. Veteriner hekimlere ücretsiz ve reklamsız doğrulanmış klinik profili sunar.
 
 Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zamana kadar bağlantı koyma.
-İletişim: support@patisos.app
+İletişim: destek@patiport.app
 
 ## 3. Görsel kurallar
 
@@ -70,7 +71,7 @@ Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zama
 
 App Store ekran görüntüleri aynı dille yenilendi: `store/screenshots/01_acil.png` … `07_gece.png`.
 
-Hikâyelerdeki "Yakında App Store'da" satırı yayından sonra "App Store'da: Pati SOS" olarak değiştirilmeli.
+Hikâyelerdeki "Yakında App Store'da" satırı yayından sonra "App Store'da: Patiport" olarak değiştirilmeli.
 
 ## 5. İçerik dağılımı
 
@@ -122,9 +123,9 @@ Hashtag'ler metnin sonunda, 3–5 tane. Emoji kullanılmaz.
 
 **A — Tanıtım**
 > Gece 03:00'te dostun hastalandığında ilk soru: hangi veteriner şu an açık?
-> Pati SOS yakınındaki açık klinikleri bulur, tek dokunuşla aratır. Saatini bilmediğimiz bir kliniği açık göstermeyiz.
+> Patiport yakınındaki açık klinikleri bulur, tek dokunuşla aratır. Saatini bilmediğimiz bir kliniği açık göstermeyiz.
 > Ücretsiz, üyelik gerekmez, reklamsız.
-> #veteriner #acilveteriner #kedi #köpek #patisos
+> #veteriner #acilveteriner #kedi #köpek #patiport
 
 **B — Beklemeden veterinere gitmen gereken 5 durum**
 > Kaydet, bir gün lazım olabilir.
@@ -140,13 +141,13 @@ Hashtag'ler metnin sonunda, 3–5 tane. Emoji kullanılmaz.
 
 **D — 4 Ekim**
 > Bugün 4 Ekim, Hayvanları Koruma Günü. Dostun için küçük bir iş: aşı karnesindeki tarihleri takvime ekle.
-> Pati SOS zamanı gelince bir gün önce ve gününde hatırlatır.
+> Patiport zamanı gelince bir gün önce ve gününde hatırlatır.
 > #4ekim #hayvanlarıkorumagünü #kedi #köpek
 
 **E — Aşı takvimi**
 > Karma aşı, kuduz, iç ve dış parazit. Hangisi ne zaman?
 > Tarihi bir kez gir; bir gün önce ve gününde hatırlatalım. Yapınca işaretle, sonrakini biz kuralım.
-> #aşıtakvimi #kedi #köpek #patisos
+> #aşıtakvimi #kedi #köpek #patiport
 
 **F — Veterinere sor**
 > Acil olmayan soruların için: beslenme, davranış, aşı, bakım.
@@ -161,7 +162,7 @@ Hashtag'ler metnin sonunda, 3–5 tane. Emoji kullanılmaz.
 **H — Haftanın sorusu** (yalnızca soran kişi ve yanıtlayan hekim yazılı izin verirse)
 > Haftanın sorusu: "[soru]"
 > Veteriner hekimin yanıtı: "[yanıtın kısa özeti]"
-> Sen de acil olmayan sorunu Pati SOS'ta sorabilirsin.
+> Sen de acil olmayan sorunu Patiport'ta sorabilirsin.
 > #veteriner #kedi #köpek
 
 **I — İdrar yapamayan kedi**
@@ -170,11 +171,11 @@ Hashtag'ler metnin sonunda, 3–5 tane. Emoji kullanılmaz.
 > #kedi #kedisahibi #acilveteriner
 
 **J — Tanıtım (ikinci)**
-> Acil anında ne söyleyeceğini de hazırladık: Pati SOS kliniği ararken dostunun kilosunu, alerjisini ve ilaçlarını ekranında gösterir.
-> #veteriner #kedi #köpek #patisos
+> Acil anında ne söyleyeceğini de hazırladık: Patiport kliniği ararken dostunun kilosunu, alerjisini ve ilaçlarını ekranında gösterir.
+> #veteriner #kedi #köpek #patiport
 
 **L1 — LinkedIn (hekimlere)**
-> Pati SOS'ta klinik profilleri ücretsizdir ve sıralama satın alınamaz. Hasta sahipleri en yakın açık kliniği arar; biz de saatini bilmediğimiz kliniği açık göstermeyiz.
+> Patiport'ta klinik profilleri ücretsizdir ve sıralama satın alınamaz. Hasta sahipleri en yakın açık kliniği arar; biz de saatini bilmediğimiz kliniği açık göstermeyiz.
 > Kliniğinizin telefon ve çalışma saatlerini doğrulamak için uygulamadaki "Veteriner hekim misiniz?" bölümünden başvurabilirsiniz.
 
 **L2 — LinkedIn (nasıl çalışır)**
@@ -196,7 +197,7 @@ Hepsi gerçek uygulama ekran kaydı ve kısa bir sesle. Oyuncu, efekt ya da yapa
   önce bir veteriner hekime okutulur. Sonunda "Bu içerik tedavi değildir; veterinerinin
   söyledikleri önce gelir." yazar.
 - **Klinik tanıtımı yok:** Veteriner hekimlerin reklam ve tanıtım yapması meslek kurallarıyla
-  sınırlıdır. Pati SOS belirli bir kliniği övmez, "en iyi klinik" demez, ücretli klinik tanıtımı
+  sınırlıdır. Patiport belirli bir kliniği övmez, "en iyi klinik" demez, ücretli klinik tanıtımı
   almaz. Hekim yanıtlarında yalnızca adı ve kliniği yazılır, o da izin varsa.
 - **Uydurma yok:** Sahte yorum, uydurma kullanıcı hikâyesi ya da kaynağı olmayan rakam kullanılmaz.
 - **Fotoğraf izni:** Kullanıcı fotoğrafı, sahibinden yazılı izin (DM'de "paylaşabilir miyiz?"
@@ -206,7 +207,7 @@ Hepsi gerçek uygulama ekran kaydı ve kısa bir sesle. Oyuncu, efekt ya da yapa
 ## 10. Yorum ve mesaj yanıtları
 
 **Acil durum yazan birine:**
-> Geçmiş olsun. Buradan teşhis koyamayız ve mesajları geç görebiliriz. Lütfen hemen bir veteriner ara. Pati SOS'ta "Acil veteriner bul" en yakın açık kliniği gösterir.
+> Geçmiş olsun. Buradan teşhis koyamayız ve mesajları geç görebiliriz. Lütfen hemen bir veteriner ara. Patiport'ta "Acil veteriner bul" en yakın açık kliniği gösterir.
 
 **Tıbbi soru soran birine (acil değilse):**
 > Sorun için teşekkürler. Uygulamadaki "Topluluk" bölümünde sorarsan onaylı veteriner hekimler yanıtlayabilir. Belirtiler kötüleşirse beklemeden veterinerini ara.

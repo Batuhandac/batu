@@ -191,7 +191,7 @@ export default function EmergencyScreen() {
 
       <DataAttribution clinics={[...(best ? [best] : []), ...others]} />
       <Text variant="caption" tone="subtle" center style={{ paddingHorizontal: 32 }}>
-        Pati SOS teşhis ya da tedavi önermez. Klinik bilgileri değişebilir; gitmeden önce ara.
+        Patiport teşhis ya da tedavi önermez. Klinik bilgileri değişebilir; gitmeden önce ara.
       </Text>
 
       {dirClinic && (

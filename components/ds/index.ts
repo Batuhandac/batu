@@ -1,4 +1,4 @@
-// Pati SOS tasarım sistemi — ekranlar yalnızca bu bileşenleri ve lib/theme
+// Patiport tasarım sistemi — ekranlar yalnızca bu bileşenleri ve lib/theme
 // değerlerini kullanır; emoji ya da elle yazılmış renk kodu kullanılmaz.
 export { Text, trUpper } from './Text';
 export { Icon, IconBadge, type IconName } from './Icon';

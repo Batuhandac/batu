@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Pati SOS — Firestore güvenlik kuralları
+// Patiport — Firestore güvenlik kuralları
 // Firebase Console → Firestore Database → Rules sekmesine yapıştırıp Publish et.
 // Kullanıcılar görünmez anonim oturumla, veteriner hekimler yöneticinin açtığı
 // e-posta hesabıyla girer (Authentication → Anonymous + Email/Password açık olmalı).
