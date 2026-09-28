@@ -31,6 +31,12 @@ const CHAMBERS = [
     key: 'ank',
     city: 'Ankara',
     label: 'Ankara Veteriner Hekimleri Odası',
+    // Adres sonundaki "İlçe/Ankara" bazen bitişik yazılmış ("No:67/AYenimahalle/Ankara")
+    districts: [
+      'Akyurt', 'Altındağ', 'Ayaş', 'Bala', 'Beypazarı', 'Çamlıdere', 'Çankaya', 'Çubuk', 'Elmadağ',
+      'Etimesgut', 'Evren', 'Gölbaşı', 'Güdül', 'Haymana', 'Kahramankazan', 'Kalecik', 'Keçiören',
+      'Kızılcahamam', 'Mamak', 'Nallıhan', 'Polatlı', 'Pursaklar', 'Sincan', 'Şereflikoçhisar', 'Yenimahalle',
+    ],
     pages: [
       { url: 'https://www.avho.org.tr/muayenehaneler/', type: 'VM' },
       { url: 'https://www.avho.org.tr/poliklinikler/', type: 'VP' },
@@ -110,18 +116,25 @@ const ABBR = [
  * { mahalle: "Bağlıca", street: "Mermeroğlu Caddesi", no: "61", door: "61/2A",
  *   district: "Etimesgut", display: "Bağlıca Mahallesi, Mermeroğlu Caddesi No:61/2A" }
  */
-function parseAddress(raw, city) {
+function parseAddress(raw, city, districts = []) {
   let a = raw.replace(/\s+/g, ' ').trim();
-  const tail = a.match(/\s*([^\s/]+)\s*\/\s*([^\s/]+)\s*$/);
   let district = null;
-  if (tail && tail[2].toLocaleLowerCase('tr') === city.toLocaleLowerCase('tr')) {
+  const known = districts.length ? a.match(new RegExp(`(${districts.join('|')})\\s*/\\s*${city}\\s*$`, 'i')) : null;
+  const tail = known ?? a.match(/\s*([^\s/]+)\s*\/\s*([^\s/]+)\s*$/);
+  if (tail && (known || tail[2].toLocaleLowerCase('tr') === city.toLocaleLowerCase('tr'))) {
     district = tail[1];
     a = a.slice(0, tail.index).trim();
   }
+  a = a.replace(/(?<!\p{L})Şht\.\s*/gu, 'Şehit ');
+  a = a.replace(/\b(Mah|Cad|Sok|Bulv|Blv)\.(?=\p{Lu})/gu, '$1. '); // "Mah.Akıncılar" → "Mah. Akıncılar"
   a = a.replace(/(\d+\.)(?=[A-Za-zÇĞİÖŞÜçğıöşü])/g, '$1 '); // "655.Sok." → "655. Sok."
   for (const [re, full] of ABBR) a = a.replace(re, full);
   // Numaralı caddeler OpenStreetMap'te "1408. Cadde" diye yazılır
-  a = a.replace(/(\d+\.) Caddesi/g, '$1 Cadde').replace(/\s+/g, ' ').trim();
+  a = a
+    .replace(/(?<![\d./])(\d+) (Caddesi|Sokak)\b/g, '$1. $2') // "142 Cad." → "142. Cadde"
+    .replace(/(\d+\.) Caddesi/g, '$1 Cadde')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   const mah = a.match(/^(.+?) Mahallesi\b/);
   const mahalle = mah ? mah[1].trim() : null;
@@ -410,7 +423,7 @@ async function main() {
         stats.skipped++;
         continue;
       }
-      const p = parseAddress(row.address, ch.city);
+      const p = parseAddress(row.address, ch.city, ch.districts);
       const key = `${ch.key}|${row.address}`;
       if (!(key in cache) && cacheOnly) {
         stats.skipped++;
