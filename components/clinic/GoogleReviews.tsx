@@ -2,31 +2,44 @@
 // fotoğrafı ve profil bağlantısı; kaynağa (Google Maps) doğrudan erişim; "Google
 // Maps" atfı; içerik cihaza kaydedilmez. Yorumlar ücretli bir API alanı olduğu
 // için yalnızca kullanıcı isteyince çekilir.
+//
+// Klinik başka kaynaktan geldiyse (oda listesi, OpenStreetMap, Apple) ve Google
+// eşi henüz birleşmemişse, "Yorumları göster"e basınca önce Google'da adıyla
+// aranır; yalnızca aynı klinik olduğu kesinse (ad + yakınlık) yorumları gösterilir.
 import React, { useState } from 'react';
 import { View, Image, Pressable, Linking, ActivityIndicator } from 'react-native';
 import { Text, Card, Button, Section, Avatar } from '@/components/ds';
 import { Stars } from '@/components/ui/Stars';
 import { useTheme } from '@/lib/theme';
 import { fetchPlaceReviews, isPlacesConfigured, type GoogleReviews as Reviews } from '@/lib/data/places';
+import { findGooglePlaceId } from '@/lib/data/googleMatch';
+import type { Clinic } from '@/types';
 import { track } from '@/lib/analytics';
 
 const open = (url: string | null) => {
   if (url) Linking.openURL(url).catch(() => {});
 };
 
-export function GoogleReviews({ placeId, rating, count }: { placeId: string | null; rating: number | null; count?: number }) {
+export function GoogleReviews({ clinic }: { clinic: Clinic }) {
   const t = useTheme();
   const [data, setData] = useState<Reviews | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!placeId || !isPlacesConfigured) return null;
+  if (!isPlacesConfigured) return null;
+  const rating = clinic.source === 'google' || clinic.google_place_id ? clinic.rating : null;
 
   const load = async () => {
     setLoading(true);
     setFailed(false);
-    track('google_reviews_open', { place_id: placeId });
     try {
+      const placeId = await findGooglePlaceId(clinic);
+      track('google_reviews_open', { clinic_id: clinic.id, found: !!placeId });
+      if (!placeId) {
+        setNotFound(true);
+        return;
+      }
       setData(await fetchPlaceReviews(placeId));
     } catch {
       setFailed(true);
@@ -36,7 +49,7 @@ export function GoogleReviews({ placeId, rating, count }: { placeId: string | nu
   };
 
   const shownRating = data?.rating ?? rating;
-  const shownCount = data?.count ?? count;
+  const shownCount = data?.count ?? (rating ? clinic.rating_count : undefined);
 
   return (
     <Section title="Google yorumları">
@@ -55,7 +68,11 @@ export function GoogleReviews({ placeId, rating, count }: { placeId: string | nu
           </View>
         ) : null}
 
-        {!data ? (
+        {notFound ? (
+          <Text variant="callout" tone="muted">
+            Bu klinik Google'da bulunamadı.
+          </Text>
+        ) : !data ? (
           loading ? (
             <ActivityIndicator color={t.primary} style={{ marginVertical: 8 }} />
           ) : (

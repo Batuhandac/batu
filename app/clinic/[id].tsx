@@ -17,7 +17,7 @@ import { GoogleReviews } from '@/components/clinic/GoogleReviews';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { getClinicById, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
-import { fetchPlaceClinic, googlePlaceIdOf } from '@/lib/data/places';
+import { fetchPlaceClinic } from '@/lib/data/places';
 import { fetchAppleClinic } from '@/lib/data/apple';
 import { chamberLabel, directionsAddress } from '@/lib/data/chamber';
 import { applyProfile, loadClinicProfiles } from '@/lib/data/profiles';
@@ -336,7 +336,7 @@ export default function ClinicDetailScreen() {
         </View>
 
         <PhotosSection clinicId={id} />
-        <GoogleReviews placeId={googlePlaceIdOf(clinic)} rating={clinic.rating} count={clinic.rating_count} />
+        <GoogleReviews clinic={clinic} />
         <ReviewsSection clinicId={id} clinicName={clinic.name} />
 
         {/* Veteriner hekimlere: reklam değil, doğru bilgi */}
