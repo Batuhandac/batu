@@ -132,6 +132,64 @@ export function Field({
   );
 }
 
+/** Hap biçimli arama kutusu: solda büyüteç, yazı varken sağda temizle. */
+export function SearchField({
+  value,
+  onChangeText,
+  placeholder,
+  loading,
+}: {
+  value: string;
+  onChangeText: (s: string) => void;
+  placeholder: string;
+  loading?: boolean;
+}) {
+  const t = useTheme();
+  const [focused, setFocused] = React.useState(false);
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        height: 46,
+        paddingLeft: 14,
+        paddingRight: 6,
+        borderRadius: radius.pill,
+        backgroundColor: t.surface,
+        borderWidth: 1,
+        borderColor: focused ? t.primary : t.dark ? t.surface : t.border,
+      }}
+    >
+      <Icon name="search" size={18} color={t.textSubtle} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={t.textSubtle}
+        returnKeyType="search"
+        autoCorrect={false}
+        clearButtonMode="never"
+        accessibilityLabel={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[type.body, { flex: 1, color: t.text, paddingVertical: 0, height: 44, outlineWidth: 0 }]}
+      />
+      {value ? (
+        <Pressable
+          onPress={() => onChangeText('')}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Aramayı temizle"
+          style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Icon name={loading ? 'ellipsis-horizontal' : 'close-circle'} size={20} color={t.textSubtle} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export function SwitchRow({
   label,
   hint,

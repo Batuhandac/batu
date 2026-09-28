@@ -1,7 +1,11 @@
 // Google Places API (New) — kullanıcının konumuna göre canlı veteriner verisi.
-// - İki arama paralel: en yakın 20 veteriner (Nearby Search) + çevredeki
-//   7/24 / acil veterinerler (Text Search). Gece en yakınlar kapalıyken bile
-//   açık bir klinik listede olsun diye ikincisi gerekli.
+// - Üç arama paralel: en yakın 20 veteriner (Nearby Search), mesafeye göre
+//   sıralı "veteriner" metin araması (sayfalı, en fazla 40) ve çevredeki 7/24 /
+//   acil veterinerler. Nearby Search tek başına 20 sonuçla sınırlı; şehir
+//   merkezinde bu 20 klinik 2-3 km'yi doldurur ve biraz uzaktakiler kaybolur.
+//   Gece en yakınlar kapalıyken bile açık bir klinik listede olsun diye acil
+//   araması da gerekli.
+// - Ada göre arama (searchPlacesByName): listede olmayan bir kliniği bulmak için.
 // - Açık/kapalı durumu Google'ın o anki "openNow" değerinden değil, çalışma
 //   periyotlarından cihazda hesaplanır → önbellek eskise de durum güncel kalır.
 // - Sonuçlar cihazda (AsyncStorage) ~2 km'lik hücre başına 3 gün saklanır.
@@ -22,9 +26,12 @@ const TIMEOUT_MS = 8000;
 
 const NEARBY_RADIUS_M = 15000;
 const EMERGENCY_RADIUS_M = 30000;
+const NAME_SEARCH_RADIUS_M = 50000;
+const TEXT_PAGES = 2; // sayfa başına 20 sonuç
 export const PLACES_RADIUS_KM = EMERGENCY_RADIUS_M / 1000;
 
-const CACHE_KEY = 'patisos:places:v1';
+// v2: hücre başına daha çok klinik tutuluyor; v1 önbelleği yeniden doldurulsun
+const CACHE_KEY = 'patisos:places:v2';
 const CACHE_TTL = 3 * 24 * 3600 * 1000; // 3 gün
 const CELL_DEG = 0.02; // ~2 km
 
@@ -45,6 +52,7 @@ const FIELDS = [
   'businessStatus',
 ];
 const SEARCH_MASK = FIELDS.map((f) => `places.${f}`).join(',');
+const PAGED_MASK = `${SEARCH_MASK},nextPageToken`;
 const DETAILS_MASK = FIELDS.join(',');
 
 // ─── HTTP ────────────────────────────────────────────────────────────────────
@@ -202,9 +210,22 @@ function cellOf(lat: number, lng: number): { key: string; lat: number; lng: numb
 
 const inflight = new Map<string, Promise<Clinic[]>>();
 
+/** Sayfalı metin araması: her sayfa 20 sonuç, en fazla `pages` sayfa. */
+async function textSearchPages(body: object, pages: number): Promise<{ places: any[] }> {
+  const places: any[] = [];
+  let pageToken: string | undefined;
+  for (let i = 0; i < pages; i++) {
+    const json = await request('places:searchText', PAGED_MASK, pageToken ? { ...body, pageToken } : body);
+    places.push(...(json?.places ?? []));
+    pageToken = json?.nextPageToken;
+    if (!pageToken) break;
+  }
+  return { places };
+}
+
 async function searchCell(cell: { key: string; lat: number; lng: number }): Promise<Clinic[]> {
   const center = { latitude: cell.lat, longitude: cell.lng };
-  const [nearby, emergency] = await Promise.allSettled([
+  const results = await Promise.allSettled([
     request('places:searchNearby', SEARCH_MASK, {
       includedTypes: ['veterinary_care'],
       maxResultCount: 20,
@@ -213,6 +234,19 @@ async function searchCell(cell: { key: string; lat: number; lng: number }): Prom
       languageCode: 'tr',
       regionCode: 'TR',
     }),
+    textSearchPages(
+      {
+        textQuery: 'veteriner',
+        includedType: 'veterinary_care',
+        strictTypeFiltering: true,
+        rankPreference: 'DISTANCE',
+        pageSize: 20,
+        locationBias: { circle: { center, radius: NEARBY_RADIUS_M } },
+        languageCode: 'tr',
+        regionCode: 'TR',
+      },
+      TEXT_PAGES
+    ),
     request('places:searchText', SEARCH_MASK, {
       textQuery: '7/24 acil veteriner',
       includedType: 'veterinary_care',
@@ -222,26 +256,31 @@ async function searchCell(cell: { key: string; lat: number; lng: number }): Prom
       regionCode: 'TR',
     }),
   ]);
-  if (nearby.status === 'rejected' && emergency.status === 'rejected') throw nearby.reason;
+  if (results.every((r) => r.status === 'rejected')) throw (results[0] as PromiseRejectedResult).reason;
 
+  const clinics = collect(results);
+  // Yalnız tüm aramalar başarılıysa sakla — yarım sonuç 3 gün kalmasın
+  if (results.every((r) => r.status === 'fulfilled')) await remember(cell.key, clinics);
+  return clinics;
+}
+
+function collect(results: PromiseSettledResult<{ places?: any[] }>[]): Clinic[] {
   const byId = new Map<string, Clinic>();
-  for (const r of [nearby, emergency]) {
+  for (const r of results) {
     if (r.status !== 'fulfilled') continue;
     for (const p of r.value?.places ?? []) {
       const c = toPlaceClinic(p);
       if (c && !byId.has(c.id)) byId.set(c.id, c);
     }
   }
-  const clinics = [...byId.values()];
+  return [...byId.values()];
+}
 
-  // Yalnız iki arama da başarılıysa sakla — yarım sonuç 3 gün kalmasın
-  if (nearby.status === 'fulfilled' && emergency.status === 'fulfilled') {
-    const cache = await loadCache();
-    cache.cells[cell.key] = { ts: Date.now(), ids: clinics.map((c) => c.id) };
-    for (const c of clinics) cache.places[c.id] = c;
-    await saveCache(cache);
-  }
-  return clinics;
+async function remember(key: string, clinics: Clinic[]): Promise<void> {
+  const cache = await loadCache();
+  cache.cells[key] = { ts: Date.now(), ids: clinics.map((c) => c.id) };
+  for (const c of clinics) cache.places[c.id] = c;
+  await saveCache(cache);
 }
 
 /** Konumun çevresindeki Google veteriner kayıtları (durum + mesafe güncel). */
@@ -262,6 +301,36 @@ export async function fetchPlacesClinics(lat: number, lng: number): Promise<Clin
       inflight.set(cell.key, pending);
     }
     base = await pending;
+  }
+  return base.map((c) => withLiveStatus(c, lat, lng));
+}
+
+/**
+ * Ada ya da semte göre veteriner arama ("Vetmagic", "Bağlıca veteriner").
+ * Kullanıcının çevresi öncelikli ama 50 km dışı da gelebilir. Sonuçlar
+ * aramaya göre 3 gün önbellekte kalır.
+ */
+export async function searchPlacesByName(query: string, lat: number, lng: number): Promise<Clinic[]> {
+  const q = query.trim();
+  if (!isPlacesConfigured || q.length < 2) return [];
+
+  const key = `q:${trLower(q)}@${cellOf(lat, lng).key}`;
+  const cache = await loadCache();
+  const hit = cache.cells[key];
+  let base: Clinic[];
+  if (hit && Date.now() - hit.ts < CACHE_TTL) {
+    base = hit.ids.map((id) => cache.places[id]).filter(Boolean);
+  } else {
+    const json = await request('places:searchText', SEARCH_MASK, {
+      textQuery: q,
+      includedType: 'veterinary_care',
+      pageSize: 20,
+      locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: NAME_SEARCH_RADIUS_M } },
+      languageCode: 'tr',
+      regionCode: 'TR',
+    });
+    base = collect([{ status: 'fulfilled', value: json }]);
+    await remember(key, base);
   }
   return base.map((c) => withLiveStatus(c, lat, lng));
 }

@@ -111,6 +111,51 @@ export function rankClinics(
   return out;
 }
 
+// ─── Kullanıcının seçtiği sıralama ──────────────────────────────────────────
+export type ClinicSort = 'recommended' | 'distance' | 'rating';
+
+// Az yorumlu 5,0 bir klinik, 300 yorumlu 4,8'in önüne geçmesin: puan, 10 sanal
+// 4,0'lık oyla harmanlanır (Bayes ortalaması). Puanı olmayan en sona kalır.
+const PRIOR_RATING = 4.0;
+const PRIOR_VOTES = 10;
+
+export function ratingScore(c: Clinic): number {
+  if (c.rating == null || c.rating <= 0) return -1;
+  const n = c.rating_count ?? 0;
+  return (c.rating * n + PRIOR_RATING * PRIOR_VOTES) / (n + PRIOR_VOTES);
+}
+
+export function sortClinics(list: Clinic[], sort: ClinicSort): Clinic[] {
+  const out = [...list];
+  if (sort === 'distance') out.sort((a, b) => a.distance_km - b.distance_km);
+  else if (sort === 'rating') out.sort((a, b) => ratingScore(b) - ratingScore(a) || a.distance_km - b.distance_km);
+  else out.sort((a, b) => b.emergency_score - a.emergency_score);
+  return out;
+}
+
+// ─── Ada göre arama ─────────────────────────────────────────────────────────
+function haystack(c: Clinic): string {
+  return trFold([c.name, c.district, c.address].filter(Boolean).join(' '));
+}
+
+/** Sorgudaki her kelime adda, ilçede ya da adreste geçiyorsa eşleşir. */
+export function matchesClinicQuery(c: Clinic, query: string): boolean {
+  const words = trFold(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return false;
+  const h = haystack(c);
+  return words.every((w) => h.includes(w));
+}
+
+/** Arama sonucunun önceliği: ad sorguyla başlıyorsa en önde. Yüksek = önce. */
+export function searchScore(c: Clinic, query: string): number {
+  const q = trFold(query);
+  const name = trFold(c.name);
+  if (name.startsWith(q)) return 3;
+  if (name.split(/\s+/).some((w) => w.startsWith(q))) return 2;
+  if (name.includes(q)) return 1;
+  return 0;
+}
+
 /** Tek gömülü klinik (detay ekranı için). */
 export function getClinicById(id: string): SeedClinic | null {
   return CLINICS.find((c) => c.id === id) ?? null;

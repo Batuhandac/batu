@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Screen, Text, Chip, Button, EmptyState, Icon } from '@/components/ds';
+import { Screen, Text, Chip, Button, EmptyState, Icon, SearchField, Segmented } from '@/components/ds';
 import { ClinicCard } from '@/components/clinic/ClinicCard';
 import { DataAttribution } from '@/components/ui/DataAttribution';
 import { LocationBar } from '@/components/location/LocationBar';
 import { DistrictList } from '@/components/location/DistrictPicker';
 import { useClinics } from '@/lib/hooks/useClinics';
+import { useClinicSearch } from '@/lib/hooks/useClinicSearch';
+import { sortClinics, type ClinicSort } from '@/lib/data/query';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { useTheme } from '@/lib/theme';
 import { track } from '@/lib/analytics';
@@ -14,11 +16,22 @@ import type { NearbyFilters } from '@/types';
 
 const DEFAULT_FILTERS: NearbyFilters = { only_24_7: false, only_emergency: false, only_open: false };
 
+const SORTS: { key: ClinicSort; label: string }[] = [
+  { key: 'recommended', label: 'Önerilen' },
+  { key: 'distance', label: 'En yakın' },
+  { key: 'rating', label: 'En yüksek puan' },
+];
+
 export default function NearbyScreen() {
   const t = useTheme();
   const { clinics, loading, error, fetch } = useClinics();
   const { lat, lng, source, isStale, loading: locating, request, refresh, setManual } = useLocation();
   const [filters, setFilters] = useState<NearbyFilters>(DEFAULT_FILTERS);
+  const [sort, setSort] = useState<ClinicSort>('recommended');
+  const [query, setQuery] = useState('');
+  const search = useClinicSearch(query, lat, lng, clinics);
+  const sorted = useMemo(() => sortClinics(clinics, sort), [clinics, sort]);
+  const shown = search.active ? search.results : sorted;
 
   // Ekran her açıldığında GPS konumunu tazele — dün evdeyken alınan konumla
   // bugün başka yerde klinik önermeyelim. Elle seçilen ilçeye dokunma.
@@ -77,12 +90,24 @@ export default function NearbyScreen() {
         </Text>
       </View>
       <LocationBar />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 14 }}>
-        <Chip label="Tümü" active={!anyFilter} onPress={() => setFilters(DEFAULT_FILTERS)} />
-        <Chip label="Şu an açık" icon="time-outline" active={filters.only_open} onPress={() => toggleFilter('only_open')} />
-        <Chip label="7/24" icon="moon-outline" active={filters.only_24_7} onPress={() => toggleFilter('only_24_7')} />
-        <Chip label="Acil kabul" icon="medkit-outline" active={filters.only_emergency} onPress={() => toggleFilter('only_emergency')} />
-      </ScrollView>
+      <View style={{ marginTop: 12 }}>
+        <SearchField value={query} onChangeText={setQuery} placeholder="Klinik ara: ad, semt, ilçe" loading={search.searching} />
+      </View>
+      {search.active ? (
+        <Text variant="caption" tone="muted" style={{ marginTop: 10, marginBottom: 6, marginLeft: 4 }}>
+          {search.searching ? 'Aranıyor…' : `${search.results.length} sonuç`}
+        </Text>
+      ) : (
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 12, paddingBottom: 12 }}>
+            <Chip label="Tümü" active={!anyFilter} onPress={() => setFilters(DEFAULT_FILTERS)} />
+            <Chip label="Şu an açık" icon="time-outline" active={filters.only_open} onPress={() => toggleFilter('only_open')} />
+            <Chip label="7/24" icon="moon-outline" active={filters.only_24_7} onPress={() => toggleFilter('only_24_7')} />
+            <Chip label="Acil kabul" icon="medkit-outline" active={filters.only_emergency} onPress={() => toggleFilter('only_emergency')} />
+          </ScrollView>
+          <Segmented options={SORTS} value={sort} onChange={setSort} />
+        </>
+      )}
       {loading && clinics.length > 0 && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <ActivityIndicator color={t.primary} size="small" />
@@ -97,13 +122,24 @@ export default function NearbyScreen() {
   return (
     <Screen>
       <FlatList
-        data={clinics}
+        data={shown}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ClinicCard clinic={item} />}
         ListHeaderComponent={header}
-        ListFooterComponent={<DataAttribution clinics={clinics} />}
+        ListFooterComponent={<DataAttribution clinics={shown} />}
         ListEmptyComponent={
-          loading ? (
+          search.active ? (
+            search.searching ? null : (
+              <EmptyState
+                icon="search-outline"
+                title={`"${query.trim()}" bulunamadı`}
+                text="Yazımı kontrol et ya da semt adıyla dene. Bildiğin bir klinik listede yoksa ekle; kontrol ettikten sonra herkes görsün."
+                action={<Button title="Klinik ekle" variant="secondary" icon="add" onPress={() => router.push('/clinic/add')} full />}
+              />
+            )
+          ) : loading ? (
             <View style={{ alignItems: 'center', paddingVertical: 60 }}>
               <ActivityIndicator color={t.primary} size="large" />
               <Text variant="callout" tone="muted" style={{ marginTop: 12 }}>

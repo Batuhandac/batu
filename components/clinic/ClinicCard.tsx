@@ -43,6 +43,7 @@ export function ClinicCard({ clinic }: { clinic: Clinic }) {
                 <Icon name="star" size={12} color={t.honey} />
                 <Text variant="caption" tone="muted">
                   {clinic.rating.toFixed(1).replace('.', ',')}
+                  {clinic.rating_count ? ` (${clinic.rating_count})` : ''}
                 </Text>
               </View>
             ) : null}
