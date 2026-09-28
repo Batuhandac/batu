@@ -21,7 +21,8 @@ type EventName =
   | 'banner_tap' | 'question_posted' | 'answer_posted' | 'message_sent'
   | 'conversation_started' | 'whatsapp_tap' | 'vet_login' | 'review_reply'
   | 'sign_up' | 'sign_in' | 'account_deleted'
-  | 'care_saved' | 'care_done' | 'weight_added' | 'pet_photo_added';
+  | 'care_saved' | 'care_done' | 'weight_added' | 'pet_photo_added'
+  | 'google_reviews_open';
 
 interface EventProps {
   clinic_id?: string;

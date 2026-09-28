@@ -49,8 +49,16 @@ Odası'nın klinik listeleri) ve iPhone'da Apple Haritalar aramasını kullanır
 Build log'unda "EXPO_PUBLIC_* secret yok — Google Places kapalı" satırı bunu gösterir.
 
 Uygulama her ~2 km'lik bölge için 4 istek atar (en yakın 20, mesafeye göre sıralı 40,
-7/24 acil) ve sonucu cihazda 3 gün saklar. Klinik adıyla arama, her yeni sorgu için
-1 istek daha atar. Açık/kapalı durumu çalışma saatlerinden cihazda hesaplanır.
+7/24 acil). Google'ın koşulları gereği sonuçlar cihaza kaydedilmez (yalnızca place ID
+saklanabilir); uygulama açıkken 30 dakika bellekte tutulur. Klinik adıyla arama, her
+yeni sorgu için 1 istek daha atar. Açık/kapalı durumu çalışma saatlerinden cihazda
+hesaplanır.
+
+Klinik sayfasındaki **Google yorumları** (en fazla 5, Google'ın sıralamasıyla) yalnızca
+kullanıcı "Yorumları göster"e dokununca, oturumda klinik başına bir kez çekilir. Bu
+istek Place Details'in en pahalı fiyat grubundadır (Enterprise + Atmosphere); kotada
+ayrıca sınır koymak iyi olur. Yorumlarda yazarın adı, fotoğrafı ve profil bağlantısı,
+"Tüm yorumlar Google Maps'te" bağlantısı ve "Google Maps" atfı gösterilir.
 Google Cloud'da Places API (New) için günlük kota (Quotas) koymak beklenmedik
 faturayı önler.
 

@@ -53,7 +53,9 @@ içinde yakındaki açık kliniği bul, tek dokunuşla ara.
    (`scripts/gen-clinics-osm.js`) yeniler. © OpenStreetMap katkıcıları, ODbL.
 2. **Google Places (canlı)** — `EXPO_PUBLIC_GOOGLE_PLACES_KEY` tanımlıysa konumun
    çevresindeki en yakın veterinerler + 7/24/acil veterinerler. Telefon ve saat
-   bilgisi OSM'den çok daha dolu. Kurulum: `.github/SECRETS_SETUP.md`.
+   bilgisi OSM'den çok daha dolu. Klinik sayfasında istenince Google yorumları
+   (en fazla 5, yazar atfıyla). Google içeriği cihaza kaydedilmez, yalnızca oturum
+   boyunca bellekte kalır. Kurulum: `.github/SECRETS_SETUP.md`.
    Anahtar yoksa listede yalnızca OSM'deki klinikler olur.
 3. **Apple Haritalar (canlı, iOS, anahtarsız)** — `lib/data/apple.ts`, yerel Expo
    modülü `modules/apple-poi` (MapKit `MKLocalSearch`). Ad, adres, telefon; saat yok.

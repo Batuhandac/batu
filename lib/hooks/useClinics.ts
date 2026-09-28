@@ -177,6 +177,14 @@ function mergeInto(best: Clinic, other: Clinic): Clinic {
     out.is_24_7 = out.is_24_7 || other.is_24_7;
     used = true;
   }
+  if (other.source === 'google' && out.source !== 'google' && !out.google_place_id) {
+    out.google_place_id = other.id.replace(/^gp-/, '');
+    if (out.rating == null && other.rating != null) {
+      out.rating = other.rating;
+      out.rating_count = other.rating_count;
+      used = true;
+    }
+  }
   out.accepts_emergency = out.accepts_emergency || other.accepts_emergency;
   if (used && other.source && other.source !== out.source) {
     out.merged_sources = [...new Set([...(out.merged_sources ?? []), other.source])];

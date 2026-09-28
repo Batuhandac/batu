@@ -42,6 +42,8 @@ export interface Clinic {
   weekday_text?: string[]; // ["Pazartesi: 09:00–19:00", ...]
   // Birleştirilen kayıtta bilgisi kullanılan diğer kaynaklar (atıf için)
   merged_sources?: ClinicSource[];
+  // Aynı klinik Google'da da varsa place ID'si (Google yorumları için; kalıcı saklanabilir)
+  google_place_id?: string;
   // Klinik onaylı profilden (lib/data/profiles.ts)
   emergency_phone?: string | null;
   services?: string[];

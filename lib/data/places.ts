@@ -8,7 +8,10 @@
 // - Ada göre arama (searchPlacesByName): listede olmayan bir kliniği bulmak için.
 // - Açık/kapalı durumu Google'ın o anki "openNow" değerinden değil, çalışma
 //   periyotlarından cihazda hesaplanır → önbellek eskise de durum güncel kalır.
-// - Sonuçlar cihazda (AsyncStorage) ~2 km'lik hücre başına 3 gün saklanır.
+// - Google koşulları gereği sonuçlar cihaza kaydedilmez (yalnızca place ID
+//   kalıcı saklanabilir, ör. favoriler). Uygulama açıkken ~2 km'lik hücre başına
+//   30 dakika bellekte tutulur; aynı ekranı tekrar açmak yeni istek atmaz.
+// - Google yorumları (fetchPlaceReviews) yalnızca kullanıcı isteyince çekilir.
 // - Anahtar yoksa sessizce boş döner, gömülü veri devreye girer.
 //
 // Google Cloud'da "Places API (New)" etkin olmalı. Eski (legacy) Places API
@@ -30,9 +33,9 @@ const NAME_SEARCH_RADIUS_M = 50000;
 const TEXT_PAGES = 2; // sayfa başına 20 sonuç
 export const PLACES_RADIUS_KM = EMERGENCY_RADIUS_M / 1000;
 
-// v2: hücre başına daha çok klinik tutuluyor; v1 önbelleği yeniden doldurulsun
-const CACHE_KEY = 'patisos:places:v2';
-const CACHE_TTL = 3 * 24 * 3600 * 1000; // 3 gün
+// Eski sürümler Google sonuçlarını cihaza yazıyordu; ilk açılışta silinir
+const LEGACY_CACHE_KEYS = ['patisos:places', 'patisos:places:v1', 'patisos:places:v2'];
+const CACHE_TTL = 30 * 60 * 1000; // uygulama açıkken 30 dakika, yalnızca bellekte
 const CELL_DEG = 0.02; // ~2 km
 
 export const isPlacesConfigured = KEY.length > 10;
@@ -163,7 +166,7 @@ export function toPlaceClinic(p: any): Clinic | null {
   };
 }
 
-// ─── Cihaz önbelleği ─────────────────────────────────────────────────────────
+// ─── Oturum önbelleği (yalnızca bellek) ────────────────────────────────────
 
 interface CacheShape {
   cells: Record<string, { ts: number; ids: string[] }>;
@@ -174,16 +177,12 @@ let mem: CacheShape | null = null;
 
 async function loadCache(): Promise<CacheShape> {
   if (mem) return mem;
-  try {
-    const raw = await AsyncStorage.getItem(CACHE_KEY);
-    mem = raw ? (JSON.parse(raw) as CacheShape) : { cells: {}, places: {} };
-  } catch {
-    mem = { cells: {}, places: {} };
-  }
+  mem = { cells: {}, places: {} };
+  AsyncStorage.multiRemove(LEGACY_CACHE_KEYS).catch(() => {});
   return mem;
 }
 
-async function saveCache(c: CacheShape): Promise<void> {
+function prune(c: CacheShape): void {
   // Süresi dolan hücreleri ve artık hiçbir hücrenin göstermediği klinikleri at
   const now = Date.now();
   for (const [k, cell] of Object.entries(c.cells)) {
@@ -192,11 +191,6 @@ async function saveCache(c: CacheShape): Promise<void> {
   const used = new Set(Object.values(c.cells).flatMap((cell) => cell.ids));
   for (const id of Object.keys(c.places)) {
     if (!used.has(id)) delete c.places[id];
-  }
-  try {
-    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(c));
-  } catch {
-    // disk dolu vb. — bellek içi kopya yine kullanılır
   }
 }
 
@@ -259,7 +253,7 @@ async function searchCell(cell: { key: string; lat: number; lng: number }): Prom
   if (results.every((r) => r.status === 'rejected')) throw (results[0] as PromiseRejectedResult).reason;
 
   const clinics = collect(results);
-  // Yalnız tüm aramalar başarılıysa sakla — yarım sonuç 3 gün kalmasın
+  // Yalnız tüm aramalar başarılıysa sakla — yarım sonuç önbellekte kalmasın
   if (results.every((r) => r.status === 'fulfilled')) await remember(cell.key, clinics);
   return clinics;
 }
@@ -280,7 +274,7 @@ async function remember(key: string, clinics: Clinic[]): Promise<void> {
   const cache = await loadCache();
   cache.cells[key] = { ts: Date.now(), ids: clinics.map((c) => c.id) };
   for (const c of clinics) cache.places[c.id] = c;
-  await saveCache(cache);
+  prune(cache);
 }
 
 /** Konumun çevresindeki Google veteriner kayıtları (durum + mesafe güncel). */
@@ -307,8 +301,8 @@ export async function fetchPlacesClinics(lat: number, lng: number): Promise<Clin
 
 /**
  * Ada ya da semte göre veteriner arama ("Vetmagic", "Bağlıca veteriner").
- * Kullanıcının çevresi öncelikli ama 50 km dışı da gelebilir. Sonuçlar
- * aramaya göre 3 gün önbellekte kalır.
+ * Kullanıcının çevresi öncelikli ama 50 km dışı da gelebilir. Aynı arama
+ * 30 dakika içinde tekrarlanırsa bellekteki sonuç kullanılır.
  */
 export async function searchPlacesByName(query: string, lat: number, lng: number): Promise<Clinic[]> {
   const q = query.trim();
@@ -347,4 +341,65 @@ export async function fetchPlaceClinic(clinicId: string): Promise<Clinic | null>
   const p = await request(`places/${placeId}?languageCode=tr&regionCode=TR`, DETAILS_MASK);
   const c = toPlaceClinic(p);
   return c ? withLiveStatus(c) : null;
+}
+
+// ─── Google yorumları ───────────────────────────────────────────────────────
+
+export interface GoogleReview {
+  author: string;
+  author_uri: string | null; // yazarın Google Maps profili
+  author_photo: string | null;
+  rating: number;
+  text: string;
+  when: string; // "2 hafta önce" (Google'ın yazdığı gibi)
+  maps_uri: string | null; // yorumun Google Maps'teki yeri
+}
+
+export interface GoogleReviews {
+  rating: number | null;
+  count: number | null;
+  maps_uri: string | null; // kliniğin Google Maps sayfası (tüm yorumlar)
+  reviews: GoogleReview[];
+}
+
+/** Kliniğin Google place ID'si: Google kaydıysa kimliğinden, birleştirilmişse alanından. */
+export function googlePlaceIdOf(c: Pick<Clinic, 'id' | 'google_place_id'>): string | null {
+  if (c.id.startsWith('gp-')) return c.id.slice(3);
+  return c.google_place_id ?? null;
+}
+
+// Place Details'te "reviews" alanı en pahalı fiyat grubunda (Enterprise + Atmosphere);
+// bu yüzden yalnızca kullanıcı "Yorumları göster" deyince ve oturumda bir kez çekilir.
+const REVIEWS_MASK = 'reviews,rating,userRatingCount,googleMapsUri';
+const reviewMemo = new Map<string, Promise<GoogleReviews | null>>();
+
+export function toGoogleReviews(p: any): GoogleReviews {
+  const reviews: GoogleReview[] = (p?.reviews ?? [])
+    .map((r: any) => ({
+      author: r?.authorAttribution?.displayName ?? 'Google kullanıcısı',
+      author_uri: r?.authorAttribution?.uri ?? null,
+      author_photo: r?.authorAttribution?.photoUri ?? null,
+      rating: typeof r?.rating === 'number' ? r.rating : 0,
+      text: (r?.text?.text ?? r?.originalText?.text ?? '').trim(),
+      when: r?.relativePublishTimeDescription ?? '',
+      maps_uri: r?.googleMapsUri ?? null,
+    }))
+    .filter((r: GoogleReview) => r.rating > 0 || r.text);
+  return { rating: p?.rating ?? null, count: p?.userRatingCount ?? null, maps_uri: p?.googleMapsUri ?? null, reviews };
+}
+
+/** Google'daki en ilgili 5 yorum (Google'ın sıralaması). Anahtar yoksa null. */
+export function fetchPlaceReviews(placeId: string): Promise<GoogleReviews | null> {
+  if (!isPlacesConfigured || !placeId) return Promise.resolve(null);
+  let pending = reviewMemo.get(placeId);
+  if (!pending) {
+    pending = request(`places/${encodeURIComponent(placeId)}?languageCode=tr&regionCode=TR`, REVIEWS_MASK)
+      .then(toGoogleReviews)
+      .catch((e) => {
+        reviewMemo.delete(placeId); // hata kalıcı olmasın, sonra tekrar denensin
+        throw e;
+      });
+    reviewMemo.set(placeId, pending);
+  }
+  return pending;
 }
