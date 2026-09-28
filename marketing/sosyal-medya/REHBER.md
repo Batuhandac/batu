@@ -16,9 +16,9 @@ Tasarım ve dil kuralları `brand/BRAND.md`, arka plandaki araştırma `docs/ARA
 
 ## 2. Hesaplar
 
-Instagram hesabı: `@patiport.app`. Açılan `@patisos.app` hesabının kullanıcı adını
-Ayarlar → Profili düzenle → Kullanıcı adı'ndan `patiport.app` yap; takipçiler korunur. Diğer
-platformlarda da aynı adı kullan (TikTok: `patiport.app`); alınmışsa `patiportapp`.
+Instagram hesabı: `@patiport`. Açılan `@patisos.app` hesabının kullanıcı adını
+Ayarlar → Profili düzenle → Kullanıcı adı'ndan `patiport` yap; takipçiler korunur. Diğer
+platformlarda da aynı adı kullan (TikTok, X, YouTube: `patiport`); alınmışsa `patiport.app`.
 
 **Instagram biyografisi** (150 karakter sınırı):
 

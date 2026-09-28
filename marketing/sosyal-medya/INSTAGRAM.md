@@ -8,7 +8,7 @@ metnin sonunda, 3–5 tane.
 
 ## Hesap kurulumu
 
-1. Kullanıcı adı: `@patiport.app`. Mevcut `@patisos.app` hesabında Ayarlar → Profili düzenle →
+1. Kullanıcı adı: `@patiport`. Mevcut `@patisos.app` hesabında Ayarlar → Profili düzenle →
    Kullanıcı adı'ndan değiştir; takipçiler ve gönderiler korunur.
 2. Profesyonel hesaba geç (Ayarlar → Hesap türü ve araçlar → Profesyonel hesaba geç → İşletme).
    Kategori olarak uygulamaya en yakın kategoriyi seç.
