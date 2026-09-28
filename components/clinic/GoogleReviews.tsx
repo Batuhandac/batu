@@ -86,8 +86,10 @@ export function GoogleReviews({ clinic }: { clinic: Clinic }) {
             </>
           )
         ) : data.reviews.length === 0 ? (
+          // Google bazen yorum metinlerini API'de vermiyor (puan ve sayı gelse de);
+          // "yorum yok" demek yanıltıcı olur, Google Maps'e yönlendir
           <Text variant="callout" tone="muted">
-            Bu klinik için Google'da yazılı yorum yok.
+            Yazılı yorumlar burada gösterilemiyor; Google Maps'te okuyabilirsin.
           </Text>
         ) : (
           data.reviews.map((r, i) => (
