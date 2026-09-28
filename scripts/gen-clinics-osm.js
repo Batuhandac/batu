@@ -184,7 +184,16 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(OUT, render(clinics, base));
+  // Kayıtlar aynıysa dosyaya dokunma: yalnızca osm_base tarihi değişip her push'ta
+  // boş bir veri commit'i oluşmasın
+  const body = (src) => src.split('\n').filter((l) => !l.startsWith('//')).join('\n');
+  const next = render(clinics, base);
+  const prev = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
+  if (body(prev) === body(next)) {
+    console.log('ℹ OpenStreetMap verisinde değişiklik yok; dosya olduğu gibi bırakıldı.');
+    return;
+  }
+  fs.writeFileSync(OUT, next);
   const withPhone = clinics.filter((c) => c.phone).length;
   const withHours = clinics.filter((c) => c.opening_hours).length;
   console.log(`✓ ${OUT}: ${clinics.length} klinik · telefonlu ${withPhone} · saatli ${withHours}`);
