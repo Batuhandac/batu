@@ -1,0 +1,8 @@
+{
+  "name": "apple-poi",
+  "version": "1.0.0",
+  "description": "Apple Haritalar (MapKit) yerel arama: anahtarsız veteriner araması",
+  "main": "index.ts",
+  "private": true,
+  "license": "UNLICENSED"
+}

@@ -3,6 +3,7 @@ import { cacheClinics } from '@/lib/cache';
 import { nearbySeedClinics, rankClinics, trFold } from '@/lib/data/query';
 import { fetchCommunityClinics } from '@/lib/data/community';
 import { fetchPlacesClinics, PLACES_RADIUS_KM } from '@/lib/data/places';
+import { fetchAppleClinics } from '@/lib/data/apple';
 import { applyProfile, cachedProfiles, loadClinicProfiles, type ProfileMap } from '@/lib/data/profiles';
 import { registerClinics } from '@/lib/data/registry';
 import { haversine } from '@/lib/utils/geo';
@@ -28,8 +29,8 @@ interface UseClinicsResult {
 }
 
 /**
- * Tüm kaynakları birleştirir: Google Places (canlı) + OpenStreetMap (gömülü,
- * çevrimdışı) + topluluk. Aynı klinik birden çok kaynakta varsa en iyi kayıt
+ * Tüm kaynakları birleştirir: Google Places (canlı) + Apple Haritalar (iOS, canlı,
+ * anahtarsız) + OpenStreetMap (gömülü, çevrimdışı) + topluluk. Aynı klinik birden çok kaynakta varsa en iyi kayıt
  * tutulur, eksik telefon/saat diğerinden tamamlanır; klinik onaylı profiller
  * en üste uygulanır. Sonra tek skorla sıralanır.
  */
@@ -37,13 +38,14 @@ export function buildClinicList(
   lat: number,
   lng: number,
   filters: NearbyFilters,
-  sources: { places: Clinic[]; local: Clinic[]; community: Clinic[] },
+  sources: { places: Clinic[]; apple?: Clinic[]; local: Clinic[]; community: Clinic[] },
   profiles: ProfileMap
 ): Clinic[] {
   const withProfile = (cs: Clinic[]) => cs.map((c) => applyProfile(c, profiles[c.id]));
   const merged = deduplicateClinics([
     ...withProfile(sources.places),
     ...withProfile(sources.local),
+    ...withProfile(sources.apple ?? []),
     ...withProfile(sources.community),
   ]);
   return rankClinics(merged, lat, lng, filters, PLACES_RADIUS_KM).sort(
@@ -76,10 +78,11 @@ export function useClinics(): UseClinicsResult {
         registerClinics(first);
         cacheClinics(first).catch(() => {});
 
-        // 2) Google Places + topluluk + onaylı profiller — paralel
+        // 2) Google Places + Apple Haritalar + topluluk + onaylı profiller — paralel
         // Zayıf bağlantıda hiçbir kaynak listeyi sonsuza dek "yükleniyor"da tutmasın
-        const [places, community, profiles] = await Promise.allSettled([
+        const [places, apple, community, profiles] = await Promise.allSettled([
           fetchPlacesClinics(lat, lng),
+          withTimeout(fetchAppleClinics(lat, lng), SOURCE_TIMEOUT_MS),
           withTimeout(fetchCommunityClinics(), SOURCE_TIMEOUT_MS),
           withTimeout(loadClinicProfiles(), SOURCE_TIMEOUT_MS),
         ]);
@@ -87,12 +90,14 @@ export function useClinics(): UseClinicsResult {
         if (requestId !== latestRequest.current) return;
 
         const placesData = places.status === 'fulfilled' ? places.value : [];
+        const appleData = apple.status === 'fulfilled' ? apple.value : [];
         const full = buildClinicList(
           lat,
           lng,
           filters,
           {
             places: placesData,
+            apple: appleData,
             local,
             community: community.status === 'fulfilled' ? community.value : [],
           },
@@ -100,7 +105,7 @@ export function useClinics(): UseClinicsResult {
         );
         registerClinics(full);
         setClinics(full);
-        setLive(placesData.length > 0);
+        setLive(placesData.length > 0 || appleData.length > 0);
       } catch {
         if (requestId === latestRequest.current) setError('Klinikler yüklenemedi. Tekrar dene.');
       } finally {
@@ -131,9 +136,11 @@ export function sameClinic(a: Clinic, b: Clinic): boolean {
   return ka === kb || ka.startsWith(kb) || kb.startsWith(ka);
 }
 
-// Düşük sayı = tercih edilir: onaylı > Google > OpenStreetMap > topluluk
+// Düşük sayı = tercih edilir: onaylı > Google > OpenStreetMap > Apple > topluluk.
+// Apple'da saat yok; aynı klinik OSM'de de varsa saatli kayıt kalır, telefon Apple'dan tamamlanır.
+const SOURCE_RANK: Record<string, number> = { google: 0, builtin: 1, apple: 2 };
 function rank(c: Clinic): number {
-  const src = c.source === 'google' ? 0 : c.source === 'builtin' ? 1 : 2;
+  const src = SOURCE_RANK[c.source ?? ''] ?? 3;
   return (c.is_verified ? 0 : 10) + src;
 }
 

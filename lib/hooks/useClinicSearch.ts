@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isPlacesConfigured, searchPlacesByName } from '@/lib/data/places';
+import { isAppleConfigured, searchAppleByName } from '@/lib/data/apple';
 import { matchesClinicQuery, rankClinics, searchClinicsByName, searchScore, seedToClinic } from '@/lib/data/query';
 import { registerClinics } from '@/lib/data/registry';
 import { deduplicateClinics } from '@/lib/hooks/useClinics';
@@ -12,8 +13,8 @@ const DEBOUNCE_MS = 450;
 /**
  * Klinikler ekranında ada, semte ya da adrese göre arama. Ekrandaki listeden ve
  * gömülü veriden (tüm Türkiye, çevrimdışı) anında sonuç verir; ardından
- * Google'da da arar ve listede olmayan klinikleri ekler (ör. yakın 60'a
- * girmeyen bir mahalle kliniği).
+ * Google'da ve Apple Haritalar'da da arar, listede olmayan klinikleri ekler
+ * (ör. yakın 60'a girmeyen bir mahalle kliniği).
  */
 export function useClinicSearch(query: string, lat: number | null, lng: number | null, loaded: Clinic[]) {
   const q = query.trim();
@@ -23,15 +24,14 @@ export function useClinicSearch(query: string, lat: number | null, lng: number |
 
   useEffect(() => {
     setRemote([]);
-    if (!active || lat == null || lng == null || !isPlacesConfigured) return;
+    if (!active || lat == null || lng == null || !(isPlacesConfigured || isAppleConfigured)) return;
     let cancelled = false;
     setSearching(true);
     const timer = setTimeout(() => {
-      searchPlacesByName(q, lat, lng)
-        .then((r) => {
-          if (!cancelled) setRemote(r);
+      Promise.all([searchPlacesByName(q, lat, lng).catch(() => []), searchAppleByName(q, lat, lng).catch(() => [])])
+        .then(([g, a]) => {
+          if (!cancelled) setRemote([...g, ...a]);
         })
-        .catch(() => {})
         .finally(() => {
           if (!cancelled) setSearching(false);
         });

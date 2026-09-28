@@ -17,6 +17,7 @@ import { useFavorites } from '@/lib/hooks/useFavorites';
 import { getClinicById, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { fetchPlaceClinic } from '@/lib/data/places';
+import { fetchAppleClinic } from '@/lib/data/apple';
 import { applyProfile, loadClinicProfiles } from '@/lib/data/profiles';
 import { withLiveStatus, istanbulNow } from '@/lib/utils/openingHours';
 import { clinicStatus, formatDistance } from '@/lib/utils/status';
@@ -42,6 +43,7 @@ function sourceNote(c: Clinic): string {
   }
   if (c.source === 'google') return 'Saat ve telefon bilgisi Google Maps kaynaklıdır.';
   if (c.source === 'builtin') return 'Bilgiler OpenStreetMap gönüllülerince girildi; eksik ya da eski olabilir.';
+  if (c.source === 'apple') return 'Adres ve telefon Apple Haritalar kaynaklıdır; çalışma saati bilinmiyor, gitmeden önce ara.';
   return 'Bu klinik bir kullanıcı tarafından eklendi.';
 }
 
@@ -373,6 +375,7 @@ async function loadClinic(id: string): Promise<Clinic | null> {
     if (seed) c = seedToClinic(seed);
   }
   if (!c) c = await fetchPlaceClinic(id).catch(() => null);
+  if (!c) c = await fetchAppleClinic(id).catch(() => null);
   if (c && !c.is_verified) {
     const profiles = await loadClinicProfiles().catch(() => ({}));
     c = applyProfile(c, (profiles as Record<string, never>)[id]);

@@ -1,6 +1,6 @@
 export type ClinicStatus = 'open' | 'closed' | 'unknown';
 export type VerificationStatus = 'seed' | 'verified' | 'claimed' | 'flagged';
-export type ClinicSource = 'builtin' | 'community' | 'google';
+export type ClinicSource = 'builtin' | 'community' | 'google' | 'apple';
 
 // Google Places çalışma periyodu (0=Pazar … 6=Cumartesi, klinik yerel saati).
 // close yoksa yer 7/24 açıktır.

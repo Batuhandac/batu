@@ -111,7 +111,7 @@ GİZLİLİĞİN SENDE
 - Dostlarının kartları, bakım takvimin ve konumun yalnızca telefonunda durur.
 - Hesap açmadan kullanabilirsin. Reklam yok, seni izlemiyoruz.
 
-Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten ve kliniklerin kendisinden gelir. Patiport veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
+Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten, Apple Haritalar'dan ve kliniklerin kendisinden gelir. Patiport veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
 ```
 
 ### Ekran görüntüleri
@@ -164,7 +164,7 @@ Apple sonucu yanıtlara göre kendisi hesaplar. Dürüst yanıtlar:
 
 | Kategori | Veri türü | Amaç | Nerede |
 | --- | --- | --- | --- |
-| Location | Precise Location | App Functionality | Klinik aramasında Google Maps Platform'a gider, bizde saklanmaz |
+| Location | Precise Location | App Functionality | Klinik aramasında Google Maps Platform'a ve Apple Haritalar'a gider, bizde saklanmaz |
 | Usage Data | Product Interaction | Analytics | Yalnızca PostHog anahtarı tanımlıysa |
 
 Toplanmayanlar: dost kartları, bakım takvimi, kilo kayıtları, pati puanı. Bunlar
