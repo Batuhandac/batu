@@ -18,6 +18,7 @@ import { getClinicById, seedToClinic } from '@/lib/data/query';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { fetchPlaceClinic } from '@/lib/data/places';
 import { fetchAppleClinic } from '@/lib/data/apple';
+import { chamberLabel, directionsAddress } from '@/lib/data/chamber';
 import { applyProfile, loadClinicProfiles } from '@/lib/data/profiles';
 import { withLiveStatus, istanbulNow } from '@/lib/utils/openingHours';
 import { clinicStatus, formatDistance } from '@/lib/utils/status';
@@ -44,6 +45,8 @@ function sourceNote(c: Clinic): string {
   if (c.source === 'google') return 'Saat ve telefon bilgisi Google Maps kaynaklıdır.';
   if (c.source === 'builtin') return 'Bilgiler OpenStreetMap gönüllülerince girildi; eksik ya da eski olabilir.';
   if (c.source === 'apple') return 'Adres ve telefon Apple Haritalar kaynaklıdır; çalışma saati bilinmiyor, gitmeden önce ara.';
+  if (c.source === 'chamber')
+    return `Adres ve telefon ${chamberLabel(c.id)} listesinden alındı; çalışma saati bilinmiyor.${c.location_approx ? ' Haritadaki yer adresten bulundu, birkaç yüz metre sapabilir.' : ''}`;
   return 'Bu klinik bir kullanıcı tarafından eklendi.';
 }
 
@@ -141,7 +144,7 @@ export default function ClinicDetailScreen() {
   const weekdayText = clinic.weekday_text ?? [];
   const todayIdx = (istanbulNow().dow + 6) % 7; // weekday_text Pazartesi'den başlar
   const place = [clinic.district, clinic.city].filter(Boolean).join(', ');
-  const meta = [place || null, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ');
+  const meta = [place || null, clinic.distance_km > 0 ? formatDistance(clinic.distance_km, clinic.location_approx) : null].filter(Boolean).join(' · ');
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom']}>
@@ -230,7 +233,14 @@ export default function ClinicDetailScreen() {
         {/* Bilgiler */}
         <Section title="Bilgiler">
           <Group>
-            {clinic.address ? <ListRow icon="location-outline" title={clinic.address} subtitle="Adres" onPress={handleDirections} /> : null}
+            {clinic.address ? (
+              <ListRow
+                icon="location-outline"
+                title={clinic.address}
+                subtitle={clinic.location_approx ? 'Adres · haritadaki yer yaklaşık' : 'Adres'}
+                onPress={handleDirections}
+              />
+            ) : null}
             <View style={{ padding: 16, borderBottomWidth: hairline, borderBottomColor: t.border }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: weekdayText.length ? 10 : 0 }}>
                 <Icon name="time-outline" size={20} color={t.primary} />
@@ -359,6 +369,7 @@ export default function ClinicDetailScreen() {
         lat={clinic.lat}
         lng={clinic.lng}
         clinicId={id}
+        address={directionsAddress(clinic)}
       />
       <FeedbackModal visible={showFeedback} onClose={() => setShowFeedback(false)} clinicId={id} clinicName={clinic.name} />
     </SafeAreaView>

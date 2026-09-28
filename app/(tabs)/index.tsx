@@ -413,7 +413,7 @@ function FirstPetCard() {
 function NearestCard({ clinic }: { clinic: Clinic }) {
   const t = useTheme();
   const s = clinicStatus(clinic);
-  const meta = [clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null, clinic.district].filter(Boolean).join(' · ');
+  const meta = [clinic.distance_km > 0 ? formatDistance(clinic.distance_km, clinic.location_approx) : null, clinic.district].filter(Boolean).join(' · ');
   return (
     <Card onPress={() => router.push(`/clinic/${clinic.id}`)} accessibilityLabel={clinic.name}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

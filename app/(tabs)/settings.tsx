@@ -99,7 +99,7 @@ export default function SettingsScreen() {
           onPress={() =>
             Alert.alert(
               'Veri kaynakları',
-              'Klinik bilgileri: © OpenStreetMap katkıcıları (ODbL lisansı), Google Maps, Apple Haritalar ve kliniklerin kendi onayladığı bilgiler. Kullanıcıların eklediği klinikler kontrol edildikten sonra yayınlanır.'
+              'Klinik bilgileri: © OpenStreetMap katkıcıları (ODbL lisansı), Google Maps, Apple Haritalar, Ankara Veteriner Hekimleri Odası\'nın klinik listeleri ve kliniklerin kendi onayladığı bilgiler. Kullanıcıların eklediği klinikler kontrol edildikten sonra yayınlanır.'
             )
           }
         />

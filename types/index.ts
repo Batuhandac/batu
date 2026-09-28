@@ -1,6 +1,7 @@
 export type ClinicStatus = 'open' | 'closed' | 'unknown';
 export type VerificationStatus = 'seed' | 'verified' | 'claimed' | 'flagged';
-export type ClinicSource = 'builtin' | 'community' | 'google' | 'apple';
+// chamber: veteriner hekimleri odasının klinik listesi (lib/data/chamberClinics.ts)
+export type ClinicSource = 'builtin' | 'community' | 'google' | 'apple' | 'chamber';
 
 // Google Places çalışma periyodu (0=Pazar … 6=Cumartesi, klinik yerel saati).
 // close yoksa yer 7/24 açıktır.
@@ -16,6 +17,9 @@ export interface Clinic {
   district: string | null;
   lat: number;
   lng: number;
+  // Konum kapı numarasından değil cadde/mahalleden bulundu (oda listeleri);
+  // yol tarifi koordinat yerine adresle açılır
+  location_approx?: boolean;
   phone: string | null;
   is_24_7: boolean;
   accepts_emergency: boolean;

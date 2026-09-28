@@ -111,7 +111,7 @@ GİZLİLİĞİN SENDE
 - Dostlarının kartları, bakım takvimin ve konumun yalnızca telefonunda durur.
 - Hesap açmadan kullanabilirsin. Reklam yok, seni izlemiyoruz.
 
-Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten, Apple Haritalar'dan ve kliniklerin kendisinden gelir. Patiport veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
+Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten, Apple Haritalar'dan, veteriner hekimleri odalarının klinik listelerinden ve kliniklerin kendisinden gelir. Patiport veteriner muayenesinin yerini tutmaz; dostun kötüyse hemen bir kliniği ara.
 ```
 
 ### Ekran görüntüleri

@@ -10,15 +10,18 @@ interface Props {
   lat: number;
   lng: number;
   clinicId: string;
+  // Konum yaklaşıksa (oda listesi) harita uygulaması adresi kendisi bulsun
+  address?: string | null;
 }
 
-export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clinicId }: Props) {
+export function DirectionsModal({ visible, onClose, onCallFirst, lat, lng, clinicId, address }: Props) {
   const openMaps = async () => {
     track('directions_confirmed', { clinic_id: clinicId });
-    // Gerçek yol tarifi (varış noktası = klinik koordinatı)
-    const iosUrl = `maps://?daddr=${lat},${lng}&dirflg=d`;
-    const androidUrl = `google.navigation:q=${lat},${lng}`;
-    const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    // Gerçek yol tarifi (varış noktası = klinik koordinatı ya da adresi)
+    const dest = address ? encodeURIComponent(address) : `${lat},${lng}`;
+    const iosUrl = `maps://?daddr=${dest}&dirflg=d`;
+    const androidUrl = `google.navigation:q=${dest}`;
+    const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
     const nativeUrl = Platform.OS === 'ios' ? iosUrl : androidUrl;
     try {
       const canOpen = await Linking.canOpenURL(nativeUrl);

@@ -30,6 +30,8 @@ export function clinicStatus(c: Pick<Clinic, 'status' | 'is_24_7' | 'closes_in_m
   return { label: 'Saat bilinmiyor', tone: 'unknown', closingSoon: null };
 }
 
-export function formatDistance(km: number): string {
+/** 850 m · 2,4 km. Konum adresten yaklaşık bulunduysa "~" ile ve 100 m'ye yuvarlanır. */
+export function formatDistance(km: number, approx = false): string {
+  if (approx) return km < 1 ? `~${Math.max(100, Math.round(km * 10) * 100)} m` : `~${km.toFixed(1).replace('.', ',')} km`;
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`;
 }

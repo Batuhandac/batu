@@ -6,7 +6,12 @@ import { haversine } from '@/lib/utils/geo';
 import { isAlwaysOpen, weekdayText, withLiveStatus } from '@/lib/utils/openingHours';
 import { parseOsmHours } from '@/lib/utils/osmHours';
 import { CLINICS } from './clinics';
+import { CHAMBER_CLINICS } from './chamberClinics';
 import type { SeedClinic } from './types';
+
+// OpenStreetMap + veteriner hekimleri odası listeleri. Aynı klinik ikisinde de
+// varsa useClinics'teki birleştirme tek kayda indirir (OSM konumu kalır).
+const SEEDS: SeedClinic[] = [...CLINICS, ...CHAMBER_CLINICS];
 
 const periodsCache = new Map<string, OpeningPeriod[] | undefined>();
 
@@ -28,6 +33,7 @@ export function seedToClinic(c: SeedClinic, lat?: number, lng?: number): Clinic 
       city: c.city,
       lat: c.lat,
       lng: c.lng,
+      location_approx: c.approx ? true : undefined,
       phone: c.phone,
       is_24_7: is247,
       accepts_emergency: c.emergency || is247,
@@ -40,7 +46,7 @@ export function seedToClinic(c: SeedClinic, lat?: number, lng?: number): Clinic 
       is_open_now: false,
       status: 'unknown',
       emergency_score: 0,
-      source: 'builtin',
+      source: c.source ?? 'builtin',
       opening_periods: periods,
       weekday_text: periods && periods.length > 0 ? weekdayText(periods) : undefined,
     },
@@ -51,7 +57,7 @@ export function seedToClinic(c: SeedClinic, lat?: number, lng?: number): Clinic 
 
 /** Gömülü veriden yarıçap içindeki klinikler (filtresiz, sırasız). */
 export function nearbySeedClinics(lat: number, lng: number, radiusKm = 20): Clinic[] {
-  return CLINICS.filter((c) => haversine(lat, lng, c.lat, c.lng) <= radiusKm).map((c) =>
+  return SEEDS.filter((c) => haversine(lat, lng, c.lat, c.lng) <= radiusKm).map((c) =>
     seedToClinic(c, lat, lng)
   );
 }
@@ -158,14 +164,14 @@ export function searchScore(c: Clinic, query: string): number {
 
 /** Tek gömülü klinik (detay ekranı için). */
 export function getClinicById(id: string): SeedClinic | null {
-  return CLINICS.find((c) => c.id === id) ?? null;
+  return SEEDS.find((c) => c.id === id) ?? null;
 }
 
 /** Ada göre gömülü klinik arama (veteriner hekim ekranı için). */
 export function searchClinicsByName(query: string, limit = 20): SeedClinic[] {
   const q = trFold(query);
   if (q.length < 2) return [];
-  return CLINICS.filter((c) => trFold(c.name).includes(q)).slice(0, limit);
+  return SEEDS.filter((c) => trFold(c.name).includes(q)).slice(0, limit);
 }
 
 export function trFold(s: string): string {

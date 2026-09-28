@@ -8,7 +8,7 @@ import { useTheme, radius, shadow, type Theme } from '@/lib/theme';
 import { useClinics } from '@/lib/hooks/useClinics';
 import { useLocation } from '@/lib/hooks/useLocation';
 import { DistrictPicker } from '@/components/location/DistrictPicker';
-import { usesSource } from '@/components/ui/DataAttribution';
+import { attributionText } from '@/components/ui/DataAttribution';
 import { clinicStatus, formatDistance } from '@/lib/utils/status';
 import type { Clinic, NearbyFilters } from '@/types';
 
@@ -57,8 +57,7 @@ export default function MapScreen() {
     if (!ok) setPicker(true);
   };
 
-  const google = usesSource(clinics, 'google');
-  const osm = usesSource(clinics, 'builtin');
+  const attribution = attributionText(clinics);
   const openCount = clinics.filter((c) => clinicStatus(c).tone === 'open').length;
 
   return (
@@ -92,7 +91,7 @@ export default function MapScreen() {
                     {clinic.name}
                   </Text>
                   <Text variant="caption" color={markerColor(t, clinic)} style={{ marginTop: 4 }}>
-                    {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
+                    {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km, clinic.location_approx) : null].filter(Boolean).join(' · ')}
                   </Text>
                   <Text variant="caption" tone="primary" style={{ marginTop: 8 }}>
                     Detay ve arama →
@@ -143,11 +142,11 @@ export default function MapScreen() {
         {loading ? <ActivityIndicator color={t.primary} size="small" /> : <Icon name="location-outline" size={18} color={t.primary} />}
         <View style={{ flex: 1 }}>
           <Text variant="callout">{loading ? 'Klinikler yükleniyor…' : `${openCount} açık · ${clinics.length} klinik`}</Text>
-          {(google || osm) && (
-            <Text variant="caption" tone="subtle" style={{ fontSize: 11 }} numberOfLines={1}>
-              {[google ? 'Google Maps' : null, osm ? '© OpenStreetMap katkıcıları' : null].filter(Boolean).join(' · ')}
+          {attribution ? (
+            <Text variant="caption" tone="subtle" style={{ fontSize: 11 }} numberOfLines={2}>
+              {attribution}
             </Text>
-          )}
+          ) : null}
         </View>
         <Text variant="caption" tone="primary">
           Konum

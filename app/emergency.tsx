@@ -20,6 +20,7 @@ import { track } from '@/lib/analytics';
 import { BEFORE_YOU_GO } from '@/lib/content/firstAid';
 import { FirstAidList } from '@/components/clinic/FirstAidList';
 import { DirectionsModal } from '@/components/clinic/DirectionsModal';
+import { directionsAddress } from '@/lib/data/chamber';
 import { DistrictPicker } from '@/components/location/DistrictPicker';
 import { DataAttribution } from '@/components/ui/DataAttribution';
 import type { Clinic, Pet } from '@/types';
@@ -202,6 +203,7 @@ export default function EmergencyScreen() {
           lat={dirClinic.lat}
           lng={dirClinic.lng}
           clinicId={dirClinic.id}
+          address={directionsAddress(dirClinic)}
         />
       )}
       <DistrictPicker
@@ -231,7 +233,7 @@ function BestClinicCard({ clinic, onDirections }: { clinic: Clinic; onDirections
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 8 }}>
         <Badge label={s.label} tone="open" dot />
-        {clinic.distance_km > 0 ? <Badge label={formatDistance(clinic.distance_km)} tone="neutral" /> : null}
+        {clinic.distance_km > 0 ? <Badge label={formatDistance(clinic.distance_km, clinic.location_approx)} tone="neutral" /> : null}
         {s.closingSoon ? <Badge label={s.closingSoon} tone="honey" /> : null}
         {clinic.is_verified ? <Badge label="Klinik onaylı" tone="primary" icon="checkmark-circle" /> : null}
       </View>
@@ -284,7 +286,7 @@ function AltRow({ clinic, onDirections, last }: { clinic: Clinic; onDirections: 
           {clinic.name}
         </Text>
         <Text variant="caption" tone="muted" style={{ marginTop: 1 }}>
-          {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km) : null].filter(Boolean).join(' · ')}
+          {[s.closingSoon ?? s.label, clinic.distance_km > 0 ? formatDistance(clinic.distance_km, clinic.location_approx) : null].filter(Boolean).join(' · ')}
         </Text>
       </Pressable>
       {canCall(clinic) ? (

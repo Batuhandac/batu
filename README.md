@@ -57,13 +57,24 @@ içinde yakındaki açık kliniği bul, tek dokunuşla ara.
    Anahtar yoksa listede yalnızca OSM'deki klinikler olur.
 3. **Apple Haritalar (canlı, iOS, anahtarsız)** — `lib/data/apple.ts`, yerel Expo
    modülü `modules/apple-poi` (MapKit `MKLocalSearch`). Ad, adres, telefon; saat yok.
-4. **Topluluk** — kullanıcıların eklediği klinikler (Firestore); yönetici onayından sonra görünür.
-5. **Klinik onaylı profiller** — veteriner hekimlerin "Bu klinik benim" başvurusu
+4. **Veteriner hekimleri odası listeleri (gömülü, çevrimdışı)** —
+   `lib/data/chamberClinics.ts`. Şimdilik Ankara Veteriner Hekimleri Odası'nın herkese
+   açık muayenehane, poliklinik ve hayvan hastanesi listeleri. OSM'de olmayan mahalle
+   muayenehaneleri böylece anahtarsız da listede. `scripts/gen-clinics-chamber.js`
+   adresleri OpenStreetMap Nominatim ile konuma çevirir (saniyede 1 istek, sonuçlar
+   `scripts/data/geocode-cache.json`'da; sonraki çalıştırmada yalnızca yeni adresler
+   sorulur) ve aylık workflow'da yenilenir. Hekimin adı alınmaz; yalnızca işletme adı,
+   telefon ve adres. Kapı numarası bulunamayanların konumu cadde ya da mahalleden
+   yaklaşıktır: listede mesafe "~" ile yazılır, yol tarifi koordinat yerine adresle açılır.
+   Başka bir odanın listesi aynı biçimdeyse script'teki `CHAMBERS` dizisine eklenir.
+5. **Topluluk** — kullanıcıların eklediği klinikler (Firestore); yönetici onayından sonra görünür.
+6. **Klinik onaylı profiller** — veteriner hekimlerin "Bu klinik benim" başvurusu
    telefonla doğrulanınca yönetici `clinic_profiles` belgesini oluşturur; bu bilgiler
    diğer kaynakların üzerine yazılır. Süreç: `YONETICI_REHBERI.md`.
 
 Aynı klinik birden çok kaynakta varsa tek kayıt gösterilir (onaylı > Google > OSM >
-Apple > topluluk), eksik telefon/saat diğer kaynaktan tamamlanır. Açık/kapalı durumu her
+Apple > oda listesi > topluluk), eksik telefon/saat/adres diğer kaynaktan tamamlanır;
+oda listesindeki yaklaşık konum, aynı klinik başka kaynakta varsa onun konumuyla değişir. Açık/kapalı durumu her
 zaman çalışma saatlerinden cihazda hesaplanır; saat bilinmiyorsa "bilinmiyor" yazar.
 
 Sıralama satın alınamaz: yalnızca şu an açık olma, acil kabul, 7/24, doğrulanmış

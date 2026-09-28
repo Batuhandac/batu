@@ -74,11 +74,15 @@ oluştur/güncelle.
 gösterilmiyor). Aynı kliniğe çok sayıda "telefonu açmadı" geliyorsa kliniği ara,
 numarayı düzelt.
 
-## 5. Klinik verisi (OpenStreetMap)
+## 5. Klinik verisi (OpenStreetMap ve oda listeleri)
 
-Çevrimdışı klinik listesi her ayın 1'inde OpenStreetMap'ten otomatik yenilenir
-(GitHub → Actions → "Klinik verisini güncelle"). Elle çalıştırmak için
-**Run workflow**. Eksik bir kliniği kalıcı olarak düzeltmenin en iyi yolu onu
+Çevrimdışı klinik listesi her ayın 1'inde OpenStreetMap'ten ve Ankara Veteriner
+Hekimleri Odası'nın muayenehane/poliklinik/hayvan hastanesi listelerinden otomatik
+yenilenir (GitHub → Actions → "Klinik verisini güncelle"). Elle çalıştırmak için
+**Run workflow**. Oda listesine yeni eklenen kliniklerin adresi konuma çevrilir; konumu
+bulunamayanlar workflow log'unda "Konumu bulunamayanlar" altında listelenir. Bir
+kliniğin yeri yanlışsa en kalıcı çözüm, kliniği OpenStreetMap'e eklemektir: aynı klinik
+OSM'de de varsa uygulama OSM konumunu kullanır. Eksik bir kliniği kalıcı olarak düzeltmenin en iyi yolu onu
 OpenStreetMap'e eklemektir (openstreetmap.org → Düzenle) — herkes faydalanır.
 
 ## 6. Veteriner hekim hesabı ve mesajlaşma

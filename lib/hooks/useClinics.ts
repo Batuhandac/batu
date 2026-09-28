@@ -120,33 +120,53 @@ export function useClinics(): UseClinicsResult {
 
 // ─── Tekrarları birleştirme ─────────────────────────────────────────────────
 
-const GENERIC = /\b(veteriner|veterinary|veterinerlik|vet|klinigi|klinik|poliklinigi|poliklinik|hayvan|hayvanlar|hastanesi|hastane|saglik|merkezi|pet|ve|dr|hekim|hekimi)\b/g;
+const GENERIC = /\b(veteriner|veterinary|veterinerlik|vet|klinigi|klinik|poliklinigi|poliklinik|muayenehanesi|muayenehane|vm|vp|hh|hayvan|hayvanlar|hastanesi|hastane|saglik|merkezi|pet|ve|dr|hekim|hekimi)\b/g;
 
 function nameKey(name: string): string {
   return trFold(name).replace(/[^a-z0-9 ]/g, ' ').replace(GENERIC, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// Oda listesindeki konum adresten bulunduğu için gerçek yerden 1-2 km sapabilir
+const APPROX_MATCH_KM = 2.5;
+
 export function sameClinic(a: Clinic, b: Clinic): boolean {
   const d = haversine(a.lat, a.lng, b.lat, b.lng);
-  if (d < 0.04) return true; // aynı bina
-  if (d > 0.3) return false;
+  // Oda listesi kendi içinde tekrarsız; yakın iki kayıt ayrı kliniklerdir
+  if (a.source === 'chamber' && b.source === 'chamber') return false;
+  const approx = a.location_approx || b.location_approx;
+  if (d < 0.04 && !approx) return true; // aynı bina
+  if (d > (approx ? APPROX_MATCH_KM : 0.3)) return false;
   const ka = nameKey(a.name);
   const kb = nameKey(b.name);
   if (!ka || !kb) return false;
-  return ka === kb || ka.startsWith(kb) || kb.startsWith(ka);
+  if (ka === kb) return true;
+  // Yaklaşık konumda yalnızca adın ayırt edici kısmı birebir aynıysa aynı klinik say
+  return d <= 0.3 && (ka.startsWith(kb) || kb.startsWith(ka));
 }
 
-// Düşük sayı = tercih edilir: onaylı > Google > OpenStreetMap > Apple > topluluk.
+// Düşük sayı = tercih edilir: onaylı > Google > OpenStreetMap > Apple > oda listesi > topluluk.
 // Apple'da saat yok; aynı klinik OSM'de de varsa saatli kayıt kalır, telefon Apple'dan tamamlanır.
-const SOURCE_RANK: Record<string, number> = { google: 0, builtin: 1, apple: 2 };
+// Oda listesinin konumu yaklaşık; aynı klinik başka kaynakta varsa o konum kullanılır.
+const SOURCE_RANK: Record<string, number> = { google: 0, builtin: 1, apple: 2, chamber: 3 };
 function rank(c: Clinic): number {
-  const src = SOURCE_RANK[c.source ?? ''] ?? 3;
+  const src = SOURCE_RANK[c.source ?? ''] ?? 4;
   return (c.is_verified ? 0 : 10) + src;
 }
 
 function mergeInto(best: Clinic, other: Clinic): Clinic {
   const out: Clinic = { ...best };
   let used = false;
+  if (out.location_approx && !other.location_approx) {
+    out.lat = other.lat;
+    out.lng = other.lng;
+    out.location_approx = undefined;
+    used = true;
+  }
+  if (!out.address && other.address) {
+    out.address = other.address;
+    out.district = out.district ?? other.district;
+    used = true;
+  }
   if (!out.phone && other.phone) {
     out.phone = other.phone;
     used = true;

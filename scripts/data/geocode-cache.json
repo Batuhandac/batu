@@ -1,0 +1,1559 @@
+{
+ "ank|100. Yıl Mah. Reşit Galip Cad. Koçak İşhanı No:7/B Çankaya/Ankara": {
+  "lat": 39.899999,
+  "lng": 32.869263,
+  "approx": "street"
+ },
+ "ank|100. Yıl Mah. Reşit Galip Cad. No:44/A Çankaya/Ankara": {
+  "lat": 39.899999,
+  "lng": 32.869263,
+  "approx": "street"
+ },
+ "ank|30 Agustos Mah. 2071 Cad. No:7/A Etimesgut/Ankara": {
+  "lat": 39.94355,
+  "lng": 32.655898,
+  "approx": "area"
+ },
+ "ank|30 Ağustos Mah. Ahi Mesut Bulv. No:7/B Etimesgut/Ankara": {
+  "lat": 39.94355,
+  "lng": 32.655898,
+  "approx": "area"
+ },
+ "ank|Ahi Mesut Mah. 1904. Cad. İrem Sit. No:2/11C Etimesgut/Ankara": {
+  "lat": 39.937384,
+  "lng": 32.635762,
+  "approx": "street"
+ },
+ "ank|Ahi Mesut Mah. Ahi Mesut Bulvarı No:81/C Etimesgut/Ankara": {
+  "lat": 39.934367,
+  "lng": 32.63857,
+  "approx": "area"
+ },
+ "ank|Ahlatlıbel Mah. 1835. Cad. No:25/D Çankaya/Ankara": {
+  "lat": 39.834974,
+  "lng": 32.744742,
+  "approx": "area"
+ },
+ "ank|Ahlatlıbel Mah. 1846. Cad. No:260 Çankaya/Ankara": {
+  "lat": 39.834974,
+  "lng": 32.744742,
+  "approx": "area"
+ },
+ "ank|Akarsu Mah. Şht. Mükremin Başaran Cad. No:19/A Gölbaşı/Ankara": null,
+ "ank|Akarsu Mah. Şht. Mükremin Başaran Cad. No:76/B Gölbaşı/Ankara": null,
+ "ank|Akpınar Mah. Dikmen Cad. No:566/A Çankaya/Ankara": {
+  "lat": 39.859581,
+  "lng": 32.81554,
+  "approx": "street"
+ },
+ "ank|Alacaatlı Mah. 3300 Cad. No:1/8 Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. 3315. Sok. Divan Sit. No:18 Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. 3316 Sok. No:2/EA Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. 3316. Sok. No:3/1 Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. 3341. Sok. No:1/8C Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. 3408. Cad. No:2/F Çankaya/Ankara": {
+  "lat": 39.853908,
+  "lng": 32.629016,
+  "approx": null
+ },
+ "ank|Alacaatlı Mah. 5110 Sok. No:3/A-B Çankaya/Ankara": {
+  "lat": 39.842431,
+  "lng": 32.641627,
+  "approx": "street"
+ },
+ "ank|Alacaatlı Mah. Kanuni Sultan Süleyman Bulv. No:152/C Çankaya/Ankara": {
+  "lat": 39.824812,
+  "lng": 32.708601,
+  "approx": null
+ },
+ "ank|Alacaatlı Mah. Mehmet Rifat Börekçi Cad. No:2/37 E Çankaya/Ankara": {
+  "lat": 39.856599,
+  "lng": 32.6455,
+  "approx": null
+ },
+ "ank|Alacaatlı Mah. No:3A/4 Çankaya/Ankara": {
+  "lat": 39.847875,
+  "lng": 32.674792,
+  "approx": "area"
+ },
+ "ank|Alacaatlı Mah. Park Cad. No:65/2 Çankaya/Ankara": {
+  "lat": 39.85822,
+  "lng": 32.652937,
+  "approx": null
+ },
+ "ank|Alsancak Mah. 1773 Cad. No:63/D Etimesgut/Ankara": {
+  "lat": 39.93402,
+  "lng": 32.649408,
+  "approx": "area"
+ },
+ "ank|Alsancak Mah. Şehit Hikmet Özer Cad. No:160/A Etimesgut/Ankara": {
+  "lat": 39.931634,
+  "lng": 32.654855,
+  "approx": "street"
+ },
+ "ank|Altay Mah. 1408. Sok. Fırat Residence No:35A/34 Etimesgut/Ankara": {
+  "lat": 39.972489,
+  "lng": 32.644749,
+  "approx": "area"
+ },
+ "ank|Anıttepe Mah. Gençlik Cad. No:24/B Çankaya/Ankara": {
+  "lat": 39.928665,
+  "lng": 32.840195,
+  "approx": "street"
+ },
+ "ank|Aşağı Öveçler Mah. Lizbon Cad. No:69/A Çankaya/Ankara": {
+  "lat": 39.89114,
+  "lng": 32.823296,
+  "approx": "street"
+ },
+ "ank|Aşıkpaşa Mah. Ziya Oralay Cad. No:232/A Çankaya/Ankara": {
+  "lat": 39.910265,
+  "lng": 32.884575,
+  "approx": "street"
+ },
+ "ank|Ata Mah. Kabil Cad. No:130/B Çankaya/Ankara": {
+  "lat": 39.876965,
+  "lng": 32.826179,
+  "approx": "street"
+ },
+ "ank|Ata Mah. Lizbon Cad. No:93/B Çankaya/Ankara": {
+  "lat": 39.876817,
+  "lng": 32.823041,
+  "approx": "street"
+ },
+ "ank|Atakent Mah. Şehit Celal İşen Sok. No:4/B Etimesgut/Ankara": {
+  "lat": 39.952516,
+  "lng": 32.610085,
+  "approx": "area"
+ },
+ "ank|Atakent Mah. Şehit Celal İşen Sok. No:52/B Etimesgut/Ankara": {
+  "lat": 39.952516,
+  "lng": 32.610085,
+  "approx": "area"
+ },
+ "ank|Atakent Mah. Şehit Celal İşen Sok. No:8/10 Etimesgut/Ankara": {
+  "lat": 39.952516,
+  "lng": 32.610085,
+  "approx": "area"
+ },
+ "ank|Atatürk Mah. Fevzi Çakmak Cad. No:5/B Kahramankazan/Ankara": {
+  "lat": 40.200535,
+  "lng": 32.678217,
+  "approx": "street"
+ },
+ "ank|Atatürk Mah. Leylak Sok.No: 1/D Çubuk/Ankara": {
+  "lat": 40.236917,
+  "lng": 33.026295,
+  "approx": "street"
+ },
+ "ank|Atayurt Mah. 4462 Cad. B Blok No:10/5 Etimesgut/Ankara": {
+  "lat": 39.841901,
+  "lng": 32.539858,
+  "approx": "area"
+ },
+ "ank|Atayurt Mah. Evliya Çelebi Cad. No:59A/2 Etimesgut/Ankara": {
+  "lat": 39.841571,
+  "lng": 32.543293,
+  "approx": "street"
+ },
+ "ank|Aydınlar Mah. Ece Cad. No:14/D Çankaya/Ankara": {
+  "lat": 39.879337,
+  "lng": 32.83412,
+  "approx": "street"
+ },
+ "ank|Aydınlıkevler Mah. Çevreli Cad. No:95/A Altındağ/Ankara": {
+  "lat": 39.962165,
+  "lng": 32.877605,
+  "approx": "street"
+ },
+ "ank|Aydınlıkevler Mah. Karaahmet Sok. No:42/1 Altındağ/Ankara": {
+  "lat": 39.962739,
+  "lng": 32.874879,
+  "approx": "area"
+ },
+ "ank|Aydınlıkevler Mah. Kırktaş Sok. No:27/B Altındağ/Ankara": {
+  "lat": 39.961382,
+  "lng": 32.879905,
+  "approx": null
+ },
+ "ank|Aydınlıkevler Mah. Şehit Ömer Halisdemir Blv No:104 Altındağ/Ankara": {
+  "lat": 39.963922,
+  "lng": 32.870752,
+  "approx": "street"
+ },
+ "ank|Aydınlıkevler Mah. Şehit Ömer Halisdemir Bulv. No:128/A Altındağ/Ankara": {
+  "lat": 39.963922,
+  "lng": 32.870752,
+  "approx": "street"
+ },
+ "ank|Ayrancı Mah. Güvenlik Cad. No:60/A Çankaya/Ankara": {
+  "lat": 39.898448,
+  "lng": 32.853264,
+  "approx": null
+ },
+ "ank|Ayrancı Mah. Hoşdere Cad. No:80/A Çankaya/Ankara": {
+  "lat": 39.904026,
+  "lng": 32.849866,
+  "approx": "street"
+ },
+ "ank|Ayrancı Mah. Hoşdere Cad.No:41/7 Çankaya/Ankara": {
+  "lat": 39.899536,
+  "lng": 32.84926,
+  "approx": null
+ },
+ "ank|Ayrancı Mah. Hoşdere Cad.No:64-66/A Çankaya/Ankara": {
+  "lat": 39.904026,
+  "lng": 32.849866,
+  "approx": "street"
+ },
+ "ank|Ayrancı Mah. Mesnevi Cad. No:55/A Çankaya/Ankara": {
+  "lat": 39.896252,
+  "lng": 32.845564,
+  "approx": "street"
+ },
+ "ank|Aziziye Mah. Hoşdere Cad. No: 127/B Çankaya/Ankara": {
+  "lat": 39.890699,
+  "lng": 32.847124,
+  "approx": "street"
+ },
+ "ank|Aziziye Mah. Hoşdere Cad. No:79/A Çankaya/Ankara": {
+  "lat": 39.890699,
+  "lng": 32.847124,
+  "approx": "street"
+ },
+ "ank|Aziziye Mah. Hoşdere Cad.No:198/A Çankaya/Ankara": {
+  "lat": 39.884859,
+  "lng": 32.851031,
+  "approx": null
+ },
+ "ank|Aziziye Mah. Platin Sok. Dostlar Apt. No:3/1 Çankaya/Ankara": {
+  "lat": 39.890644,
+  "lng": 32.851072,
+  "approx": "street"
+ },
+ "ank|Aziziye Mah. Portakal Çiçeği Sok. No:2/B Çankaya/Ankara": {
+  "lat": 39.893056,
+  "lng": 32.851524,
+  "approx": "area"
+ },
+ "ank|Aziziye Mah. Willy Brand Sok. No:24/A Çankaya/Ankara": {
+  "lat": 39.893056,
+  "lng": 32.851524,
+  "approx": "area"
+ },
+ "ank|Bademlidere Mah. Şemsettin Günaltay Cad. No:29/B Çankaya/Ankara": {
+  "lat": 39.898261,
+  "lng": 32.884285,
+  "approx": "street"
+ },
+ "ank|Bağcılar Mah. Vedat Dalokay Cad. No:97/B Çankaya/Ankara": {
+  "lat": 39.904472,
+  "lng": 32.879887,
+  "approx": "street"
+ },
+ "ank|Bağlıca Mah. 1181. Sokak No:4/B-1 Etimesgut/Ankara": {
+  "lat": 39.894073,
+  "lng": 32.648044,
+  "approx": "area"
+ },
+ "ank|Bağlıca Mah. Bağlıca Bulvarı No: 61/DA Etimesgut/ANKARA": {
+  "lat": 39.896116,
+  "lng": 32.663385,
+  "approx": "street"
+ },
+ "ank|Bağlıca Mah. Bağlıca Bulvarı No:31/HA Etimesgut/Ankara": {
+  "lat": 39.896116,
+  "lng": 32.663385,
+  "approx": "street"
+ },
+ "ank|Bağlıca Mah. Bağlıca Mah. Eskibağlar Cad. No:13B/1 Etimesgut/Ankara": {
+  "lat": 39.894073,
+  "lng": 32.648044,
+  "approx": "area"
+ },
+ "ank|Bağlıca Mah. Bağlıca Mah. Mermeroğlu Cad. Vera Konutları No:2/76B Etimesgut/Ankara": {
+  "lat": 39.894073,
+  "lng": 32.648044,
+  "approx": "area"
+ },
+ "ank|Bağlıca Mah. Mermeroğlu Cad. No:61/2A Etimesgut/Ankara": {
+  "lat": 39.887407,
+  "lng": 32.633372,
+  "approx": "street"
+ },
+ "ank|Bağlıca Mah. Mert Cad. No:4/19 Etimesgut/Ankara": {
+  "lat": 39.896083,
+  "lng": 32.648703,
+  "approx": "street"
+ },
+ "ank|Bahçelievler Mah. Azerbaycan Cad. No:46/A Çankaya/Ankara": {
+  "lat": 39.927059,
+  "lng": 32.826546,
+  "approx": null
+ },
+ "ank|Bahçelievler Mah. Kazakistan Cad. No:33/1 Çankaya/Ankara": {
+  "lat": 39.931664,
+  "lng": 32.823015,
+  "approx": "street"
+ },
+ "ank|Bahçelievler Mah. Kazakistan Cad. No:95/A Çankaya/Ankara": {
+  "lat": 39.923731,
+  "lng": 32.822738,
+  "approx": null
+ },
+ "ank|Bahçelievler Mah. Kazakistan Cad. Veli Necdet Arığ Sok. No:6/A Çankaya/Ankara": {
+  "lat": 39.931664,
+  "lng": 32.823015,
+  "approx": "street"
+ },
+ "ank|Bahçelievler Mah. Kazakistan Cad. Veli Nejdet Arığ Sok. No:18/1 Çankaya/Ankara": {
+  "lat": 39.931664,
+  "lng": 32.823015,
+  "approx": "street"
+ },
+ "ank|Bahçelievler Mah. Mareşal Fevzi Çakmak Cad. 53. Sok. No:72/B Çankaya/Ankara": {
+  "lat": 39.928545,
+  "lng": 32.831112,
+  "approx": "street"
+ },
+ "ank|Bahçelievler Mah. Taşkent Cad. No:84/A Çankaya/Ankara": {
+  "lat": 39.928924,
+  "lng": 32.829069,
+  "approx": "street"
+ },
+ "ank|Barbaros Mah. Billur Sok. No:25/B Çankaya/Ankara": {
+  "lat": 39.904228,
+  "lng": 32.862397,
+  "approx": "street"
+ },
+ "ank|Başpınar Mah. Orhan Kemal Cad. No:79/A Altındağ/Ankara": {
+  "lat": 39.967464,
+  "lng": 32.920615,
+  "approx": "street"
+ },
+ "ank|Bayraktar Mah. Vedat Dalokay Cad. No:70/B Çankaya/Ankara": {
+  "lat": 39.904472,
+  "lng": 32.879887,
+  "approx": "street"
+ },
+ "ank|Beyazıt Mah. Ankara Cad. No:13/C Akyurt/Ankara": {
+  "lat": 40.131092,
+  "lng": 33.083595,
+  "approx": "street"
+ },
+ "ank|Beyazıt Mah. Huzur Sok. No:12/A Akyurt/Ankara": {
+  "lat": 40.132345,
+  "lng": 33.086448,
+  "approx": "area"
+ },
+ "ank|Beyazıt Mah. Huzur Sok. No:15/B Akyurt/Ankara": {
+  "lat": 40.132345,
+  "lng": 33.086448,
+  "approx": "area"
+ },
+ "ank|Beyazıt Mah. Nurettin Cankurtaran Cad. No:56/B Akyurt/Ankara": {
+  "lat": 40.132431,
+  "lng": 33.083885,
+  "approx": "street"
+ },
+ "ank|Beytepe Mah. 5359 Sok. No:4/C Çankaya/Ankara": {
+  "lat": 39.856413,
+  "lng": 32.740529,
+  "approx": "area"
+ },
+ "ank|Beytepe Mah. İhsan Yavaş Sok. No:20 Beypazarı/Ankara": {
+  "lat": 40.169407,
+  "lng": 31.92257,
+  "approx": "area"
+ },
+ "ank|Beytepe Mah. Kanuni Sultan Süleyman Bulvarı 5387. Cadde No:27 Lotus Beytepe D5 Çankaya/Ankara": {
+  "lat": 39.870358,
+  "lng": 32.704694,
+  "approx": "street"
+ },
+ "ank|Beytepe Mah. Plevne Cad. No:10/AA Çankaya/Ankara": {
+  "lat": 39.850043,
+  "lng": 32.706386,
+  "approx": null
+ },
+ "ank|Birlik Mah. 398. Cad. No:15/B Çankaya/Ankara": {
+  "lat": 39.884343,
+  "lng": 32.875138,
+  "approx": "street"
+ },
+ "ank|Birlik Mah. 428. Cad. No:51/B Çankaya/Ankara": {
+  "lat": 39.876209,
+  "lng": 32.868465,
+  "approx": "street"
+ },
+ "ank|Birlik Mah. 435. Cad. No:65/A Çankaya/Ankara": {
+  "lat": 39.877223,
+  "lng": 32.875302,
+  "approx": "street"
+ },
+ "ank|Birlik Mah. 448. Cad. No:58/B Çankaya/Ankara": {
+  "lat": 39.881967,
+  "lng": 32.881711,
+  "approx": "street"
+ },
+ "ank|Birlik Mah. 448. Cad. No:73/A Çankaya/Ankara": {
+  "lat": 39.881967,
+  "lng": 32.881711,
+  "approx": "street"
+ },
+ "ank|Birlik Mah. 448. Cad. No:97/A Çankaya/Ankara": {
+  "lat": 39.881967,
+  "lng": 32.881711,
+  "approx": "street"
+ },
+ "ank|Büyükesat Mah. Koza 1 Cad. No:125/1 Çankaya/Ankara": {
+  "lat": 39.894264,
+  "lng": 32.881993,
+  "approx": "street"
+ },
+ "ank|Büyükesat Mah. Uğur Mumcu Cad. No:99/5 Çankaya/Ankara": {
+  "lat": 39.892048,
+  "lng": 32.874653,
+  "approx": "street"
+ },
+ "ank|Cami Atik Mah. Cumhuriyet Meydanı 1. Kısım No:2 Ayaş/Ankara": null,
+ "ank|Cami Atik Mah. Emine Tevfika Ayaşlı Cad. No:13/B Ayaş/Ankara": {
+  "lat": 40.014455,
+  "lng": 32.323656,
+  "approx": "area"
+ },
+ "ank|Cebeci Mah. Cemal Gürsel Cad. No:104/2 Çankaya/Ankara": {
+  "lat": 39.932467,
+  "lng": 32.87792,
+  "approx": "street"
+ },
+ "ank|Cebeci Mah. Cemal Gürsel Cad. Yeni Ankara Sok. No:29/1 Çankaya/Ankara": {
+  "lat": 39.932467,
+  "lng": 32.87792,
+  "approx": "street"
+ },
+ "ank|Cevizlidere Mah. 1066. Cad. No:52/B Çankaya/Ankara": {
+  "lat": 39.884245,
+  "lng": 32.815598,
+  "approx": null
+ },
+ "ank|Cevizlidere Mah. Cevizlidere Cad. No: 49/A Çankaya/Ankara": {
+  "lat": 39.879452,
+  "lng": 32.817734,
+  "approx": "street"
+ },
+ "ank|Cevizlidere Mah. Ceyhun Atuf Kansu Cad. No:180/B Çankaya/Ankara": {
+  "lat": 39.887285,
+  "lng": 32.816272,
+  "approx": "street"
+ },
+ "ank|Cevizlidere Mah. No:33/A Çankaya/Ankara": {
+  "lat": 39.885049,
+  "lng": 32.816741,
+  "approx": "area"
+ },
+ "ank|Cumhuriyet Mah. 2. Sok. No:11/A Çubuk/Ankara": {
+  "lat": 40.237969,
+  "lng": 33.027929,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. 2. Sok. No:26/A Çubuk/Ankara": {
+  "lat": 40.237969,
+  "lng": 33.027929,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. 4. Sok. No:13/A Çubuk/Ankara": {
+  "lat": 40.237931,
+  "lng": 33.028267,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. 7. Sok. No:5/B Çubuk/Ankara": {
+  "lat": 40.238346,
+  "lng": 33.027992,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. 9. Sok. No:5/B Çubuk/Ankara": {
+  "lat": 40.237677,
+  "lng": 33.028126,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. Filiz Sok. No:3/C Çubuk/Ankara": {
+  "lat": 40.228102,
+  "lng": 33.03013,
+  "approx": "area"
+ },
+ "ank|Cumhuriyet Mah. Kıbrıs Cad. Filiz Sok. No:7/A Çubuk/Ankara": {
+  "lat": 40.237474,
+  "lng": 33.028517,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. Kıbrıs Cad. No:13/A Çubuk/Ankara": {
+  "lat": 40.237474,
+  "lng": 33.028517,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. Stad Cad. No:30/B Çubuk/Ankara": {
+  "lat": 40.227854,
+  "lng": 33.026362,
+  "approx": "street"
+ },
+ "ank|Cumhuriyet Mah. Şehit Fatih Korçam Sok. No:3/A Çubuk/Ankara": {
+  "lat": 40.228102,
+  "lng": 33.03013,
+  "approx": "area"
+ },
+ "ank|Cumhuriyet Mah. Zafer Sok. No:29/A Çubuk/Ankara": {
+  "lat": 40.230835,
+  "lng": 33.02983,
+  "approx": "street"
+ },
+ "ank|Çamlıtepe Mah. Teveküller Sok. No:35/B Çankaya/Ankara": {
+  "lat": 39.926769,
+  "lng": 32.869864,
+  "approx": "area"
+ },
+ "ank|Çankaya Mah. Cinnah Cad. No:43/D Çankaya/Ankara": {
+  "lat": 39.892701,
+  "lng": 32.856373,
+  "approx": "street"
+ },
+ "ank|Çankaya Mah. Farabi Sok. No:13/A Çankaya/Ankara": {
+  "lat": 39.89066,
+  "lng": 32.861767,
+  "approx": "area"
+ },
+ "ank|Çankaya Mah. Üsküp Cad. Çevre Sok. No:26/B Çankaya/Ankara": {
+  "lat": 39.893402,
+  "lng": 32.857985,
+  "approx": "street"
+ },
+ "ank|Çayyolu Mah. 2432. Sok. No:157/A Köy İçi Çankaya/Ankara": {
+  "lat": 39.886328,
+  "lng": 32.695253,
+  "approx": "area"
+ },
+ "ank|Çiğdem Mah. 1551. Cad. Atrium İş Merkezi No:12/3 Çankaya/Ankara": {
+  "lat": 39.882353,
+  "lng": 32.801361,
+  "approx": "street"
+ },
+ "ank|Çiğdem Mah. Muhsin Yazıcıoğlu Cad. No:44/61 Çankaya/Ankara": {
+  "lat": 39.892868,
+  "lng": 32.810748,
+  "approx": "street"
+ },
+ "ank|Devlet Mah. 376. Sok. No:7/2-C Etimesgut/Ankara": {
+  "lat": 39.977288,
+  "lng": 32.606664,
+  "approx": "area"
+ },
+ "ank|Dodurga Mah. Odabaşı Cad. No: 2/10D Çankaya/Ankara": {
+  "lat": 39.826211,
+  "lng": 32.662222,
+  "approx": "street"
+ },
+ "ank|Dodurga Mah. Odabaşı Cad. No:14/4D Çankaya/Ankara": {
+  "lat": 39.826211,
+  "lng": 32.662222,
+  "approx": "street"
+ },
+ "ank|Dodurga Mah. Odabaşı Cad. No:16/6C Çankaya/Ankara": {
+  "lat": 39.829401,
+  "lng": 32.660365,
+  "approx": null
+ },
+ "ank|Ehlibeyt Mah. Ceyhun Atıf Kansu Cad. No:9/114 F Çankaya/Ankara": {
+  "lat": 39.891959,
+  "lng": 32.816588,
+  "approx": "area"
+ },
+ "ank|Emek Mah. Bişkek Cad. No:26/B Çankaya/Ankara": {
+  "lat": 39.924385,
+  "lng": 32.817901,
+  "approx": "street"
+ },
+ "ank|Emek Mah. Bişkek Cad. No:47/A Çankaya/Ankara": {
+  "lat": 39.924385,
+  "lng": 32.817901,
+  "approx": "street"
+ },
+ "ank|Emek Mah. Bosna Hersek Cad. No:18/A Çankaya/Ankara": {
+  "lat": 39.917002,
+  "lng": 32.819665,
+  "approx": null
+ },
+ "ank|Emek Mah. Kazakistan Cad. No:94/B Çankaya/Ankara": {
+  "lat": 39.924593,
+  "lng": 32.822503,
+  "approx": null
+ },
+ "ank|Ertuğrulgazi Mah. Münzeviler Cad. No:12/A Çankaya/Ankara": {
+  "lat": 39.925102,
+  "lng": 32.88261,
+  "approx": "street"
+ },
+ "ank|Eryaman Mah. 285. Sok. No:4/8 Etimesgut/Ankara": {
+  "lat": 39.972935,
+  "lng": 32.621917,
+  "approx": "street"
+ },
+ "ank|Eryaman Mah. Dil Devrimi Cad. No:27/8A Etimesgut/Ankara": {
+  "lat": 39.972301,
+  "lng": 32.621018,
+  "approx": "street"
+ },
+ "ank|Eryaman Mah. Emiryaman Cad. 309. Sok. No:6/A Etimesgut/Ankara": {
+  "lat": 39.971969,
+  "lng": 32.616104,
+  "approx": "street"
+ },
+ "ank|Eryaman Mah. Emiryaman Cad. No:34/B Etimesgut/Ankara": {
+  "lat": 39.971969,
+  "lng": 32.616104,
+  "approx": "street"
+ },
+ "ank|Eryaman Mah.262. Sok. Akcenter AVM No:6/54 Etimesgut/Ankara": {
+  "lat": 39.977972,
+  "lng": 32.617191,
+  "approx": "street"
+ },
+ "ank|Esatoğlu Mah. Bülbülderesi Cad. No:54/A Çankaya/Ankara": {
+  "lat": 39.911065,
+  "lng": 32.866591,
+  "approx": "street"
+ },
+ "ank|Esatoğlu Mah. Tunalı Hilmi Cad. No: 49/A Çankaya/Ankara": {
+  "lat": 39.910892,
+  "lng": 32.862445,
+  "approx": null
+ },
+ "ank|GOP Mah. 375. Sok. No:6/C Gölbaşı/Ankara": {
+  "lat": 39.792052,
+  "lng": 32.805204,
+  "approx": "street"
+ },
+ "ank|GOP Mah. 376. Sok. No:5/A Gölbaşı/Ankara": {
+  "lat": 39.792562,
+  "lng": 32.805156,
+  "approx": "street"
+ },
+ "ank|GOP Mah. 377. Sok. No:13/B Gölbaşı/Ankara": {
+  "lat": 39.792357,
+  "lng": 32.805031,
+  "approx": "street"
+ },
+ "ank|GOP Mah. 377. Sok. No:20/F Gölbaşı/Ankara": {
+  "lat": 39.792357,
+  "lng": 32.805031,
+  "approx": "street"
+ },
+ "ank|GOP Mah. 378. Sok. No:7/C Gölbaşı/Ankara": {
+  "lat": 39.79265,
+  "lng": 32.804248,
+  "approx": "street"
+ },
+ "ank|GOP Mah. 379. Sok. No:7/A Gölbaşı/Ankara": {
+  "lat": 39.792929,
+  "lng": 32.803676,
+  "approx": "street"
+ },
+ "ank|GOP Mah. Ankara Cad. No:80/B Gölbaşı/Ankara": {
+  "lat": 39.790208,
+  "lng": 32.805955,
+  "approx": "street"
+ },
+ "ank|GOP Mah. Plevne Cad. No:9/B Gölbaşı/Ankara": {
+  "lat": 39.795604,
+  "lng": 32.804173,
+  "approx": "street"
+ },
+ "ank|GOP Mah. Şehit Gaffar Okkan Cad. No:78/C Gölbaşı/Ankara": {
+  "lat": 39.79874,
+  "lng": 32.802342,
+  "approx": "street"
+ },
+ "ank|Göksu Mah. 1.İnönü Cad. No:9/K Etimesgut/Ankara": {
+  "lat": 39.99241,
+  "lng": 32.639161,
+  "approx": "street"
+ },
+ "ank|Göksu Mah. 84. Sok. No:1/4E Etimesgut/Ankara": {
+  "lat": 39.989898,
+  "lng": 32.641127,
+  "approx": "area"
+ },
+ "ank|Güneşevler Mah. Mehmet Akif Ersoy Cad. No:23/G Altındağ/Ankara": {
+  "lat": 39.970445,
+  "lng": 32.896868,
+  "approx": "street"
+ },
+ "ank|Güneşevler Mah. Şehit Pilot Fatih Korçam Cad. No:10/B Altındağ/Ankara": {
+  "lat": 39.971589,
+  "lng": 32.886624,
+  "approx": "area"
+ },
+ "ank|Güvenevler Mah. Mesnevi Sok. No:42/13 Çankaya/Ankara": {
+  "lat": 39.896597,
+  "lng": 32.855208,
+  "approx": "area"
+ },
+ "ank|Güzelkent Mah. Lozan Barışı Cad. 727. Sok. No:1 Etimesgut/Ankara": {
+  "lat": 39.992423,
+  "lng": 32.60603,
+  "approx": "street"
+ },
+ "ank|Güzeltepe Mah. Alper Sok. No:13/1 Çankaya/Ankara": {
+  "lat": 39.883756,
+  "lng": 32.849519,
+  "approx": "street"
+ },
+ "ank|Hacı Memi Mah. 1. Okul Sok. No:13/B Ayaş/Ankara": null,
+ "ank|Hacıkara Mah. Mustafa Taşkoparan Sok. No:2 Beypazarı/Ankara": {
+  "lat": 40.152738,
+  "lng": 31.915381,
+  "approx": "area"
+ },
+ "ank|Hacıkara Mah. Piyade Onbaşı Ş.Ufuk Gökgöz Sok. No:27/A Beypazarı/Ankara": {
+  "lat": 40.152738,
+  "lng": 31.915381,
+  "approx": "area"
+ },
+ "ank|Harbiye Mah. Dikmen Cad. No:120/1 Çankaya/Ankara": {
+  "lat": 39.888433,
+  "lng": 32.840227,
+  "approx": "street"
+ },
+ "ank|Harbiye Mah. Dikmen Cad. No:204/A Çankaya/Ankara": {
+  "lat": 39.888433,
+  "lng": 32.840227,
+  "approx": "street"
+ },
+ "ank|Harbiye Mah. Dikmen Cad. No:333/B Çankaya/Ankara": {
+  "lat": 39.888433,
+  "lng": 32.840227,
+  "approx": "street"
+ },
+ "ank|Harbiye Mah. Hürriyet Cad. No:15/61 Çankaya/Ankara": {
+  "lat": 39.888003,
+  "lng": 32.838713,
+  "approx": "street"
+ },
+ "ank|Harbiye Mah. Sokullu Mehmet Paşa Cad. No:21/A Çankaya/Ankara": {
+  "lat": 39.888171,
+  "lng": 32.836714,
+  "approx": "street"
+ },
+ "ank|Harbiye Mah. Tavuskuşu Sok. No:17/B Çankaya/Ankara": {
+  "lat": 39.895616,
+  "lng": 32.839174,
+  "approx": "street"
+ },
+ "ank|Hasanoğlan Bahçelievler Mah. Menderes Bulv. No:136/A-12 Elmadağ/Ankara": {
+  "lat": 39.977692,
+  "lng": 33.165397,
+  "approx": "street"
+ },
+ "ank|Hilal Mah. 4. Cad. 677. Sok. No:49 Çankaya/Ankara": {
+  "lat": 39.868868,
+  "lng": 32.856035,
+  "approx": "area"
+ },
+ "ank|Hilal Mah. 694. Cad. No:5/A Çankaya/Ankara": {
+  "lat": 39.868868,
+  "lng": 32.856035,
+  "approx": "area"
+ },
+ "ank|Hilal Mah. Turan Güneş Bulv. No:100/B Çankaya/Ankara": {
+  "lat": 39.868577,
+  "lng": 32.859289,
+  "approx": "street"
+ },
+ "ank|Hoca Sinan Mah. Menderes Meydanı No: 1/C Ayaş/Ankara": null,
+ "ank|Huzur Mah. 1066. Cad. No:43/A Çankaya/Ankara": {
+  "lat": 39.883539,
+  "lng": 32.821577,
+  "approx": "street"
+ },
+ "ank|İleri Mah. Kıbrıs Cad. No:54/A Çankaya/Ankara": {
+  "lat": 39.922145,
+  "lng": 32.871065,
+  "approx": "street"
+ },
+ "ank|İlkbahar Mah. 596. Sok. No:83/A Çankaya/Ankara": {
+  "lat": 39.862313,
+  "lng": 32.857808,
+  "approx": "street"
+ },
+ "ank|İlkbahar Mah. Doğukent Cad. No:733 A/B Çankaya/Ankara": {
+  "lat": 39.859742,
+  "lng": 32.85565,
+  "approx": null
+ },
+ "ank|İlkbahar Mah. Doğukent Cad. No:933 B/D Çankaya/Ankara": {
+  "lat": 39.860412,
+  "lng": 32.855775,
+  "approx": "street"
+ },
+ "ank|İlkbahar Mah. Güney Park Küme Evleri No:20/A Çankaya/Ankara": {
+  "lat": 39.862156,
+  "lng": 32.858594,
+  "approx": "area"
+ },
+ "ank|İlkbahar Mah. Konrad Adenauer Cad. No:51/A Çankaya/Ankara": {
+  "lat": 39.862608,
+  "lng": 32.856896,
+  "approx": "street"
+ },
+ "ank|İlkbahar Mah. Turan Güneş Blv. No:71/B Çankaya/Ankara": {
+  "lat": 39.863803,
+  "lng": 32.856034,
+  "approx": "street"
+ },
+ "ank|İlker Mah. İlker Cad. No:183/A Çankaya/Ankara": {
+  "lat": 39.869815,
+  "lng": 32.841252,
+  "approx": "street"
+ },
+ "ank|İncek Mah. Turgut Özal Cad. İncek İş Merkezi No:27/D Gölbaşı/Ankara": {
+  "lat": 39.80754,
+  "lng": 32.697551,
+  "approx": "area"
+ },
+ "ank|İncesu Mah. Mahmut Esat Bozkurt Cad. No:41/A Çankaya/Ankara": {
+  "lat": 39.918881,
+  "lng": 32.869531,
+  "approx": "street"
+ },
+ "ank|İsmetpaşa Mah. Bülent Ecevit Cad. No:50/1 Elmadağ/Ankara": {
+  "lat": 39.921406,
+  "lng": 33.23685,
+  "approx": "street"
+ },
+ "ank|İsmetpaşa Mah. Derya Sok. No:11-28/1 Elmadağ/Ankara": {
+  "lat": 39.921044,
+  "lng": 33.23272,
+  "approx": "street"
+ },
+ "ank|İsmetpaşa Mah. Mercan Sok. No:11/B Elmadağ/Ankara": {
+  "lat": 39.918718,
+  "lng": 33.234021,
+  "approx": "street"
+ },
+ "ank|İstasyon Mah. Ulubatlı Hasan Cad. No:79 Etimesgut/Ankara": {
+  "lat": 39.942928,
+  "lng": 32.661716,
+  "approx": "street"
+ },
+ "ank|İşçi Blokları Mah. 1511. Sok. No:2/B Çankaya/Ankara": {
+  "lat": 39.890563,
+  "lng": 32.801326,
+  "approx": "street"
+ },
+ "ank|İşçi Blokları Mah. Hasan Celal Güzel Cad. (eski 1427.cd) No:23/A Çankaya/Ankara": {
+  "lat": 39.893994,
+  "lng": 32.803844,
+  "approx": "street"
+ },
+ "ank|Karapınar Mah. Cevizlidere Cad. No:124/A Çankaya/Ankara": {
+  "lat": 39.868955,
+  "lng": 32.820703,
+  "approx": "street"
+ },
+ "ank|Karapürçek Mah. Şehit Harun Aydın Cad. No:69/B Altındağ/Ankara": {
+  "lat": 39.973752,
+  "lng": 32.974132,
+  "approx": "street"
+ },
+ "ank|Karşıyaka Mah. 812/1 Sok. No:13/B Gölbaşı/Ankara": {
+  "lat": 39.800326,
+  "lng": 32.80138,
+  "approx": "street"
+ },
+ "ank|Karşıyaka Mah. Haymana Bulv. No:66/B Gölbaşı/Ankara": {
+  "lat": 39.791316,
+  "lng": 32.79325,
+  "approx": "street"
+ },
+ "ank|Karşıyaka Mah. Haymana Cad. No:100/A Gölbaşı/Ankara": {
+  "lat": 39.796853,
+  "lng": 32.797888,
+  "approx": "area"
+ },
+ "ank|Karşıyaka Mah. Haymana Cad. No:112/B Gölbaşı/Ankara": {
+  "lat": 39.796853,
+  "lng": 32.797888,
+  "approx": "area"
+ },
+ "ank|Karşıyaka Mah. Haymana Cad. No:90/B Gölbaşı/Ankara": {
+  "lat": 39.796853,
+  "lng": 32.797888,
+  "approx": "area"
+ },
+ "ank|Karşıyaka Mah. İnönü Cad. No:26/A Gölbaşı/Ankara": {
+  "lat": 39.799093,
+  "lng": 32.80215,
+  "approx": "street"
+ },
+ "ank|Karşıyaka Mah. Osman Karaaslan Cad. No:15/A Gölbaşı/Ankara": {
+  "lat": 39.796853,
+  "lng": 32.797888,
+  "approx": "area"
+ },
+ "ank|Kartaltepe Mah. Atatürk Cad. No:97 Bala/Ankara": null,
+ "ank|Kartaltepe Mah. Kırşehir Cad. No:124/C Bala/Ankara": null,
+ "ank|Kavaklıdere Mah. Büklüm Sok. No:22/24 Çankaya/Ankara": {
+  "lat": 39.913349,
+  "lng": 32.857853,
+  "approx": "area"
+ },
+ "ank|Kavaklıdere Mah. Esat Cad. No:52/A Çankaya/Ankara": {
+  "lat": 39.910766,
+  "lng": 32.860663,
+  "approx": null
+ },
+ "ank|Kavaklıdere Mah. Hacıyolu Sok. No:15/B Çankaya/Ankara": {
+  "lat": 39.913349,
+  "lng": 32.857853,
+  "approx": "area"
+ },
+ "ank|Kayabaşı Mah. Halil Balcı Cad. No:6/D Haymana/Ankara": {
+  "lat": 39.43076,
+  "lng": 32.502064,
+  "approx": "area"
+ },
+ "ank|Kayabaşı Mah. Halil Balcı Cad. No:7 Haymana/Ankara": {
+  "lat": 39.43076,
+  "lng": 32.502064,
+  "approx": "area"
+ },
+ "ank|Kazım Özalp Mah. Nene Hatun Cad. No:107/A Çankaya/Ankara": {
+  "lat": 39.895475,
+  "lng": 32.868648,
+  "approx": "street"
+ },
+ "ank|Kazım Özalp Mah. Nene Hatun Cad. No:41/B Çankaya/Ankara": {
+  "lat": 39.895475,
+  "lng": 32.868648,
+  "approx": "street"
+ },
+ "ank|Kazım Özalp Mah. Nene Hatun Cad. No:42/B Çankaya/Ankara": {
+  "lat": 39.901487,
+  "lng": 32.867288,
+  "approx": null
+ },
+ "ank|Kazım Özalp Mah. Uğur Mumcu Cad. No:11/1 Çankaya/Ankara": {
+  "lat": 39.892674,
+  "lng": 32.870668,
+  "approx": "street"
+ },
+ "ank|Keklikpınarı Mah. Dikmen Cad. No:477/A Çankaya/Ankara": {
+  "lat": 39.869469,
+  "lng": 32.826328,
+  "approx": "area"
+ },
+ "ank|Kırkonaklar Mah. 310 Sok. No:2/B Çankaya/Ankara": null,
+ "ank|Kırkonaklar Mah. 450. Cad. No:83/B Çankaya/Ankara": {
+  "lat": 39.874759,
+  "lng": 32.87976,
+  "approx": "area"
+ },
+ "ank|Kırkonaklar Mah. Şemsettin Günaltay Cad. No:269/B Çankaya/Ankara": {
+  "lat": 39.888039,
+  "lng": 32.882791,
+  "approx": "area"
+ },
+ "ank|Kızılcaşar Mah. 1221. Cad. No:2/D Gölbaşı/Ankara": {
+  "lat": 39.822728,
+  "lng": 32.732967,
+  "approx": "area"
+ },
+ "ank|Kızılcaşar Mah. 2666. Cad. Tek Yapı Koop. No:21 Gölbaşı/Ankara": {
+  "lat": 39.814954,
+  "lng": 32.713426,
+  "approx": "street"
+ },
+ "ank|Kızılcaşar Mah. 30 Ağustos Cad. No:23 Gölbaşı/Ankara": {
+  "lat": 39.823933,
+  "lng": 32.721236,
+  "approx": "street"
+ },
+ "ank|Kızılcaşar Mah. Barış Cad. No:27 Gölbaşı/Ankara": {
+  "lat": 39.819426,
+  "lng": 32.720023,
+  "approx": "street"
+ },
+ "ank|Kızılcaşar Mah. Hürriyet Cad. İncek Tek Yapı Sit. No:56 Gölbaşı/Ankara": {
+  "lat": 39.816552,
+  "lng": 32.711745,
+  "approx": "street"
+ },
+ "ank|Kızılcaşar Mah. Kızılcaşar Küme Evleri No:408/8 Gölbaşı/Ankara": {
+  "lat": 39.822728,
+  "lng": 32.732967,
+  "approx": "area"
+ },
+ "ank|Kızılcaşar Mah. Zafer Cad. A Blok No:6 Gölbaşı/Ankara": {
+  "lat": 39.824642,
+  "lng": 32.713034,
+  "approx": "street"
+ },
+ "ank|Konutkent Mah. 2639. Cad. No:39 Çankaya/Ankara": {
+  "lat": 39.87989,
+  "lng": 32.669737,
+  "approx": "street"
+ },
+ "ank|Konutkent Mah. 2893. Cad. No:54 Çankaya/Ankara": {
+  "lat": 39.877841,
+  "lng": 32.667996,
+  "approx": "area"
+ },
+ "ank|Konutkent Mah. 2983. Cad. No:32 Çankaya/Ankara": {
+  "lat": 39.879104,
+  "lng": 32.66281,
+  "approx": "street"
+ },
+ "ank|Konutkent Mah. 3014. Sok. No:14 Çankaya/Ankara": {
+  "lat": 39.875174,
+  "lng": 32.656282,
+  "approx": "street"
+ },
+ "ank|Konutkent Mah. Doğan Taşdelen Bulv. No:306 Çankaya/Ankara": {
+  "lat": 39.875752,
+  "lng": 32.671544,
+  "approx": "street"
+ },
+ "ank|Konutkent Mah. Dumlupınar Blv. No:381/A-5 Çankaya/Ankara": {
+  "lat": 39.88432,
+  "lng": 32.66482,
+  "approx": null
+ },
+ "ank|Kurtuluş Mah. Milli Egemenlik Cad. No:155/E Beypazarı/Ankara": {
+  "lat": 40.158957,
+  "lng": 31.910401,
+  "approx": "street"
+ },
+ "ank|Kurtuluş Mah. Milli Egemenlik Cad. No:64/B Beypazarı/Ankara": {
+  "lat": 40.158957,
+  "lng": 31.910401,
+  "approx": "street"
+ },
+ "ank|Küçükesat Mah. Esat Cad. No:119/A Çankaya/Ankara": {
+  "lat": 39.908257,
+  "lng": 32.864955,
+  "approx": "street"
+ },
+ "ank|Kültür Mah. Libya Cad. No: 8/A Çankaya/Ankara": {
+  "lat": 39.91625,
+  "lng": 32.862679,
+  "approx": "street"
+ },
+ "ank|Kültür Mah. Meşrutiyet Cad. No:52/B Çankaya/Ankara": {
+  "lat": 39.919185,
+  "lng": 32.861804,
+  "approx": "street"
+ },
+ "ank|Maltepe Mah. Gençlik Cad. No:65 Çankaya/Ankara": {
+  "lat": 39.921216,
+  "lng": 32.844322,
+  "approx": "street"
+ },
+ "ank|Metin Akkuş Mah. Sinan Cad. No: 87/B Çankaya/Ankara": {
+  "lat": 39.873023,
+  "lng": 32.845188,
+  "approx": "street"
+ },
+ "ank|Metin Oktay Mah. Şehit Oğuz Kağan Usta Cad. No:18/C Çankaya/Ankara": {
+  "lat": 39.910022,
+  "lng": 32.875358,
+  "approx": "area"
+ },
+ "ank|Muhsin Ertuğrul Mah. Bülbülderesi Cad. No:113/C Çankaya/Ankara": {
+  "lat": 39.90561,
+  "lng": 32.868644,
+  "approx": "street"
+ },
+ "ank|Murat Mah. Bağlar Cad. No:207/A Çankaya/Ankara": {
+  "lat": 39.901807,
+  "lng": 32.873081,
+  "approx": "street"
+ },
+ "ank|Mustafa Kemal Mah. 2139. Cad. No:1/A Çankaya/Ankara": {
+  "lat": 39.913568,
+  "lng": 32.772099,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. 2035. Sokak Planlamacılar Sitesi No:12 Çankaya/Ankara": {
+  "lat": 39.891997,
+  "lng": 32.721587,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. 2432. Cad. No:51 Çankaya/Ankara": {
+  "lat": 39.890701,
+  "lng": 32.708415,
+  "approx": "area"
+ },
+ "ank|Mutlukent Mah. Angora Bulvarı No:16 Çankaya/Ankara": {
+  "lat": 39.885691,
+  "lng": 32.715924,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. Angora Bulvarı No:166 Çankaya/Ankara": {
+  "lat": 39.885691,
+  "lng": 32.715924,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. Dicle Cad. No:3/A Çankaya/Ankara": {
+  "lat": 39.896465,
+  "lng": 32.724678,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. Hitit Bulv. Işıklar Sok. No:12/A Çankaya/Ankara": {
+  "lat": 39.869343,
+  "lng": 32.717113,
+  "approx": "street"
+ },
+ "ank|Mutlukent Mah. Mutluköy Sit. 1947. Sok. Çankaya/Ankara": {
+  "lat": 39.890701,
+  "lng": 32.708415,
+  "approx": "area"
+ },
+ "ank|Naci Çakır Mah. 763. Cad No:4/C Çankaya/Ankara": {
+  "lat": 39.877796,
+  "lng": 32.839235,
+  "approx": "area"
+ },
+ "ank|Naci Çakır Mah. Sinan Cad. No:16/C Çankaya/Ankara": {
+  "lat": 39.879051,
+  "lng": 32.841816,
+  "approx": null
+ },
+ "ank|Oğuzlar Mah. 1367. Sok. No:1/Çankaya/Ankara": {
+  "lat": 39.900917,
+  "lng": 32.816974,
+  "approx": "area"
+ },
+ "ank|Oğuzlar Mah.1371. Cad. No:2/B Çankaya/Ankara": {
+  "lat": 39.897761,
+  "lng": 32.816208,
+  "approx": "street"
+ },
+ "ank|Örnek Mah. Şehit Ömer Halisdemir Bulv. No:32/B Altındağ/Ankara": {
+  "lat": 39.959259,
+  "lng": 32.865566,
+  "approx": "street"
+ },
+ "ank|Öveçler Mah. 1335. Cad. No:8/B Çankaya/Ankara": {
+  "lat": 39.88905,
+  "lng": 32.830051,
+  "approx": "street"
+ },
+ "ank|Öveçler Mah. Kabil Cad. 1338. Sok. No:2/A Çankaya/Ankara": {
+  "lat": 39.889541,
+  "lng": 32.829098,
+  "approx": "street"
+ },
+ "ank|Öveçler Mah. Mimar Cad. No:52/B Çankaya/Ankara": {
+  "lat": 39.88445,
+  "lng": 32.82988,
+  "approx": "street"
+ },
+ "ank|Piyade Mah. 1857. Cad. No:10B/7 Etimesgut/Ankara": {
+  "lat": 39.942559,
+  "lng": 32.635322,
+  "approx": "street"
+ },
+ "ank|Piyade Mah. Atilla Eşer Cad. No:104C/8 Etimesgut/Ankara": {
+  "lat": 39.948506,
+  "lng": 32.637562,
+  "approx": "street"
+ },
+ "ank|Piyade Mah. Atilla Eşer Cad. No:51/A Etimesgut/Ankara": {
+  "lat": 39.948506,
+  "lng": 32.637562,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2715 Sok. Concept İşyerleri No:2/8-B Çankaya/Ankara": {
+  "lat": 39.874205,
+  "lng": 32.692057,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2768 Sok. No:3 Çankaya/Ankara": {
+  "lat": 39.866282,
+  "lng": 32.698467,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2808 Cad. No:3 Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2873. Cad. No:3/D-4 Çankaya/Ankara": {
+  "lat": 39.869249,
+  "lng": 32.683355,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2886/1 Sok. No:3/9 Çankaya/Ankara": {
+  "lat": 39.86819,
+  "lng": 32.684953,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. 2918. Sok. No:3/B Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Beyler Cad. 2769. Sok. No:5 Çankaya/Ankara": {
+  "lat": 39.867691,
+  "lng": 32.685924,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Beyler Cad. No:29 Çankaya/Ankara": {
+  "lat": 39.867691,
+  "lng": 32.685924,
+  "approx": "street"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Dolunevler Konut Yapı Koop. 154 Ada 2 Parsel No:2 Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Engürü Villaları No:63 Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. İlko Sit. 2818. Cad.No:19 Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Park Cad.Batı Birlik Park Evleri Sit. No:19A/4 Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Prof. Dr. Ahmet Taner Kışlalı Mah. Seyfi Saltoğlu Cad. 2715. Sok. No:2/16-B Çankaya/Ankara": {
+  "lat": 39.873919,
+  "lng": 32.687875,
+  "approx": "area"
+ },
+ "ank|Remzi Oğuz Arık Mah. Şimşek Sok. No:6/A Çankaya/Ankara": {
+  "lat": 39.907211,
+  "lng": 32.859842,
+  "approx": "area"
+ },
+ "ank|Sancak Mah. Kahire Cad. 515. Sokak No:3 Çankaya/Ankara": {
+  "lat": 39.871727,
+  "lng": 32.866754,
+  "approx": "street"
+ },
+ "ank|Sancak Mah. Kahire Cad. No: 6/A Çankaya/Ankara": {
+  "lat": 39.871727,
+  "lng": 32.866754,
+  "approx": "street"
+ },
+ "ank|Sancak Mah. Konrad Adenauer Cad. No:23/9 Çankaya/Ankara": {
+  "lat": 39.86895,
+  "lng": 32.866587,
+  "approx": "street"
+ },
+ "ank|Sancak Mah. Tiflis Cad. No:26/A-B Çankaya/Ankara": {
+  "lat": 39.870979,
+  "lng": 32.862525,
+  "approx": "street"
+ },
+ "ank|Sancak Mah. Turan Güneş Bulvarı Doğan Apt. No:47/B-B Çankaya/Ankara": {
+  "lat": 39.872386,
+  "lng": 32.861485,
+  "approx": "street"
+ },
+ "ank|Satıkadın Mah. GMK Bulvarı Fatih İş Merkezi No:23 Kahramankazan/Ankara": {
+  "lat": 40.206278,
+  "lng": 32.682984,
+  "approx": "area"
+ },
+ "ank|Seğmenler Mah. 3250 Cad. No:15/D Gölbaşı/Ankara": {
+  "lat": 39.793057,
+  "lng": 32.809521,
+  "approx": "area"
+ },
+ "ank|Seğmenler Mah. Cumhuriyet Cad. N:146/BD Gölbaşı/Ankara": {
+  "lat": 39.788825,
+  "lng": 32.809658,
+  "approx": "street"
+ },
+ "ank|Seğmenler Mah. Şehit Oğuz Kağan Usta Cad. No:87/B Gölbaşı/Ankara": {
+  "lat": 39.793057,
+  "lng": 32.809521,
+  "approx": "area"
+ },
+ "ank|Süvari Mah. Ahi Mesud Bulv. No:22/A Etimesgut/Ankara": {
+  "lat": 39.942266,
+  "lng": 32.649291,
+  "approx": "street"
+ },
+ "ank|Süvari Mah. Ahi Mesut Bulv. No:29/A Etimesgut/Ankara": {
+  "lat": 39.948701,
+  "lng": 32.645555,
+  "approx": "area"
+ },
+ "ank|Süvari Mah. Mehmet Akif Ersoy Cad. No:7F/1 Etimesgut/Ankara": {
+  "lat": 39.936095,
+  "lng": 32.643782,
+  "approx": "street"
+ },
+ "ank|Şehit Cengiz Karaca Mah. Kabil Cad. No:151/B Çankaya/Ankara": {
+  "lat": 39.876965,
+  "lng": 32.826179,
+  "approx": "street"
+ },
+ "ank|Şehit Cevdet Özdemir Mah. Kabil Cad. No:77/A Çankaya/Ankara": {
+  "lat": 39.884593,
+  "lng": 32.828655,
+  "approx": "street"
+ },
+ "ank|Şehit Osman Avcı Mah. 2636 Cad. No:1/A-B Etimesgut/Ankara": {
+  "lat": 39.979266,
+  "lng": 32.653906,
+  "approx": "area"
+ },
+ "ank|Şehit Osman Avcı Mah. Kaplan Cad. No:7/D 9-10 Eryaman Etimesgut/Ankara": {
+  "lat": 39.972076,
+  "lng": 32.658548,
+  "approx": null
+ },
+ "ank|Şehit Osman Avcı Mah. Malazgirt 1071 Cad. No:12/C Etimesgut/Ankara": {
+  "lat": 39.984655,
+  "lng": 32.655197,
+  "approx": "street"
+ },
+ "ank|Şehit Osman Avcı Mah. Malazgirt 1071 Cad. No:3 Etimesgut/Ankara": {
+  "lat": 39.984655,
+  "lng": 32.655197,
+  "approx": "street"
+ },
+ "ank|Şehit Osman Avcı Mah. Malazgirt 1071 Cad. No:46/C-2 Etimesgut/Ankara": {
+  "lat": 39.984655,
+  "lng": 32.655197,
+  "approx": "street"
+ },
+ "ank|Şehit Osman Avcı Mah. Malazgirt 1071 Cad. Relax Göksu Blk.No:55/BB Etimesgut/Ankara": {
+  "lat": 39.984655,
+  "lng": 32.655197,
+  "approx": "street"
+ },
+ "ank|Şehit Osman Avcı Mah. Şehit Mehmet Çavuş Cad. No:28/E Etimesgut/Ankara": {
+  "lat": 39.974006,
+  "lng": 32.654547,
+  "approx": "street"
+ },
+ "ank|Şeker Mah. 1407. Cad. No:16B/2 Etimesgut/Ankara": {
+  "lat": 39.966416,
+  "lng": 32.652942,
+  "approx": "street"
+ },
+ "ank|Şeker Mah. 1408. Cad. No:18/A Etimesgut/Ankara": {
+  "lat": 39.966681,
+  "lng": 32.652919,
+  "approx": "street"
+ },
+ "ank|Şeker Mah. Yüzbaşı Mustafa Ertuğrul Cad. No: 39/A Etimesgut/Ankara": {
+  "lat": 39.966123,
+  "lng": 32.663325,
+  "approx": "street"
+ },
+ "ank|Şht. Cengiz Karaca Mah. Kabil Cad. No:157/A Çankaya/Ankara": {
+  "lat": 39.876965,
+  "lng": 32.826179,
+  "approx": "area"
+ },
+ "ank|Taşpınar Mah. 2813 Sok. No: 6A/D Gölbaşı/Ankara": {
+  "lat": 39.830668,
+  "lng": 32.758804,
+  "approx": "area"
+ },
+ "ank|Tepe Blokları Mah. 3. Etap 17337 Ada Tepe Blokları A6/3-3 No:3 Etimesgut/Ankara": null,
+ "ank|Ticaret - 3 Baraj Mah. Alparslan Cad. No: 1 7 /1 Altındağ/Ankara": null,
+ "ank|Topçu Mah. 1543. Cad. No:11/C Etimesgut/Ankara": {
+  "lat": 39.943106,
+  "lng": 32.61414,
+  "approx": "street"
+ },
+ "ank|Tunahan Mah. 254. Cad. Demapark Sit. No:8/V Etimesgut/Ankara": {
+  "lat": 39.983991,
+  "lng": 32.629287,
+  "approx": null
+ },
+ "ank|Turkuaz Mah. Toki 2. Etap 4321 Sok. No: 5/1 Etimesgut/Ankara": {
+  "lat": 39.813935,
+  "lng": 32.570242,
+  "approx": "area"
+ },
+ "ank|Ümit Mah. 2483. Cad. No:37 Çankaya/Ankara": {
+  "lat": 39.896737,
+  "lng": 32.699101,
+  "approx": "street"
+ },
+ "ank|Ümit Mah. 2494/3. Sok. No:7 Çankaya/Ankara": {
+  "lat": 39.893281,
+  "lng": 32.701635,
+  "approx": "street"
+ },
+ "ank|Ümit Mah. 2510. Cad. No:12/A Çankaya/Ankara": {
+  "lat": 39.894476,
+  "lng": 32.698475,
+  "approx": "street"
+ },
+ "ank|Ümit Mah. 2840. Cad. Kafkas Sit. No:50 Çankaya/Ankara": {
+  "lat": 39.894445,
+  "lng": 32.698536,
+  "approx": "area"
+ },
+ "ank|Üniversiteliler Mah. Bilkent 1 Çamlık Sitesi D 78 Blok No:26 Çankaya/Ankara": {
+  "lat": 39.89933,
+  "lng": 32.697275,
+  "approx": "area"
+ },
+ "ank|Y. Bahçelievler Mah. Aşkaabat Cad. No:36/1 Çankaya/Ankara": {
+  "lat": 39.922136,
+  "lng": 32.826077,
+  "approx": "area"
+ },
+ "ank|Y. Bahçelievler Mah. Aşkaabat Cad. No:70/B-A Çankaya/Ankara": {
+  "lat": 39.922136,
+  "lng": 32.826077,
+  "approx": "area"
+ },
+ "ank|Y. Bahçelievler Mah. Azerbaycan Cad. No:139/1 Çankaya/Ankara": {
+  "lat": 39.920219,
+  "lng": 32.829847,
+  "approx": null
+ },
+ "ank|Yaşamkent Mah. 3061. Cad. No:48 Çankaya/Ankara": {
+  "lat": 39.867064,
+  "lng": 32.659003,
+  "approx": "street"
+ },
+ "ank|Yaşamkent Mah. 3062. Sok. No:6 Çankaya/Ankara": {
+  "lat": 39.871552,
+  "lng": 32.66372,
+  "approx": null
+ },
+ "ank|Yaşamkent Mah. 3158. Cad. No:13-32C Çankaya/Ankara": {
+  "lat": 39.86691,
+  "lng": 32.653337,
+  "approx": null
+ },
+ "ank|Yaşamkent Mah. 3158. Cad. No:45 Çankaya/Ankara": {
+  "lat": 39.865345,
+  "lng": 32.653098,
+  "approx": null
+ },
+ "ank|Yaşamkent Mah. 3207 Cad. No:55 Çankaya/Ankara": {
+  "lat": 39.858413,
+  "lng": 32.643874,
+  "approx": "area"
+ },
+ "ank|Yaşamkent Mah. 3250. Cad. No:26/AF Çankaya/Ankara": {
+  "lat": 39.86367,
+  "lng": 32.637711,
+  "approx": "street"
+ },
+ "ank|Yaşamkent Mah. 3250. Cad. No:6/B Çankaya/Ankara": {
+  "lat": 39.866295,
+  "lng": 32.639779,
+  "approx": null
+ },
+ "ank|Yaşamkent Mah. Mehmet Rıfat Börekçi Cad. Besa Nova Plaza No:16/7 Çankaya/Ankara": {
+  "lat": 39.856105,
+  "lng": 32.645787,
+  "approx": "street"
+ },
+ "ank|Yeni Bağlıca Mah. Etimesgut Bulv. No:68/4 Etimesgut/Ankara": {
+  "lat": 39.897907,
+  "lng": 32.646271,
+  "approx": "street"
+ },
+ "ank|Yeni Cumhuriyet Mah. Cumhuriyet Cad. No:61/B Evren/Ankara": {
+  "lat": 39.022261,
+  "lng": 33.806841,
+  "approx": "area"
+ },
+ "ank|Yeni Ziraat Etlik Cad. No:14/A Altındağ/Ankara": null,
+ "ank|Yeni Ziraat Mah. 655.Sok. No:26/C Altındağ/Ankara": null,
+ "ank|Yeni Ziraat Mah. İrfan Baştuğ Cad. No:26/C-D Altındağ/Ankara": null,
+ "ank|Yenice Mah. Cumhuriyet Cad. No:66/A Elmadağ/Ankara": {
+  "lat": 39.917745,
+  "lng": 33.237256,
+  "approx": "street"
+ },
+ "ank|Yeşilova Mah. 4014. Cad. Doğan Life No:6/B Etimesgut/Ankara": {
+  "lat": 39.962755,
+  "lng": 32.608889,
+  "approx": "street"
+ },
+ "ank|Yeşilova Mah. 4015. Cad. Kayra Loft Sit. No:5/C Etimesgut/Ankara": {
+  "lat": 39.964772,
+  "lng": 32.604517,
+  "approx": "area"
+ },
+ "ank|Yeşilova Mah. 4016 Cad. No:10/BB Etimesgut/Ankara": {
+  "lat": 39.964772,
+  "lng": 32.604517,
+  "approx": "area"
+ },
+ "ank|Yeşilova Mah. 4016. Cad. No:23/G Etimesgut/Ankara": {
+  "lat": 39.965246,
+  "lng": 32.60963,
+  "approx": "street"
+ },
+ "ank|Yeşiltepe Mah. Çubuk Cad. No:68/A Akyurt/Ankara": {
+  "lat": 40.134812,
+  "lng": 33.084449,
+  "approx": "street"
+ },
+ "ank|Yıldırım Mah. Hançer Sok. No:16/21E Akyurt/Ankara": {
+  "lat": 40.132298,
+  "lng": 33.084617,
+  "approx": "street"
+ },
+ "ank|Yıldız Evler Mah. Rabin Dranath Tagore Cad. No:15/B Çankaya/Ankara": null,
+ "ank|Yıldız Evler Mah. Rabin Dranath Tagore Cad. No:29/A Çankaya/Ankara": null,
+ "ank|Yıldız Evler Mah. Rabin Dranath Tagore Cad. No:4/A Çankaya/Ankara": null,
+ "ank|Yıldıztepe Mah. Tomurcuk Sok. No:1/A Altındağ/Ankara": {
+  "lat": 39.974428,
+  "lng": 32.90475,
+  "approx": "area"
+ },
+ "ank|Yukarı Dikmen Mah. Turan Güneş Bulvarı No:148/C Çankaya/Ankara": {
+  "lat": 39.849484,
+  "lng": 32.843176,
+  "approx": "area"
+ },
+ "ank|Yukarı Mah. Yenipınar Sok. No:1-3/A Güdül/Ankara": null,
+ "ank|Yücetepe Mah. İlk Sok. No:9/23 Çankaya/Ankara": {
+  "lat": 39.921485,
+  "lng": 32.840849,
+  "approx": "street"
+ }
+}

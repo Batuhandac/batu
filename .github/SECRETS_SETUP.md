@@ -43,9 +43,10 @@ CI'da kullanılmaz.
    - **Application restrictions** → *iOS apps* → `com.patisos.app`
 5. Anahtarı `EXPO_PUBLIC_GOOGLE_PLACES_KEY` secret'ı olarak ekle.
 
-Bu anahtar yoksa uygulama yalnızca OpenStreetMap'teki klinikleri gösterir; Google'da
-olan birçok mahalle kliniği (ör. Bağlıca'daki bir klinik) listede çıkmaz. Build log'unda
-"EXPO_PUBLIC_* secret yok — Google Places kapalı" satırı bunu gösterir.
+Bu anahtar yoksa uygulama gömülü listeleri (OpenStreetMap ve Ankara Veteriner Hekimleri
+Odası'nın klinik listeleri) ve iPhone'da Apple Haritalar aramasını kullanır. Google'daki
+çalışma saatleri, puanlar ve Ankara dışındaki birçok mahalle kliniği yine eksik kalır.
+Build log'unda "EXPO_PUBLIC_* secret yok — Google Places kapalı" satırı bunu gösterir.
 
 Uygulama her ~2 km'lik bölge için 4 istek atar (en yakın 20, mesafeye göre sıralı 40,
 7/24 acil) ve sonucu cihazda 3 gün saklar. Klinik adıyla arama, her yeni sorgu için
