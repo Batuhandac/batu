@@ -134,6 +134,23 @@ service cloud.firestore {
                             && (data().title == null || str(data().title, 1, 30));
     }
 
+    // ── Hekim anketi / tahsilat bekleme listesi (lib/data/vetInterest.ts) ───
+    // Hesabı olan (anonim olmayan) herkes yalnızca kendi belgesini yazar; yönetici
+    // konsoldan okur. Başvurusu onaylanmamış hekim de doldurabilir.
+    match /vet_interest/{uid} {
+      function okOpt(field, max) { return !(field in data()) || data()[field] == null || str(data()[field], 1, max); }
+      allow read: if signedIn() && me() == uid;
+      allow create, update: if signedIn() && me() == uid
+                            && request.auth.token.firebase.sign_in_provider != 'anonymous'
+                            && data().keys().hasOnly(['clinic_name', 'current_software', 'pos_brand', 'esmm_way', 'wants', 'note', 'updated_at'])
+                            && okOpt('clinic_name', 120) && okOpt('current_software', 80)
+                            && okOpt('pos_brand', 40) && okOpt('esmm_way', 40) && okOpt('note', 300)
+                            && data().wants is list && data().wants.size() <= 4
+                            && data().wants.hasOnly(['tahsilat', 'randevu', 'sms', 'stok'])
+                            && data().updated_at == request.time;
+      allow delete: if signedIn() && me() == uid;
+    }
+
     // ── Veteriner hekim hesapları: SADECE yönetici yazar ────────────────────
     // Alanlar: clinic_id, clinic_name, name, title (başka kişisel veri koyma)
     match /vets/{uid} {

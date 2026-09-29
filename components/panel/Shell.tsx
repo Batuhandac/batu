@@ -1,6 +1,7 @@
 // Hekim paneli (web) çerçevesi: giriş kapısı, üst çubuk ve geniş ekran sayfası.
 import React, { useState } from 'react';
 import { View, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { router } from 'expo-router';
 import { Text, Button, Field, LogoMark, Card } from '@/components/ds';
 import { useTheme, radius } from '@/lib/theme';
 import { useSession } from '@/stores/session';
@@ -112,8 +113,9 @@ function PanelLogin() {
           {notVet ? (
             <View style={{ gap: 12 }}>
               <Text variant="body">
-                {signedEmail} hesabı henüz onaylı bir hekim hesabı değil. Klinik başvurun onaylanınca panel açılır.
+                {signedEmail} hesabı henüz onaylı bir hekim hesabı değil. Klinik başvurunuz onaylanınca panel açılır.
               </Text>
+              <Button title="Başvuru durumum" onPress={() => router.push('/panel/basvur')} />
               <Button title="Başka hesapla gir" variant="secondary" onPress={() => signOut()} />
             </View>
           ) : (
@@ -130,11 +132,12 @@ function PanelLogin() {
             </>
           )}
         </Card>
-        <View style={{ marginTop: 16, padding: 14, borderRadius: radius.md, backgroundColor: t.surfaceAlt }}>
+        <View style={{ marginTop: 16, padding: 16, borderRadius: radius.lg, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, gap: 10 }}>
+          <Text variant="bodyStrong">Hesabınız yok mu?</Text>
           <Text variant="caption" tone="muted">
-            Hesabın yoksa Patiport uygulamasında Ayarlar → "Veteriner hekim misiniz?" bölümünden ücretsiz başvur. Kliniğin doğrulanınca aynı
-            e-posta ve şifreyle buradan girersin.
+            Kliniğinizle ücretsiz başvurun. Verdiğiniz numarayı arayarak doğruluyoruz; onaylanınca aynı e-posta ve şifreyle buradan girersiniz.
           </Text>
+          <Button title="Ücretsiz başvur" variant="secondary" onPress={() => router.push('/panel/basvur')} />
         </View>
       </View>
     </ScrollView>

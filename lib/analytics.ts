@@ -22,7 +22,7 @@ type EventName =
   | 'conversation_started' | 'whatsapp_tap' | 'vet_login' | 'review_reply'
   | 'sign_up' | 'sign_in' | 'account_deleted'
   | 'care_saved' | 'care_done' | 'weight_added' | 'pet_photo_added'
-  | 'google_reviews_open';
+  | 'google_reviews_open' | 'panel_apply_account';
 
 interface EventProps {
   clinic_id?: string;

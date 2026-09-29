@@ -1,5 +1,5 @@
 // app.json'daki yapılandırmayı olduğu gibi kullanır. Yalnızca web paneli bir alt
-// klasörde yayınlanırken (GitHub Pages: /batu/hekim) EXPO_BASE_URL verilir.
+// klasörde yayınlanırken (GitHub Pages: /batu/app) EXPO_BASE_URL verilir.
 module.exports = ({ config }) => ({
   ...config,
   experiments: {

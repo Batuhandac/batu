@@ -19,7 +19,11 @@ Console** üzerinden yönetilir. Günde bir kez bakman yeterli; **şikayetlere
 ## 1. Veteriner hekim başvuruları (`clinic_claims`)
 
 Klinikler reklam veremediği için Patiport onlara **ücretsiz, doğru bilgi** ile
-görünürlük sunar. Başvuru gelince:
+görünürlük sunar. Başvurular iki yerden gelir: uygulamadaki "Bu klinik benim" ve
+web'deki başvuru sayfası (`https://batuhandac.github.io/batu/app/panel/basvur`,
+tanıtım sayfası `…/batu/hekim/`). Web'den gelenlerde `note` alanı "Web panelinden
+başvuru" yazar ve `claimant_uid` her zaman doludur (hekim önce hesap açar); onayladığında
+6. bölümdeki `vets/{uid}` belgesini bu kimlikle oluşturman yeterli. Başvuru gelince:
 
 1. `clinic_claims` koleksiyonunda `status: "pending"` olan belgeyi aç.
 2. **`claimant_phone` numarasını ara.** Kişinin o klinikte çalıştığını doğrula
@@ -119,9 +123,19 @@ iste; ya da Authentication → Users → Add user ile hesabı sen aç ve oluşan
 Yeni mesajlar hekimin telefonuna bildirim olarak gider (Expo Push; sunucu gerekmez).
 Hekim ayrılırsa: Authentication'da kullanıcıyı **Disable** et, `vets` belgesini sil.
 
+## 6a. Hekim anketi ve tahsilat bekleme listesi (`vet_interest`)
+
+Başvuru sonunda ve panelde hekimlere dört soruluk kısa bir anket gösterilir: kullandıkları
+klinik programı, kartla ödemeyi hangi cihazla aldıkları (banka POS'u, Pavo, Hugin…),
+e-SMM'yi nasıl kestikleri ve en çok hangi özelliği istedikleri. Cevaplar
+`vet_interest/{uid}` belgelerinde durur; Firebase Console → Firestore'dan okursun.
+Tahsilatı hangi yazarkasa markası ve e-SMM yoluyla yapacağımıza bu cevaplara bakarak
+karar vereceğiz (`docs/HEKIM_YOL_HARITASI.md`). Bu kural için `firestore.rules`
+dosyasının güncel hâlini Firebase'e yayınlamayı unutma.
+
 ## 6b. Hekim paneli (web)
 
-Onaylı hekimler (6. bölüm) `https://batuhandac.github.io/batu/hekim/panel` adresinden
+Onaylı hekimler (6. bölüm) `https://batuhandac.github.io/batu/app/panel` adresinden
 aynı e-posta ve şifreyle girer; ayrıca hesap açmaya gerek yok. Panelde hasta kartları ve
 aşı/muayene kayıtları tutulur (`clinic_patients/{clinic_id}/patients`). Sahip,
 uygulamada "Veterinerime bağla" ile kod alır; hekim kodu girince kayıtlar sahibin

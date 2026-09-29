@@ -1,7 +1,7 @@
 name: Site → GitHub Pages
 
-# Gizlilik, kullanım koşulları ve destek sayfalarını (site/) ve hekim panelini
-# (uygulamanın web sürümü, /hekim/panel) yayınlar. Yalnızca herkese açık
+# Gizlilik, kullanım koşulları, destek ve hekim tanıtım sayfalarını (site/) ve
+# hekim panelini (uygulamanın web sürümü, /app/panel) yayınlar. Yalnızca herkese açık
 # Batuhandac/batu deposunda çalışır; bir kez Settings → Pages → Source:
 # "GitHub Actions" seçilmesi gerekir (store/APP_STORE.md).
 on:
@@ -35,14 +35,18 @@ jobs:
       - name: Hekim panelini derle (web)
         run: |
           npm install --legacy-peer-deps --no-audit --no-fund
-          EXPO_BASE_URL=/batu/hekim npx expo export --platform web --output-dir dist-web
-          mkdir -p site/hekim
-          cp -R dist-web/. site/hekim/
-          # Tek sayfalık uygulama: /hekim/panel/hasta/… gibi adresler yenilenince
+          EXPO_BASE_URL=/batu/app npx expo export --platform web --output-dir dist-web
+          mkdir -p site/app
+          cp -R dist-web/. site/app/
+          # Tek sayfalık uygulama: /app/panel/hasta/… gibi adresler yenilenince
           # GitHub Pages 404.html'i sunar; o da uygulamayı açıp doğru ekrana gider.
           cp dist-web/index.html site/404.html
 
+      # Pages kapalıysa açmayı dener (Source: GitHub Actions). Depo ayarı buna
+      # izin vermezse bir kez Settings → Pages → Source: "GitHub Actions" seçilir.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

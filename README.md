@@ -87,8 +87,11 @@ seçebilir ve ada, semte ya da ilçeye göre arayabilir (`useClinicSearch`).
 ## Hekim paneli (web)
 
 Veteriner hekimler için tarayıcıdan hasta takibi: `app/panel`, `components/panel`,
-`lib/data/panel.ts`. Adres: `https://batuhandac.github.io/batu/hekim/panel` (GitHub
-Pages; `site-pages.yml` uygulamanın web sürümünü `/batu/hekim` altına derler).
+`lib/data/panel.ts`. Adres: `https://batuhandac.github.io/batu/app/panel` (GitHub
+Pages; `site-pages.yml` uygulamanın web sürümünü `/batu/app` altına derler, web'de kök
+doğrudan panele gider). Hekimler için tanıtım sayfası `site/hekim/` →
+`https://batuhandac.github.io/batu/hekim/`; web'den başvuru `/app/panel/basvur`.
+Ürün yönü ve aşamalar: `docs/HEKIM_YOL_HARITASI.md`.
 
 - Onaylı hekim hesabıyla giriş (uygulamadaki hekim hesabıyla aynı).
 - Hasta kartı: tür, ırk, doğum tarihi, kilo, çip, alerji, sahip bilgisi.

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Text, Button, Card, Field, Segmented, SearchField, Badge, Icon } from '@/components/ds';
 import { PetFace } from '@/components/art';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
+import { InterestCard } from '@/components/panel/Interest';
 import { DueBadge, PatientForm, speciesLabel } from '@/components/panel/Forms';
 import { useTheme, radius } from '@/lib/theme';
 import { formatDate } from '@/lib/utils/dates';
@@ -99,6 +100,9 @@ function Dashboard({ vet }: { vet: VetProfile }) {
       <Text variant="caption" tone="subtle" style={{ marginTop: 8 }}>
         Uygulamayla bağlı hastaların sahiplerine bir gün önce ve gününde telefonlarında hatırlatma gider. Diğerlerine WhatsApp ile yazabilirsin.
       </Text>
+      <View style={{ marginTop: 24 }}>
+        <InterestCard uid={vet.uid} clinicName={vet.clinic_name} compact />
+      </View>
     </View>
   );
 

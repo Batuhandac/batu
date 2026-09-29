@@ -7,20 +7,10 @@ import { useSession } from '@/stores/session';
 import { getRegisteredClinic } from '@/lib/data/registry';
 import { getClinicById } from '@/lib/data/query';
 import { track } from '@/lib/analytics';
+import { CLINIC_SERVICES } from '@/lib/data/clinicServices';
 
 type Role = 'vet' | 'owner' | 'staff';
 
-export const CLINIC_SERVICES = [
-  'Kedi',
-  'Köpek',
-  'Egzotik hayvan',
-  'Kuş',
-  'Cerrahi',
-  'Röntgen / Ultrason',
-  'Laboratuvar',
-  'Yoğun bakım',
-  'Evde muayene',
-];
 
 export default function ClaimScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

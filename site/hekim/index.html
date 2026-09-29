@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patiport Hekim</title>
+<meta name="description" content="Veteriner hekimler için ücretsiz hasta takibi. Aşıyı kaydedin; kayıt hayvanın sahibinin Patiport uygulamasına düşsün, sonraki aşının hatırlatması kendiliğinden kurulsun.">
+<meta property="og:title" content="Patiport Hekim">
+<meta property="og:description" content="Kaydı siz girin, hatırlatmayı sahibin telefonu yapsın. Ücretsiz hasta takibi, tarayıcıdan.">
+<meta property="og:image" content="https://batuhandac.github.io/batu/hekim/img/panel-hastalar.jpg">
+<link rel="icon" href="../logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../style.css">
+<style>
+  main.wide { max-width: 1080px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 40px; }
+  .top header { margin: 0; }
+  .top nav { display: flex; gap: 8px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 999px; font: 700 17px/1 Nunito, system-ui, sans-serif; text-decoration: none; border: 1.5px solid transparent; }
+  .btn.primary { background: var(--pine); color: #fff; }
+  .btn.ghost { color: var(--pine); border-color: var(--border); background: var(--surface); }
+  .btn.small { min-height: 40px; padding: 0 16px; font-size: 15px; }
+  .eyebrow { font-weight: 700; color: var(--pine); margin: 0 0 8px; letter-spacing: .02em; }
+  .hero h1 { font-size: clamp(32px, 5vw, 50px); max-width: 18ch; margin-bottom: 14px; }
+  .lead { font-size: 19px; color: var(--muted); max-width: 60ch; margin: 0 0 24px; }
+  .ctas { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .note { font-size: 15px; color: var(--muted); margin-top: 12px; }
+  .shot { margin: 36px 0 0; border-radius: 22px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 18px 50px rgba(40, 30, 20, .10); }
+  .shot img { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 14px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--border); }
+  section { margin-top: 72px; }
+  section > h2 { font-size: clamp(24px, 3.2vw, 32px); margin: 0 0 8px; }
+  section > p.sub { color: var(--muted); margin: 0 0 24px; max-width: 62ch; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+  .tile h3 { font: 700 19px/1.3 'Baloo 2', system-ui, sans-serif; margin: 0 0 6px; }
+  .tile p { margin: 0; color: var(--muted); font-size: 16px; }
+  .num { display: inline-flex; width: 34px; height: 34px; border-radius: 50%; background: var(--mint); color: var(--pine); font: 700 17px/34px 'Baloo 2', system-ui; justify-content: center; margin-bottom: 10px; }
+  .band { background: var(--mint); border-radius: 24px; padding: 28px; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: center; }
+  .band h2 { margin: 0 0 6px; font-size: 26px; }
+  .band p { margin: 0; }
+  .soon { border-style: dashed; }
+  .tag { display: inline-block; font-size: 13px; font-weight: 700; color: var(--pine); background: var(--mint); border-radius: 999px; padding: 3px 10px; margin-bottom: 8px; }
+  .price { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .price .tile ul { margin: 10px 0 0; padding-left: 20px; color: var(--text); }
+  .price .big { font: 700 34px/1 'Baloo 2', system-ui; margin: 6px 0 4px; }
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { margin: 10px 0 2px; color: var(--muted); }
+  .end { text-align: center; }
+  .end .ctas { justify-content: center; }
+  footer.links { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  footer.links a { font-weight: 500; }
+  @media (prefers-color-scheme: dark) {
+    .btn.primary { color: #10261c; }
+    .shot { box-shadow: none; }
+  }
+  @media (max-width: 560px) {
+    .top nav .ghost { display: none; }
+    .lead { font-size: 17px; }
+    section { margin-top: 56px; }
+    .band { padding: 22px; }
+  }
+</style>
+</head>
+<body>
+<main class="wide">
+  <div class="top">
+    <header><a href="./"><img src="../logo.svg" width="36" height="36" alt=""><span>Patiport Hekim</span></a></header>
+    <nav>
+      <a class="btn ghost small" href="../app/panel">Panele giriş</a>
+      <a class="btn primary small" href="../app/panel/basvur">Ücretsiz başvur</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <p class="eyebrow">Veteriner hekimler için</p>
+    <h1>Kaydı siz girin, hatırlatmayı sahibin telefonu yapsın.</h1>
+    <p class="lead">Patiport Hekim ücretsiz bir hasta takip paneli. Aşıyı ya da muayeneyi kaydettiğiniz an hayvanın sahibinin Patiport uygulamasına düşer; sonraki aşının hatırlatması kendiliğinden kurulur. Kurulum yok, tarayıcıdan çalışır.</p>
+    <div class="ctas">
+      <a class="btn primary" href="../app/panel/basvur">Ücretsiz başvur</a>
+      <a class="btn ghost" href="../app/panel">Panele giriş</a>
+    </div>
+    <p class="note">Mevcut klinik programınızı bırakmanız gerekmez; yanında da kullanılır.</p>
+    <figure class="shot">
+      <picture>
+        <source srcset="img/panel-hastalar-dark.jpg" media="(prefers-color-scheme: dark)">
+        <img src="img/panel-hastalar.jpg" width="1920" height="1200" alt="Hekim paneli: hasta listesi, bu hafta aşısı gelenler ve WhatsApp ile hatırlatma">
+      </picture>
+      <figcaption>Hasta listesi ve bu hafta aşısı ya da kontrolü gelenler. Görseldeki klinik ve kişiler örnektir.</figcaption>
+    </figure>
+  </div>
+
+  <section>
+    <h2>Nasıl çalışır</h2>
+    <p class="sub">Üç adım. Hasta sahibinin ayrı bir klinik uygulaması indirmesine gerek yok; Patiport'u kullanması yeterli.</p>
+    <div class="grid">
+      <div class="tile"><span class="num">1</span><h3>Başvurun</h3><p>Kliniğinizi listeden seçin. Verdiğiniz numarayı arayarak doğrularız; onaylanınca paneliniz açılır.</p></div>
+      <div class="tile"><span class="num">2</span><h3>Sahip kodu söyler</h3><p>Sahip uygulamada "Veterinerime bağla"ya dokunur ve 6 haneli kodu söyler. Hasta kartı adı, türü, yaşı, kilosu, çipi ve alerjileriyle dolu gelir.</p></div>
+      <div class="tile"><span class="num">3</span><h3>Kaydı girin</h3><p>Aşı, parazit, kontrol, ilaç, kilo ya da not. Kayıt sahibin takvimine düşer; sonraki tarih için bir gün önce ve gününde hatırlatma kurulur.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Panelde neler var</h2>
+    <p class="sub">Muayenehanenin günlük işi için sade bir araç.</p>
+    <div class="grid">
+      <div class="tile"><h3>Hasta kartı ve geçmiş</h3><p>Tür, ırk, yaş, kilo, çip, alerji ve sahibin iletişimi. Her kayıt tarihiyle geçmişte durur.</p></div>
+      <div class="tile"><h3>Sonraki tarih önerisi</h3><p>Kayıt türüne göre sonraki aşı ya da kontrol tarihi önerilir; isterseniz değiştirirsiniz.</p></div>
+      <div class="tile"><h3>Bu hafta listesi</h3><p>Geciken aşılar kırmızı, önümüzdeki 7 gün içindekiler sarı. Uygulamayı kullanmayan sahiplere tek tıkla hazır WhatsApp mesajı.</p></div>
+      <div class="tile"><h3>Sahibin telefonuna kendiliğinden</h3><p>Kodla bağlanan hastalarda kayıt sahibin Patiport'undaki bakım takvimine ve kilo geçmişine işlenir.</p></div>
+      <div class="tile"><h3>Onaylı klinik profili</h3><p>Patiport'ta klinik arayan sahipler sizi doğru telefon ve saatlerle, "Klinik onaylı" olarak görür. Sıralama satın alınamaz.</p></div>
+      <div class="tile"><h3>Tarayıcıdan</h3><p>Bilgisayar, tablet ya da telefon. Kurulum ve güncelleme derdi yok.</p></div>
+    </div>
+    <figure class="shot">
+      <img src="img/panel-hasta.jpg" width="1920" height="1200" alt="Hasta kartı: bilgiler, kayıt ekleme, sonraki tarih önerisi" loading="lazy">
+      <figcaption>Hasta kartı ve kayıt ekleme. Görseldeki klinik ve kişiler örnektir.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="band">
+      <div>
+        <h2>Neden Patiport?</h2>
+        <p>Klinik programlarının hasta sahibi uygulamaları o kliniğe özeldir; sahip her veteriner için ayrı uygulama indirmez. Patiport ise sahibin kendi uygulaması: acilde açık veteriner bulur, aşı takvimini ve dostunun sağlık kartını tutar. Bir kez bağlandı mı, sizin kayıtlarınız da orada.</p>
+      </div>
+      <div class="ctas"><a class="btn primary" href="../app/panel/basvur">Ücretsiz başvur</a></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Yakında</h2>
+    <p class="sub">Sırayı başvuran kliniklerin cevapları belirliyor.</p>
+    <div class="grid">
+      <div class="tile soon"><span class="tag">Yakında</span><h3>Tahsilat: POS ve e-SMM tek adımda</h3><p>Kartla ödemede tutar panelden yazarkasa POS'una gider, çekim olunca e-Serbest Meslek Makbuzu kendiliğinden kesilir ve sahibin uygulamasına düşer. İlk hangi cihaz ve e-SMM programıyla başlayacağımızı bekleme listesindeki cevaplar belirleyecek.</p></div>
+      <div class="tile soon"><span class="tag">Yakında</span><h3>Randevu</h3><p>Sahip Patiport'tan randevu ister, siz panelden onaylarsınız; iki tarafa da hatırlatma gider.</p></div>
+      <div class="tile soon"><span class="tag">Planlanıyor</span><h3>Toplu hatırlatma</h3><p>Aşısı yaklaşan hastaların sahiplerine toplu SMS ya da WhatsApp mesajı.</p></div>
+    </div>
+    <p class="note">Başvuru sırasında ve panelde dört soruluk kısa bir anket var; bekleme listesine oradan katılırsınız.</p>
+  </section>
+
+  <section>
+    <h2>Fiyat</h2>
+    <div class="price">
+      <div class="tile">
+        <b>Hasta takibi</b>
+        <div class="big">Ücretsiz</div>
+        <ul>
+          <li>Hasta kartları ve kayıtlar</li>
+          <li>Sahibin uygulamasına kayıt ve hatırlatma</li>
+          <li>WhatsApp ile hatırlatma</li>
+          <li>Onaylı klinik profili</li>
+        </ul>
+      </div>
+      <div class="tile soon">
+        <b>Tahsilat ve toplu mesaj</b>
+        <div class="big">Henüz yok</div>
+        <p>Hazır olduğunda fiyatı önceden duyurulacak. Bekleme listesindeki kliniklere önce sorulacak.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sık sorulanlar</h2>
+    <details><summary>Kayıtları kim görür?</summary><p>Hasta kartlarını ve kayıtları yalnızca kliniğinizin onaylı hekim hesapları görür. Kodla bağlanan hastalarda hayvanın sahibi de kendi dostunun kayıtlarını görür. Başka klinikler göremez. Ayrıntılar <a href="../gizlilik">gizlilik politikasında</a>.</p></details>
+    <details><summary>Sahip Patiport kullanmıyorsa?</summary><p>Hastayı elle eklersiniz. Aşısı yaklaşınca hazır mesajla WhatsApp'tan hatırlatırsınız.</p></details>
+    <details><summary>Mevcut programımı bırakmam gerekir mi?</summary><p>Hayır. Patiport Hekim'i hatırlatma ve sahiple bağlantı için yanında kullanabilirsiniz.</p></details>
+    <details><summary>Kliniği nasıl doğruluyorsunuz?</summary><p>Başvuruda verdiğiniz numarayı arayarak. Doğrulama telefonu uygulamada gösterilmez.</p></details>
+    <details><summary>Panel tahsilat yapıyor mu, e-SMM kesiyor mu?</summary><p>Henüz hayır. POS ve e-SMM'yi tek adımda yapacak tahsilat özelliği için bekleme listesi açık.</p></details>
+    <details><summary>Telefonda da çalışır mı?</summary><p>Evet, tarayıcıdan açılır. Bilgisayarda iki sütunlu, daha rahat bir görünümü var.</p></details>
+  </section>
+
+  <section class="end">
+    <h2>Kliniğinizle katılın</h2>
+    <p class="sub" style="margin-left:auto;margin-right:auto">Başvuru birkaç dakika sürer. Onaylanınca aynı e-posta ve şifreyle panele girersiniz.</p>
+    <div class="ctas">
+      <a class="btn primary" href="../app/panel/basvur">Ücretsiz başvur</a>
+      <a class="btn ghost" href="../app/panel">Panele giriş</a>
+    </div>
+  </section>
+
+  <footer class="links">
+    <span>© 2026 Patiport</span>
+    <a href="../">Hasta sahipleri için</a>
+    <a href="../gizlilik">Gizlilik</a>
+    <a href="../kosullar">Koşullar</a>
+    <a href="../destek">Destek</a>
+  </footer>
+</main>
+</body>
+</html>
