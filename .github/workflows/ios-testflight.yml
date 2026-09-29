@@ -1,7 +1,9 @@
 name: iOS → TestFlight
 
 # Manuel tetiklenir (Actions → Run workflow, istediğin branch'i seçebilirsin)
-# VEYA main'e push olunca otomatik.
+# VEYA main'e push olunca otomatik. Yalnızca site, belge, iş akışı ya da veri
+# üreticisi değiştiyse derleme yapılmaz (EAS derleme hakkı boşa gitmesin);
+# gerekirse elle çalıştırılır.
 on:
   workflow_dispatch:
     inputs:
@@ -12,6 +14,16 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "site/**"
+      - "docs/**"
+      - "marketing/**"
+      - "store/**"
+      - "**/*.md"
+      - ".github/**"
+      - "scripts/data/**"
+      - "scripts/gen-clinics-osm.js"
+      - "scripts/gen-clinics-chamber.js"
 
 jobs:
   build-and-submit:

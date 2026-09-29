@@ -2,8 +2,7 @@ name: Site → GitHub Pages
 
 # Gizlilik, kullanım koşulları, destek ve hekim tanıtım sayfalarını (site/) ve
 # hekim panelini (uygulamanın web sürümü, /app/panel) yayınlar. Yalnızca herkese açık
-# Batuhandac/batu deposunda çalışır; bir kez Settings → Pages → Source:
-# "GitHub Actions" seçilmesi gerekir (store/APP_STORE.md).
+# Batuhandac/batu deposunda çalışır (Settings → Pages → Source: "GitHub Actions").
 on:
   workflow_dispatch:
   push:
