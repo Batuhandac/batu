@@ -148,6 +148,14 @@ uygulamada "Veterinerime bağla" ile kod alır; hekim kodu girince kayıtlar sah
 takvimine düşer. Yönetici olarak yapman gereken bir şey yok; bir kliniğin kayıtlarını
 silmek gerekirse Firestore'da `clinic_patients/{clinic_id}` altını sil.
 
+**Test POS (tahsilat test modu).** Hasta kartındaki "Tahsilat" kutusuna tutar yazılıp
+"POS'a gönder"e basılınca `clinic_pos/{clinic_id}/sales` altına `status: pending,
+mode: test` bir belge düşer. Aynı hekim hesabıyla başka bir sekmede ya da telefonda
+panelin üst menüsünden **Test POS** açılır; "Kartı okut" onaylar, "Reddet" reddeder ve
+sonuç hasta kartında kendiliğinden görünür. Bankadan çekim yapılmaz, e-SMM kesilmez.
+Satış belgeleri silinemez (kural gereği); gerekirse Console'dan sen silersin. Bu özellik
+için `firestore.rules` dosyasının güncel hâlini Firebase'e yeniden yayınla.
+
 ## 7. Topluluk ve şikayetler (`content_reports`)
 
 Kullanıcılar soru, yanıt, yorum ve mesajları **Bildir** ile şikayet edebilir. Her şikayet

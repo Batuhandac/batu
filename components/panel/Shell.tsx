@@ -1,7 +1,7 @@
 // Hekim paneli (web) çerçevesi: giriş kapısı, üst çubuk ve geniş ekran sayfası.
 import React, { useState } from 'react';
-import { View, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
+import { View, ScrollView, ActivityIndicator, Pressable, useWindowDimensions } from 'react-native';
+import { router, usePathname } from 'expo-router';
 import { Text, Button, Field, LogoMark, Card } from '@/components/ds';
 import { useTheme, radius } from '@/lib/theme';
 import { useSession } from '@/stores/session';
@@ -22,10 +22,41 @@ export function PanelPage({ children }: { children: React.ReactNode }) {
   );
 }
 
+function NavLink({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="link"
+      style={({ pressed }) => ({
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: radius.pill,
+        backgroundColor: active ? t.primarySoft : pressed ? t.surfaceAlt : 'transparent',
+      })}
+    >
+      <Text variant="callout" color={active ? t.primary : t.textMuted} style={{ fontWeight: '700' }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function TopBar({ vet }: { vet: VetProfile }) {
   const t = useTheme();
   const signOut = useSession((s) => s.signOut);
-  const wide = useWide();
+  const width = useWindowDimensions().width;
+  const wide = width >= 900;
+  // Telefonda menü ikinci satıra iner; klinik adı tek satırda kalır
+  const inlineNav = width >= 640;
+  const path = usePathname();
+  const onPos = path.endsWith('/panel/pos');
+  const nav = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <NavLink label="Hastalar" active={!onPos} onPress={() => router.replace('/panel')} />
+      <NavLink label="Test POS" active={onPos} onPress={() => router.replace('/panel/pos')} />
+    </View>
+  );
   return (
     <View style={{ backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.border }}>
       <View
@@ -41,16 +72,18 @@ function TopBar({ vet }: { vet: VetProfile }) {
         }}
       >
         <LogoMark size={30} />
-        <View style={{ flex: 1 }}>
-          <Text variant="headline" style={{ fontSize: 19, lineHeight: 24 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text variant="headline" numberOfLines={1} style={{ fontSize: 19, lineHeight: 24 }}>
             {vet.clinic_name}
           </Text>
-          <Text variant="caption" tone="muted">
+          <Text variant="caption" tone="muted" numberOfLines={1}>
             Patiport hekim paneli{wide ? ` · ${vetDisplayName(vet)}` : ''}
           </Text>
         </View>
+        {inlineNav ? nav : null}
         <Button title="Çıkış" variant="ghost" size="sm" onPress={() => signOut()} />
       </View>
+      {inlineNav ? null : <View style={{ paddingHorizontal: 14, paddingBottom: 10 }}>{nav}</View>}
     </View>
   );
 }

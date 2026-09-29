@@ -5,6 +5,10 @@ import { Text, Button, Card, Field, Segmented, SearchField, Badge, Icon } from '
 import { PetFace } from '@/components/art';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
 import { InterestCard } from '@/components/panel/Interest';
+import { openTestPos } from '@/components/panel/Pos';
+import { formatTL } from '@/lib/pos/money';
+import { listTodaySales, type Sale } from '@/lib/pos/sales';
+import { daysUntil } from '@/lib/utils/dates';
 import { DueBadge, PatientForm, speciesLabel } from '@/components/panel/Forms';
 import { useTheme, radius } from '@/lib/theme';
 import { formatDate } from '@/lib/utils/dates';
@@ -24,6 +28,12 @@ function Dashboard({ vet }: { vet: VetProfile }) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+  const [sales, setSales] = useState<Sale[]>([]);
+  useEffect(() => {
+    listTodaySales(vet.clinic_id)
+      .then(setSales)
+      .catch(() => {});
+  }, [vet.clinic_id]);
 
   const load = useCallback(async () => {
     try {
@@ -44,6 +54,18 @@ function Dashboard({ vet }: { vet: VetProfile }) {
     return patients.filter((p) => trFold([p.name, p.owner_name, p.owner_phone, p.chip_no, p.breed].filter(Boolean).join(' ')).includes(q));
   }, [patients, query]);
   const soon = useMemo(() => dueSoon(patients ?? [], 7), [patients]);
+  const stats = useMemo(() => {
+    const list = patients ?? [];
+    const approved = sales.filter((s) => s.status === 'approved');
+    return {
+      total: list.length,
+      linked: list.filter((p) => p.owner_uid).length,
+      overdue: list.filter((p) => p.next_due && daysUntil(p.next_due) < 0).length,
+      soon: soon.length,
+      todayKurus: approved.reduce((a, s) => a + s.amount_kurus, 0),
+      todayCount: approved.length,
+    };
+  }, [patients, soon, sales]);
 
   const list = (
     <View style={{ flex: wide ? 1.5 : undefined, minWidth: 0 }}>
@@ -108,7 +130,18 @@ function Dashboard({ vet }: { vet: VetProfile }) {
 
   return (
     <PanelPage>
-      <View style={{ flexDirection: wide ? 'row' : 'column', gap: wide ? 28 : 32, marginTop: 24, alignItems: 'flex-start' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
+        <Stat label="Hasta" value={String(stats.total)} hint={`${stats.linked} tanesi uygulamada`} />
+        <Stat label="Bu hafta" value={String(stats.soon)} hint="aşı ya da kontrol" tone={stats.soon ? 'honey' : undefined} />
+        <Stat label="Geciken" value={String(stats.overdue)} hint="hatırlatma bekliyor" tone={stats.overdue ? 'sos' : undefined} />
+        <Stat
+          label="Bugün tahsilat"
+          value={formatTL(stats.todayKurus)}
+          hint={`${stats.todayCount} işlem · test modu`}
+          action={{ label: "Test POS'u aç", onPress: openTestPos }}
+        />
+      </View>
+      <View style={{ flexDirection: wide ? 'row' : 'column', gap: wide ? 28 : 32, marginTop: 28, alignItems: 'flex-start' }}>
         {wide ? (
           <>
             {list}
@@ -122,6 +155,43 @@ function Dashboard({ vet }: { vet: VetProfile }) {
         )}
       </View>
     </PanelPage>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+  tone,
+  action,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone?: 'honey' | 'sos';
+  action?: { label: string; onPress: () => void };
+}) {
+  const t = useTheme();
+  const color = tone === 'sos' ? t.sos : tone === 'honey' ? t.honey : t.text;
+  return (
+    <Card style={{ flexGrow: 1, flexBasis: 200, gap: 2 }}>
+      <Text variant="caption" tone="muted">
+        {label}
+      </Text>
+      <Text variant="display" color={color} style={{ fontSize: 30, lineHeight: 38 }}>
+        {value}
+      </Text>
+      <Text variant="caption" tone="subtle">
+        {hint}
+      </Text>
+      {action ? (
+        <Pressable onPress={action.onPress} accessibilityRole="link" hitSlop={6} style={{ marginTop: 6 }}>
+          <Text variant="caption" tone="primary" style={{ fontWeight: '700' }}>
+            {action.label}
+          </Text>
+        </Pressable>
+      ) : null}
+    </Card>
   );
 }
 

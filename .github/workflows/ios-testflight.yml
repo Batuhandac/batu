@@ -24,6 +24,11 @@ on:
       - "scripts/data/**"
       - "scripts/gen-clinics-osm.js"
       - "scripts/gen-clinics-chamber.js"
+      # Yalnızca web hekim paneline ait dosyalar iOS derlemesi başlatmaz
+      - "app/panel/**"
+      - "components/panel/**"
+      - "lib/pos/**"
+      - "firestore.rules"
 
 jobs:
   build-and-submit:

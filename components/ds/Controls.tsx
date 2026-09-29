@@ -112,7 +112,8 @@ export function Field({
             color: t.text,
             backgroundColor: t.surface,
             borderWidth: 1,
-            borderColor: error ? t.danger : focused ? t.primary : t.dark ? t.surface : t.border,
+            // Koyu temada da kenar görünür: kart (surface) içindeki alanlar kaybolmasın
+            borderColor: error ? t.danger : focused ? t.primary : t.border,
             borderRadius: radius.md,
             paddingHorizontal: 14,
             paddingVertical: 12,

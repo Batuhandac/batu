@@ -69,10 +69,10 @@ export function InterestCard({ uid, clinicName, compact }: { uid: string; clinic
 
   return (
     <Card style={{ gap: 4 }}>
-      <Text variant="headline">Tahsilat, yakında</Text>
+      <Text variant="headline">Gerçek POS bağlantısı</Text>
       <Text variant="callout" tone="muted" style={{ marginBottom: 10 }}>
-        Kartla ödemede tutarı panelden POS'a göndermeyi ve e-SMM'yi kendiliğinden kesmeyi planlıyoruz. İlk hangi cihaz ve programla
-        başlayacağımızı sizin cevaplarınız belirleyecek.
+        Tutarı panelden POS'a göndermeyi test modunda deneyebilirsiniz. Sırada kliniğinizdeki cihaza bağlanmak ve e-SMM'yi kendiliğinden
+        kesmek var; hangi cihaz ve programla başlayacağımızı sizin cevaplarınız belirleyecek.
       </Text>
       {!loaded ? null : !open ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

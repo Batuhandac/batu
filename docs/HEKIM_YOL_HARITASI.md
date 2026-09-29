@@ -66,10 +66,11 @@ Giriş kapımız ücretsiz hasta takibi ve sahibin telefonuna giden hatırlatma.
 | Aşama | Ne | Durum |
 |---|---|---|
 | 1 | Hekim paneli: hasta kartı, kayıtlar (aşı, parazit, kontrol, ilaç, kilo, not), sonraki tarih önerisi, bu hafta listesi, WhatsApp hatırlatma, sahibin kodla bağlanması ve telefona otomatik kayıt | Bitti |
-| 2 | Hekim tanıtım sitesi, web'den başvuru (hesap + klinik), tahsilat bekleme listesi ve kısa anket | Bu sürüm |
+| 2 | Hekim tanıtım sitesi, web'den başvuru (hesap + klinik), tahsilat bekleme listesi ve kısa anket | Bitti |
 | 3 | 10 klinikle görüşme (aşağıdaki sorular), ilk 20 kliniği ücretsiz alma | Sırada |
 | 4 | Randevu: sahip Patiport'tan randevu ister, hekim panelden onaylar; hatırlatma | Görüşmelere göre |
-| 5 | Tahsilat: tutar panelden bulut API'li yazarkasa POS'a gider (ilk marka ankete göre; Pavo'nun bulut API'si var [10]), çekim olunca e-SMM bir sağlayıcının API'siyle kendiliğinden kesilir, makbuz sahibin uygulamasına düşer. Kendimiz entegratör olmayız. Mali müşavir kontrolü şart. | Ankete göre |
+| 5a | Tahsilat test modu: hasta kartında tutar yazılır, "POS'a gönder" ile `clinic_pos/{clinic_id}/sales` belgesine `pending` düşer; panelin Test POS ekranı (başka sekme ya da telefon) onaylar ya da reddeder, sonuç panelde canlı görünür, makbuz taslağı çıkar. Banka çekimi ve e-SMM yok. | Bu sürüm |
+| 5b | Gerçek tahsilat: aynı `pending` belgesini bir sunucu işlevi okur, bulut API'li yazarkasa POS'a iletir (ilk marka ankete göre; Pavo'nun bulut API'si var [10]) ve sonucu aynı belgeye yazar; panel tarafı değişmez. Cihaz API anahtarları tarayıcıya konamaz, bu yüzden sunucu şart. Çekim olunca e-SMM bir sağlayıcının API'siyle kendiliğinden kesilir, makbuz sahibin uygulamasına düşer. Kendimiz entegratör olmayız. Mali müşavir kontrolü şart. | Ankete göre |
 | 6 | Toplu SMS / WhatsApp Business, stok, çoklu şube | Sonra |
 
 ## Görüşme soruları (her klinikle 15 dakika)

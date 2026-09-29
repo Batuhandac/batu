@@ -5,6 +5,7 @@ import { Text, Button, Card, Badge } from '@/components/ds';
 import { PetFace } from '@/components/art';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
 import { ConfirmButton, DueBadge, PatientForm, RecordForm, speciesLabel } from '@/components/panel/Forms';
+import { PosCard } from '@/components/panel/Pos';
 import { useTheme } from '@/lib/theme';
 import { formatDate } from '@/lib/utils/dates';
 import { petAge } from '@/lib/utils/pets';
@@ -192,7 +193,10 @@ function PatientView({ vet, id }: { vet: VetProfile; id: string }) {
         </View>
       </View>
       <View style={{ flexDirection: wide ? 'row' : 'column', gap: 24, alignItems: 'flex-start' }}>
-        <View style={{ flex: wide ? 1 : undefined, alignSelf: 'stretch', minWidth: 0 }}>{info}</View>
+        <View style={{ flex: wide ? 1 : undefined, alignSelf: 'stretch', minWidth: 0, gap: 24 }}>
+          {info}
+          <PosCard vet={vet} patient={p} suggestion={records[0]?.title ?? null} />
+        </View>
         <View style={{ flex: wide ? 1.6 : undefined, alignSelf: 'stretch', minWidth: 0 }}>{history}</View>
       </View>
     </PanelPage>
