@@ -1,0 +1,12 @@
+# Patiport ödeme sunucusu. Yayını .github/workflows/site-pages.yml yapar
+# (Cloudflare secret'ları GitHub secret'larından aktarılır). Ayrıntı: server/odeme/README.md
+name = "patiport-odeme"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[vars]
+# Canlıya geçerken: https://api.iyzipay.com ve canlı anahtarlar
+IYZICO_BASE_URL = "https://sandbox-api.iyzipay.com"
+FIREBASE_PROJECT_ID = "pati-sos"
+ALLOWED_ORIGINS = "https://batuhandac.github.io,http://localhost:8081"

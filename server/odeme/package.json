@@ -1,0 +1,6 @@
+{
+  "name": "patiport-odeme",
+  "private": true,
+  "type": "module",
+  "description": "Patiport ödeme sunucusu (Cloudflare Worker). Yayın: .github/workflows/site-pages.yml"
+}

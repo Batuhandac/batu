@@ -22,6 +22,9 @@ jobs:
   deploy:
     if: github.repository == 'Batuhandac/batu'
     runs-on: ubuntu-latest
+    env:
+      # Ödeme sunucusu yalnızca Cloudflare ve iyzico secret'ları eklendiyse yayınlanır
+      HAS_PAY: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.IYZICO_API_KEY != '' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -31,7 +34,34 @@ jobs:
         with:
           node-version: 22
 
+      # Kartla ödeme (iyzico) için sunucu: server/odeme. Başarısız olursa site yine
+      # yayınlanır, panelde yalnızca iyzico seçeneği görünmez.
+      - name: Ödeme sunucusunu yayınla (Cloudflare Worker)
+        id: pay
+        if: env.HAS_PAY == 'true'
+        continue-on-error: true
+        working-directory: server/odeme
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          IYZICO_API_KEY: ${{ secrets.IYZICO_API_KEY }}
+          IYZICO_SECRET_KEY: ${{ secrets.IYZICO_SECRET_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          test -n "$URL"
+          # Secret'lar dosyaya yalnızca bu adım süresince yazılır
+          node -e 'const e=process.env;require("fs").writeFileSync("s.json",JSON.stringify({IYZICO_API_KEY:e.IYZICO_API_KEY,IYZICO_SECRET_KEY:e.IYZICO_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT:e.FIREBASE_SERVICE_ACCOUNT}))'
+          if npx --yes wrangler@4 secret bulk s.json; then rc=0; else rc=1; fi
+          rm -f s.json
+          test $rc -eq 0
+          curl -sS "$URL/health" || true; echo
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
       - name: Hekim panelini derle (web)
+        env:
+          EXPO_PUBLIC_PAY_API_URL: ${{ steps.pay.outputs.url }}
         run: |
           npm install --legacy-peer-deps --no-audit --no-fund
           EXPO_BASE_URL=/batu/app npx expo export --platform web --output-dir dist-web

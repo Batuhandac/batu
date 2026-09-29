@@ -156,6 +156,14 @@ sonuç hasta kartında kendiliğinden görünür. Bankadan çekim yapılmaz, e-S
 Satış belgeleri silinemez (kural gereği); gerekirse Console'dan sen silersin. Bu özellik
 için `firestore.rules` dosyasının güncel hâlini Firebase'e yeniden yayınla.
 
+**Telefondan kartla ödeme (iyzico deneme ortamı).** Aynı Tahsilat kutusunda ikinci bir
+seçenek: panel iyzico'nun gerçek ödeme sayfasını açar, QR'ı hasta sahibi telefonuyla okutup
+kartla öder, sonuç panele kendiliğinden düşer. Deneme ortamında para sahtedir. Bunun için
+küçük bir ödeme sunucusu (Cloudflare Worker, ücretsiz) gerekir; kurulumu
+`server/odeme/README.md` anlatır (iyzico deneme hesabı, Firebase hizmet hesabı ve
+Cloudflare anahtarları GitHub secret olarak eklenir). Secret'lar eklenmeden panelde bu
+seçenek görünmez.
+
 ## 7. Topluluk ve şikayetler (`content_reports`)
 
 Kullanıcılar soru, yanıt, yorum ve mesajları **Bildir** ile şikayet edebilir. Her şikayet

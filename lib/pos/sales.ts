@@ -2,12 +2,15 @@
 // panel "pending" olarak yazar, POS tarafı sonucu (onay/ret) aynı belgeye yazar,
 // panel belgeyi canlı dinler.
 //
-// Şimdilik yalnızca TEST modu var: POS, panelin /panel/pos sayfasında (başka bir
-// sekmede ya da telefonda) açılan sanal bir terminaldir; banka çekimi ve e-SMM
-// yapılmaz. Gerçek cihaz (ör. bulut API'li yeni nesil yazarkasa POS) eklenince
-// aynı belgeyi bir sunucu işlevi okuyup cihaza iletecek ve sonucu yazacak; panel
-// tarafı değişmeyecek. Cihaz API anahtarları tarayıcıya konamayacağı için bu adım
-// sunucuda olmalı (docs/HEKIM_YOL_HARITASI.md, aşama 5).
+// İki mod:
+//  - "test": POS, panelin /panel/pos sayfasında (başka bir sekmede ya da telefonda)
+//    açılan sanal bir terminaldir; sonucu o terminal yazar.
+//  - "iyzico_test": ödeme sunucusu (server/odeme) iyzico'nun deneme ortamında gerçek
+//    bir ödeme sayfası açar; hasta sahibi telefonundan kartla öder, sonucu sunucu
+//    iyzico'dan doğrulayıp yazar. Para deneme ortamında sahtedir.
+// İkisinde de banka çekimi ve e-SMM yoktur. Gerçek cihaz ya da canlı iyzico
+// hesabı eklenince aynı belge yapısı kullanılır; anahtarlar yalnızca sunucuda durur
+// (docs/HEKIM_YOL_HARITASI.md, aşama 5).
 import {
   collection,
   doc,
@@ -21,9 +24,10 @@ import {
   where,
 } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
-import type { VetProfile } from '@/lib/auth';
+import { getAuthInstance, type VetProfile } from '@/lib/auth';
 
 export type SaleStatus = 'pending' | 'approved' | 'declined' | 'cancelled';
+export type SaleMode = 'test' | 'iyzico_test';
 
 export interface Sale {
   id: string;
@@ -32,13 +36,23 @@ export interface Sale {
   patient_id: string | null;
   patient_name: string | null;
   status: SaleStatus;
-  mode: 'test';
+  mode: SaleMode;
   created_by: string;
   created_ms: number | null;
   resolved_ms: number | null;
   card_last4: string | null;
   auth_code: string | null;
+  /** iyzico: ödeme sayfası (sunucu yazar) ve sonuç ayrıntıları */
+  pay_url: string | null;
+  pay_expires_ms: number | null;
+  payment_id: string | null;
+  card_brand: string | null;
+  fail_reason: string | null;
 }
+
+/** Ödeme sunucusunun adresi (web derlemesinde verilir); yoksa iyzico seçeneği gizlenir. */
+export const PAY_API_URL = (process.env.EXPO_PUBLIC_PAY_API_URL ?? '').replace(/\/+$/, '');
+export const onlinePayEnabled = PAY_API_URL.length > 0;
 
 export const MAX_SALE_KURUS = 100_000_000; // 1.000.000 TL
 
@@ -58,12 +72,17 @@ function toSale(id: string, d: Record<string, unknown>): Sale {
     patient_id: (d.patient_id as string) ?? null,
     patient_name: (d.patient_name as string) ?? null,
     status: (d.status as SaleStatus) ?? 'pending',
-    mode: 'test',
+    mode: d.mode === 'iyzico_test' ? 'iyzico_test' : 'test',
     created_by: String(d.created_by ?? ''),
     created_ms: ms(d.created_at),
     resolved_ms: ms(d.resolved_at),
     card_last4: (d.card_last4 as string) ?? null,
     auth_code: (d.auth_code as string) ?? null,
+    pay_url: typeof d.pay_url === 'string' ? d.pay_url : null,
+    pay_expires_ms: typeof d.pay_expires_ms === 'number' ? d.pay_expires_ms : null,
+    payment_id: typeof d.payment_id === 'string' ? d.payment_id : null,
+    card_brand: typeof d.card_brand === 'string' ? d.card_brand : null,
+    fail_reason: typeof d.fail_reason === 'string' ? d.fail_reason : null,
   };
 }
 
@@ -74,8 +93,8 @@ export interface SaleInput {
   patient_name: string | null;
 }
 
-/** Tutarı test POS'una gönderir; satış kimliğini döner. */
-export async function createTestSale(vet: VetProfile, input: SaleInput): Promise<string> {
+/** Bekleyen satış yazar (test POS'u ya da iyzico için); satış kimliğini döner. */
+export async function createSale(vet: VetProfile, input: SaleInput, mode: SaleMode = 'test'): Promise<string> {
   if (!Number.isSafeInteger(input.amount_kurus) || input.amount_kurus < 100 || input.amount_kurus > MAX_SALE_KURUS) {
     throw new Error('amount');
   }
@@ -86,7 +105,7 @@ export async function createTestSale(vet: VetProfile, input: SaleInput): Promise
     patient_id: input.patient_id,
     patient_name: input.patient_name ? input.patient_name.slice(0, 60) : null,
     status: 'pending',
-    mode: 'test',
+    mode,
     created_by: vet.uid,
     created_at: serverTimestamp(),
   });
@@ -102,11 +121,17 @@ export function watchSale(clinicId: string, id: string, cb: (s: Sale | null) => 
   );
 }
 
-/** Test POS ekranı: bekleyen satışları canlı izler (eskiden yeniye). */
+/** Test POS ekranı: bekleyen test satışlarını canlı izler (eskiden yeniye). */
 export function watchPendingSales(clinicId: string, cb: (s: Sale[]) => void): () => void {
   return onSnapshot(
     query(salesCol(clinicId), where('status', '==', 'pending')),
-    (snap) => cb(snap.docs.map((d) => toSale(d.id, d.data())).sort((a, b) => (a.created_ms ?? 0) - (b.created_ms ?? 0))),
+    (snap) =>
+      cb(
+        snap.docs
+          .map((d) => toSale(d.id, d.data()))
+          .filter((s) => s.mode === 'test')
+          .sort((a, b) => (a.created_ms ?? 0) - (b.created_ms ?? 0))
+      ),
     () => cb([])
   );
 }
@@ -138,4 +163,34 @@ export async function resolveSale(vet: VetProfile, sale: Sale, status: Exclude<S
     resolved_by: vet.uid,
     ...(status === 'approved' ? { card_last4: '4242', auth_code: testAuthCode() } : {}),
   });
+}
+
+export type StartPaymentError = 'offline' | 'auth' | 'forbidden' | 'iyzico' | 'server';
+
+/**
+ * iyzico ödeme sayfasını başlatır (sunucu tutarı satış belgesinden okur).
+ * Sayfa adresi ayrıca satış belgesine de yazılır; panel onu canlı görür.
+ */
+export async function startOnlinePayment(
+  clinicId: string,
+  saleId: string
+): Promise<{ url: string } | { error: StartPaymentError; message?: string }> {
+  const user = getAuthInstance()?.currentUser;
+  if (!PAY_API_URL || !user) return { error: 'auth' };
+  let res: Response;
+  try {
+    res = await fetch(`${PAY_API_URL}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await user.getIdToken()}` },
+      body: JSON.stringify({ clinicId, saleId }),
+    });
+  } catch {
+    return { error: 'offline' };
+  }
+  const d = (await res.json().catch(() => ({}))) as { url?: string; error?: string; message?: string | null };
+  if (res.ok && d.url) return { url: d.url };
+  if (res.status === 401) return { error: 'auth' };
+  if (res.status === 403) return { error: 'forbidden' };
+  if (d.error === 'iyzico') return { error: 'iyzico', message: d.message ?? undefined };
+  return { error: 'server' };
 }
