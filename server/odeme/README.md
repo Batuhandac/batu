@@ -17,7 +17,8 @@ hiç yazılmaz. Deneme ortamında para sahtedir.
 ## Kurulum (bir kez, yaklaşık 15 dakika)
 
 Hepsi `Batuhandac/batu` deposunun **Settings → Secrets and variables → Actions → New
-repository secret** ekranına eklenir. Anahtarları kimseyle (sohbet dahil) paylaşma.
+repository secret** ekranına eklenir: https://github.com/Batuhandac/batu/settings/secrets/actions/new
+(**Name** kutusuna adı, **Secret** kutusuna değeri yaz → **Add secret**). Anahtarları kimseyle (sohbet dahil) paylaşma.
 
 ### 1. iyzico deneme hesabı → `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`
 
@@ -30,8 +31,9 @@ repository secret** ekranına eklenir. Anahtarları kimseyle (sohbet dahil) payl
 
 ### 2. Firebase hizmet hesabı → `FIREBASE_SERVICE_ACCOUNT`
 
-1. Firebase Console → pati-sos → sol üstte dişli → **Proje ayarları → Hizmet hesapları**.
-2. **Yeni özel anahtar oluştur** → bir JSON dosyası iner.
+1. https://console.firebase.google.com/project/pati-sos/settings/serviceaccounts/adminsdk
+   (Console İngilizce: dişli → **Project settings → Service accounts**).
+2. **Generate new private key** → **Generate key** → bir JSON dosyası iner.
 3. Dosyayı metin düzenleyiciyle aç, **tüm içeriğini** `FIREBASE_SERVICE_ACCOUNT` olarak ekle.
    Dosyayı sonra bilgisayarından sil. Bu anahtar veritabanına tam yetkiyle yazabilir.
 
@@ -46,8 +48,8 @@ repository secret** ekranına eklenir. Anahtarları kimseyle (sohbet dahil) payl
 
 ### 4. Yayınla
 
-1. Firebase Console → Firestore → **Rules**: depodaki güncel `firestore.rules` içeriğini
-   yapıştır → **Publish**.
+1. https://console.firebase.google.com/project/pati-sos/firestore/rules (Firestore
+   Database → **Rules**): depodaki güncel `firestore.rules` içeriğini yapıştır → **Publish**.
 2. GitHub → batu → **Actions → Site → GitHub Pages → Run workflow**. "Ödeme sunucusunu
    yayınla" adımı yeşil olunca panelde iyzico seçeneği görünür.
 
