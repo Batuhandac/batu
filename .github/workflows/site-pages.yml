@@ -48,6 +48,15 @@ jobs:
           IYZICO_SECRET_KEY: ${{ secrets.IYZICO_SECRET_KEY }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
+          # Kopyala-yapıştırda gelen boşluk, satır sonu ya da Cloudflare'in "test"
+          # komutu varsa içinden yalnızca token'ı ve hesap kimliğini al
+          TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r' | grep -oE '[A-Za-z0-9_-]{40,}' | tail -1 || true)
+          ACCOUNT=$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -oE '[a-fA-F0-9]{32}' | head -1 || true)
+          if [ -z "$TOKEN" ]; then echo "::error::CLOUDFLARE_API_TOKEN içinde token bulunamadı"; exit 1; fi
+          if [ -z "$ACCOUNT" ]; then echo "::error::CLOUDFLARE_ACCOUNT_ID 32 karakterlik hesap kimliği değil"; exit 1; fi
+          echo "::add-mask::$TOKEN"
+          echo "::add-mask::$ACCOUNT"
+          export CLOUDFLARE_API_TOKEN="$TOKEN" CLOUDFLARE_ACCOUNT_ID="$ACCOUNT"
           npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
           URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
           test -n "$URL"
