@@ -3,7 +3,7 @@
 //  - iyzico (deneme): ödeme sunucusu iyzico'nun gerçek ödeme sayfasını açar; hasta sahibi
 //    QR'ı telefonuyla okutup kartla öder. Deneme ortamında para sahtedir.
 // İkisinde de banka çekimi ve e-SMM yok.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Linking, Platform, ActivityIndicator } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { Text, Button, Card, Field, Badge, Icon, Chip } from '@/components/ds';
 import { useTheme, radius } from '@/lib/theme';
 import { formatTL, parseTL } from '@/lib/pos/money';
 import {
+  checkOnlinePayment,
   createSale,
   listPatientSales,
   onlinePayEnabled,
@@ -58,9 +59,21 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
   const [startError, setStartError] = useState<string | null>(null);
   const [past, setPast] = useState<Sale[]>([]);
 
+  const resumed = useRef(false);
   const loadPast = useCallback(() => {
     listPatientSales(vet.clinic_id, patient.id)
-      .then(setPast)
+      .then((list) => {
+        setPast(list);
+        // Sayfa yenilendiyse bekleyen tahsilata kaldığı yerden devam et
+        if (!resumed.current) {
+          resumed.current = true;
+          const open = list.find((x) => x.status === 'pending');
+          if (open) {
+            setSaleId((cur) => cur ?? open.id);
+            if (open.mode === 'iyzico_test' && open.pay_url) checkOnlinePayment(vet.clinic_id, open.id).catch(() => {});
+          }
+        }
+      })
       .catch(() => {});
   }, [vet.clinic_id, patient.id]);
   useEffect(loadPast, [loadPast]);
@@ -172,6 +185,12 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           ownerPhone={patient.owner_phone}
           clinicName={vet.clinic_name}
           onRetry={() => saleId && begin(saleId)}
+          onCheck={async () => {
+            if (!saleId) return null;
+            const r = await checkOnlinePayment(vet.clinic_id, saleId);
+            if ('error' in r) return START_ERRORS[r.error];
+            return r.status === 'pending' ? 'Ödeme henüz tamamlanmadı. Sahibi ödedikten sonra tekrar bakın.' : null;
+          }}
           onCancel={cancel}
         />
       ) : status === 'pending' ? (
@@ -181,10 +200,10 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
               POS'ta bekleniyor
             </Text>
             <Text variant="display" style={{ fontSize: 30, lineHeight: 38 }}>
-              {kurus ? formatTL(kurus) : ''}
+              {sale ? formatTL(sale.amount_kurus) : kurus ? formatTL(kurus) : ''}
             </Text>
             <Text variant="callout" tone="muted">
-              {desc}
+              {sale?.description ?? desc}
             </Text>
           </View>
           <Text variant="callout">Kartı test POS ekranında okutun ya da reddedin; sonuç burada kendiliğinden görünür.</Text>
@@ -251,6 +270,7 @@ function OnlinePending({
   ownerPhone,
   clinicName,
   onRetry,
+  onCheck,
   onCancel,
 }: {
   sale: Sale | null;
@@ -260,10 +280,19 @@ function OnlinePending({
   ownerPhone: string | null;
   clinicName: string;
   onRetry: () => void;
+  onCheck: () => Promise<string | null>;
   onCancel: () => void;
 }) {
   const t = useTheme();
   const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState<string | null>(null);
+  const runCheck = async () => {
+    setChecking(true);
+    setCheckMsg(null);
+    setCheckMsg(await onCheck().catch(() => START_ERRORS.server));
+    setChecking(false);
+  };
   const url = sale?.pay_url ?? null;
   const amount = sale ? formatTL(sale.amount_kurus) : kurus ? formatTL(kurus) : '';
   const minutes = sale?.pay_expires_ms ? Math.max(0, Math.round((sale.pay_expires_ms - Date.now()) / 60000)) : null;
@@ -334,8 +363,14 @@ function OnlinePending({
           onPress={() => Linking.openURL(`https://wa.me/${wa ?? ''}?text=${encodeURIComponent(message)}`)}
         />
         {Platform.OS === 'web' ? <Button title={copied ? 'Kopyalandı' : 'Bağlantıyı kopyala'} size="sm" variant="ghost" icon="copy-outline" onPress={copy} /> : null}
+        <Button title="Durumu kontrol et" size="sm" variant="ghost" icon="refresh-outline" loading={checking} onPress={runCheck} />
         <Button title="İptal" size="sm" variant="ghost" onPress={onCancel} />
       </View>
+      {checkMsg ? (
+        <Text variant="caption" tone="muted">
+          {checkMsg}
+        </Text>
+      ) : null}
       <View style={{ padding: 12, borderRadius: radius.md, backgroundColor: t.honeySoft, gap: 2 }}>
         <Text variant="caption" style={{ fontWeight: '800' }}>
           Deneme kartı

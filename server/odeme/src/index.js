@@ -7,9 +7,12 @@
 //     Sunucu hekimi doğrular, tutarı belgeden okur (istekten değil), iyzico ödeme
 //     formunu başlatır; ödeme sayfası adresini belgeye yazar ve panele döner.
 //  3. Hasta sahibi sayfayı telefonunda açıp kartla öder (3D Secure dahil).
-//  4. iyzico tarayıcıyı POST /callback'e yollar (form alanı: token). Sunucu sonucu
-//     iyzico'dan kendisi sorgular, satış belgesine yazar; panel canlı dinlediği için
-//     sonuç anında görünür. Ödeyene sade bir sonuç sayfası gösterilir.
+//  4. iyzico tarayıcıyı POST /callback?c=…&s=…'ye yollar (form alanı: token). Sunucu
+//     token'ın o satışa ait olduğunu kontrol eder, sonucu iyzico'ya kendisi sorar ve
+//     satış belgesine yazar; panel canlı dinlediği için sonuç anında görünür.
+//     Ödeyene sade bir sonuç sayfası gösterilir.
+//  5. Dönüş kaçarsa (ödeyen sayfayı erken kapatırsa) panel POST /check ile sunucuya
+//     iyzico'dan yeniden sordurur; ödeme alındıysa kayıt "alındı" olur.
 //
 // Anahtarlar yalnızca burada (Cloudflare secret) durur, tarayıcıya hiç gitmez.
 // Firestore'a hizmet hesabıyla yazılır; bu yazımlar güvenlik kurallarına takılmaz,
@@ -33,7 +36,8 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     try {
       if (url.pathname === '/start' && request.method === 'POST') return await start(request, env, url, cors);
-      if (url.pathname === '/callback' && request.method === 'POST') return await callback(request, env);
+      if (url.pathname === '/callback' && request.method === 'POST') return await callback(request, env, url);
+      if (url.pathname === '/check' && request.method === 'POST') return await check(request, env, cors);
       if (url.pathname === '/health') {
         return json({ ok: true, sandbox: isSandbox(env), configured: Boolean(env.IYZICO_API_KEY && env.IYZICO_SECRET_KEY && env.FIREBASE_SERVICE_ACCOUNT) }, 200, cors);
       }
@@ -49,24 +53,32 @@ export default {
 
 // ─── /start ──────────────────────────────────────────────────────────────────
 
-async function start(request, env, url, cors) {
+/** Panel isteği: hekimi doğrular, klinik ve satış kimliğini döner (ya da hata yanıtı). */
+async function vetRequest(request, env, cors) {
   const idToken = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
-  if (!idToken) return json({ error: 'auth' }, 401, cors);
+  if (!idToken) return { res: json({ error: 'auth' }, 401, cors) };
   let body;
   try {
     body = await request.json();
   } catch {
-    return json({ error: 'bad_request' }, 400, cors);
+    return { res: json({ error: 'bad_request' }, 400, cors) };
   }
   const clinicId = str(body.clinicId, 1, 200);
   const saleId = str(body.saleId, 1, 100);
-  if (!clinicId || !saleId || /[/]/.test(clinicId + saleId)) return json({ error: 'bad_request' }, 400, cors);
+  if (!clinicId || !saleId || /[/]/.test(clinicId + saleId)) return { res: json({ error: 'bad_request' }, 400, cors) };
 
   const uid = await verifyIdToken(env, idToken);
-  if (!uid) return json({ error: 'auth' }, 401, cors);
+  if (!uid) return { res: json({ error: 'auth' }, 401, cors) };
 
   const vet = await getDoc(env, `vets/${uid}`);
-  if (!vet || vet.data.clinic_id !== clinicId) return json({ error: 'forbidden' }, 403, cors);
+  if (!vet || vet.data.clinic_id !== clinicId) return { res: json({ error: 'forbidden' }, 403, cors) };
+  return { uid, vet, clinicId, saleId };
+}
+
+async function start(request, env, url, cors) {
+  const v = await vetRequest(request, env, cors);
+  if (v.res) return v.res;
+  const { uid, vet, clinicId, saleId } = v;
 
   const salePath = `clinic_pos/${clinicId}/sales/${saleId}`;
   const sale = await getDoc(env, salePath);
@@ -116,7 +128,9 @@ async function start(request, env, url, cors) {
         price,
       },
     ],
-    callbackUrl: `${url.origin}/callback`,
+    // Satış, dönüş adresinden bulunur (iyzico'nun sorgu yanıtındaki conversationId o
+    // sorgunun kendi değerini yansıtır, başlatmadakini değil)
+    callbackUrl: `${url.origin}/callback?c=${encodeURIComponent(clinicId)}&s=${encodeURIComponent(saleId)}`,
     currency: 'TRY',
     paidPrice: price,
     enabledInstallments: [1],
@@ -132,30 +146,28 @@ async function start(request, env, url, cors) {
   return json({ url: r.paymentPageUrl, expires_ms: expiresMs }, 200, cors);
 }
 
-// ─── /callback ───────────────────────────────────────────────────────────────
+// ─── /callback ve /check ─────────────────────────────────────────────────────
 
-async function callback(request, env) {
-  const form = await request.formData().catch(() => null);
-  const token = form && typeof form.get('token') === 'string' ? form.get('token') : '';
-  if (!token || token.length > 200) return page(false, 'Ödeme bilgisi alınamadı.');
+/** iyzico'ya bu token'ın sonucunu sorar. */
+function retrieve(env, token, saleId) {
+  return iyzico(env, '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', conversationId: saleId || undefined, token });
+}
 
-  // Sonucu tarayıcıdan gelen veriye değil, iyzico'ya kendimiz sorarak öğreniriz
-  const r = await iyzico(env, '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', token });
-  const saleId = str(r.conversationId, 1, 100);
-  const clinicId = str(r.basketId, 1, 200);
-  if (!saleId || !clinicId) return page(false, 'Ödeme bulunamadı.');
-
-  const salePath = `clinic_pos/${clinicId}/sales/${saleId}`;
-  const sale = await getDoc(env, salePath);
-  if (!sale || sale.data.pay_token !== token) return page(false, 'Ödeme bulunamadı.');
+/**
+ * iyzico sonucunu satış belgesine işler. final: iyzico formun bittiğini bildirdi
+ * (geri dönüş); yalnızca o zaman başarısız sonuç "olmadı" olarak yazılır. Kontrol
+ * isteğinde ödeme tamamlanmamışsa satış beklemede kalır.
+ */
+async function settle(env, salePath, sale, r, final) {
   const s = sale.data;
   const amountOk = Math.round(Number(r.price) * 100) === Number(s.amount_kurus);
   const ok = r.status === 'success' && r.paymentStatus === 'SUCCESS' && amountOk;
 
-  if (s.status === 'approved') return page(true, 'Ödeme daha önce alınmış.');
+  if (s.status === 'approved') return { status: 'approved', message: 'Ödeme daha önce alınmış.' };
+  if (!ok && (!final || s.status !== 'pending')) {
+    return { status: s.status, message: s.status === 'pending' ? 'Ödeme henüz tamamlanmadı.' : 'Bu ödeme iptal edilmiş.' };
+  }
   // Hekim iptal etmiş olsa bile para çekildiyse kayıt "alındı" olmalı
-  if (s.status !== 'pending' && !ok) return page(false, 'Bu ödeme iptal edilmiş.');
-
   const fields = ok
     ? {
         status: 'approved',
@@ -169,12 +181,50 @@ async function callback(request, env) {
     : {
         status: 'declined',
         resolved_by: 'iyzico',
-        fail_reason: (str(r.errorMessage, 1, 200) || (amountOk ? 'Ödeme tamamlanmadı' : 'Tutar uyuşmadı')),
+        fail_reason: str(r.errorMessage, 1, 200) || (amountOk ? 'Ödeme tamamlanmadı' : 'Tutar uyuşmadı'),
       };
   await commit(env, salePath, fields, ['resolved_at'], sale.updateTime);
-  return ok
-    ? page(true, 'Ödemeniz alındı. Bu sayfayı kapatabilirsiniz.')
-    : page(false, fields.fail_reason || 'Ödeme tamamlanmadı.');
+  return ok ? { status: 'approved', message: 'Ödemeniz alındı. Bu sayfayı kapatabilirsiniz.' } : { status: 'declined', message: fields.fail_reason };
+}
+
+async function callback(request, env, url) {
+  const form = await request.formData().catch(() => null);
+  const token = form && typeof form.get('token') === 'string' ? form.get('token') : '';
+  if (!token || token.length > 200) return page(false, 'Ödeme bilgisi alınamadı.');
+
+  let clinicId = str(url.searchParams.get('c'), 1, 200);
+  let saleId = str(url.searchParams.get('s'), 1, 100);
+  let r = null;
+  if (!clinicId || !saleId) {
+    // Eski biçimli dönüş adresi: satışı iyzico'nun yanıtındaki sepet bilgisinden bul
+    r = await retrieve(env, token);
+    clinicId = str(r.basketId, 1, 200);
+    saleId = str(r.itemTransactions && r.itemTransactions[0] && r.itemTransactions[0].itemId, 1, 100);
+  }
+  if (!clinicId || !saleId || /[/]/.test(clinicId + saleId)) return page(false, 'Ödeme bulunamadı.');
+
+  const salePath = `clinic_pos/${clinicId}/sales/${saleId}`;
+  const sale = await getDoc(env, salePath);
+  // Token bu satışa ait değilse (başka ödemenin token'ı ya da uydurma) hiçbir şey yazılmaz
+  if (!sale || sale.data.pay_token !== token) return page(false, 'Ödeme bulunamadı.');
+
+  // Sonucu tarayıcıdan gelen veriye değil, iyzico'ya kendimiz sorarak öğreniriz
+  if (!r) r = await retrieve(env, token, saleId);
+  const out = await settle(env, salePath, sale, r, true);
+  return page(out.status === 'approved', out.message);
+}
+
+async function check(request, env, cors) {
+  const v = await vetRequest(request, env, cors);
+  if (v.res) return v.res;
+  const salePath = `clinic_pos/${v.clinicId}/sales/${v.saleId}`;
+  const sale = await getDoc(env, salePath);
+  if (!sale) return json({ error: 'not_found' }, 404, cors);
+  if (sale.data.mode !== SALES_MODE) return json({ error: 'forbidden' }, 403, cors);
+  if (sale.data.status === 'approved' || !sale.data.pay_token) return json({ status: sale.data.status }, 200, cors);
+  const r = await retrieve(env, sale.data.pay_token, v.saleId);
+  const out = await settle(env, salePath, sale, r, false);
+  return json(out, 200, cors);
 }
 
 // ─── iyzico ──────────────────────────────────────────────────────────────────

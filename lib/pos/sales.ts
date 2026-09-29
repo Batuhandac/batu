@@ -167,6 +167,22 @@ export async function resolveSale(vet: VetProfile, sale: Sale, status: Exclude<S
 
 export type StartPaymentError = 'offline' | 'auth' | 'forbidden' | 'iyzico' | 'server';
 
+/** Ödeme sunucusuna hekim adına istek (Firebase oturum belgesiyle). */
+async function callPay(path: string, clinicId: string, saleId: string): Promise<{ ok: boolean; status: number; data: Record<string, unknown> } | null> {
+  const user = getAuthInstance()?.currentUser;
+  if (!PAY_API_URL || !user) return { ok: false, status: 401, data: {} };
+  try {
+    const res = await fetch(`${PAY_API_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await user.getIdToken()}` },
+      body: JSON.stringify({ clinicId, saleId }),
+    });
+    return { ok: res.ok, status: res.status, data: ((await res.json().catch(() => ({}))) as Record<string, unknown>) ?? {} };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * iyzico ödeme sayfasını başlatır (sunucu tutarı satış belgesinden okur).
  * Sayfa adresi ayrıca satış belgesine de yazılır; panel onu canlı görür.
@@ -175,22 +191,24 @@ export async function startOnlinePayment(
   clinicId: string,
   saleId: string
 ): Promise<{ url: string } | { error: StartPaymentError; message?: string }> {
-  const user = getAuthInstance()?.currentUser;
-  if (!PAY_API_URL || !user) return { error: 'auth' };
-  let res: Response;
-  try {
-    res = await fetch(`${PAY_API_URL}/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await user.getIdToken()}` },
-      body: JSON.stringify({ clinicId, saleId }),
-    });
-  } catch {
-    return { error: 'offline' };
-  }
-  const d = (await res.json().catch(() => ({}))) as { url?: string; error?: string; message?: string | null };
-  if (res.ok && d.url) return { url: d.url };
-  if (res.status === 401) return { error: 'auth' };
-  if (res.status === 403) return { error: 'forbidden' };
-  if (d.error === 'iyzico') return { error: 'iyzico', message: d.message ?? undefined };
+  const r = await callPay('/start', clinicId, saleId);
+  if (!r) return { error: 'offline' };
+  if (r.ok && typeof r.data.url === 'string') return { url: r.data.url };
+  if (r.status === 401) return { error: 'auth' };
+  if (r.status === 403) return { error: 'forbidden' };
+  if (r.data.error === 'iyzico') return { error: 'iyzico', message: typeof r.data.message === 'string' ? r.data.message : undefined };
+  return { error: 'server' };
+}
+
+/**
+ * Sonucu iyzico'dan yeniden sordurur (dönüş kaçtıysa). Ödeme alındıysa satış
+ * "alındı" olur ve panel canlı görür; alınmadıysa beklemede kalır.
+ */
+export async function checkOnlinePayment(clinicId: string, saleId: string): Promise<{ status: string; message?: string } | { error: StartPaymentError }> {
+  const r = await callPay('/check', clinicId, saleId);
+  if (!r) return { error: 'offline' };
+  if (r.ok && typeof r.data.status === 'string') return { status: r.data.status, message: typeof r.data.message === 'string' ? r.data.message : undefined };
+  if (r.status === 401) return { error: 'auth' };
+  if (r.status === 403) return { error: 'forbidden' };
   return { error: 'server' };
 }
