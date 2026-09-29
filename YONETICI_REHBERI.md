@@ -111,7 +111,7 @@ alanıyla düşer; hekim, onaylanana kadar "Doğrulama" ekranını görür. Onay
 | Alan | Tür | Örnek |
 |---|---|---|
 | `clinic_id` | string | başvurudaki `clinic_id` (clinic_profiles ile aynı) |
-| `clinic_name` | string | `Çankaya Hayvan Hastanesi` |
+| `clinic_name` | string | `Vetmagic Veteriner Muayenehanesi` |
 | `name` | string | `Ayşe Yılmaz` |
 | `title` | string | `Vet. Hek.` ya da `Uzm. Vet. Hek.` |
 
@@ -121,6 +121,7 @@ alanıyla düşer; hekim, onaylanana kadar "Doğrulama" ekranını görür. Onay
    `"Genelde 1 saat içinde yanıtlarız"`). Bu belge varsa ve `open: true` ise klinik
    sayfasında **"Mesaj gönder"** düğmesi çıkar.
 4. Hekim uygulamada "Durumu yenile"ye bastığında (ya da yeniden açtığında) hekim paneli açılır.
+   Web'deki panelde sayfayı yenilemesi yeter.
 
 Başvuruda `claimant_uid` yoksa (hesapsız başvuru), hekimden uygulamada hesap açmasını
 iste; ya da Authentication → Users → Add user ile hesabı sen aç ve oluşan UID'yi kullan.
