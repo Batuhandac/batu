@@ -15,6 +15,11 @@ Console** üzerinden yönetilir. Günde bir kez bakman yeterli; **şikayetlere
 2. **Firestore Database → Rules**: depodaki `firestore.rules` içeriğini yapıştır → Publish.
 3. **Storage → Rules**: depodaki `storage.rules` içeriğini yapıştır → Publish.
 4. Ek dizin (index) gerekmez; sorgular varsayılan dizinlerle çalışacak şekilde yazıldı.
+5. **GitHub Pages (site ve hekim paneli)**, `Batuhandac/batu` deposunda:
+   Settings → Pages → Source: **GitHub Actions**; ardından Settings → Environments →
+   **github-pages** → Deployment branches and tags → **Add rule** → Branch: `main`.
+   Deponun varsayılan branch'i `main` olmadığı için bu kural olmadan yayın
+   "Branch main is not allowed to deploy to github-pages" hatasıyla durur.
 
 ## 1. Veteriner hekim başvuruları (`clinic_claims`)
 
