@@ -1,0 +1,4 @@
+# Wrangler yerel dosyaları ve CI yayın günlüğü
+.wrangler/
+deploy.log
+s.json
