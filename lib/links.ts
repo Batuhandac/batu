@@ -14,4 +14,4 @@ export const LINKS = {
   panelApply: `${SITE}/app/panel/basvur`,
 };
 
-export const SUPPORT_EMAIL = 'destek@patiport.app';
+export const SUPPORT_EMAIL = 'batuhanemreandac@gmail.com';

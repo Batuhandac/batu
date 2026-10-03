@@ -33,7 +33,7 @@ platformlarda da aynı adı kullan (TikTok, X, YouTube: `patiport`); alınmışs
 > Patiport, evcil hayvan sahipleri için acil veteriner bulucu ve bakım takvimi. Veteriner hekimlere ücretsiz ve reklamsız doğrulanmış klinik profili sunar.
 
 Biyografi bağlantısı: App Store sayfası yayına girince o bağlantı. O zamana kadar bağlantı koyma.
-İletişim: destek@patiport.app
+İletişim: batuhanemreandac@gmail.com
 
 ## 3. Görsel kurallar
 

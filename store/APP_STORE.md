@@ -15,8 +15,9 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
 2. **patiport.app alan adını al ve e-postayı kur.** Biri almadan al
    (son bakıldığında boştu; Cloudflare, Namecheap ya da Squarespace, yıllık yaklaşık 15 USD). Sonra:
    - E-posta yönlendirme (Cloudflare Email Routing ücretsiz):
-     `destek@patiport.app` → kendi e-postan. Uygulama ve sayfalar bu adresi yazıyor
-     (`lib/links.ts` → `SUPPORT_EMAIL`, `site/*.html`).
+     `destek@patiport.app` → kendi e-postan. Şimdilik uygulama ve sayfalar doğrudan
+     batuhanemreandac@gmail.com adresini yazıyor; yönlendirme kurulunca `lib/links.ts` →
+     `SUPPORT_EMAIL` ve `site/*.html` içindeki adres `destek@patiport.app` yapılır.
    - Siteyi ve paneli alan adına bağla (aşağıda **Alan adı**). Eski
      `batuhandac.github.io/batu/...` bağlantıları kendiliğinden yeni adrese yönlenir;
      uygulamayı yeniden derlemek gerekmez.

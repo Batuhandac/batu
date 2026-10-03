@@ -16,7 +16,7 @@ metnin sonunda, 3–5 tane.
 4. Ad: `Patiport`
 5. Biyografi:
    > Acilde en yakın açık veteriner. Aşı ve bakım takvimi, sağlık kartı, veterinere soru. Ücretsiz, reklamsız.
-6. İletişim e-postası: `destek@patiport.app`
+6. İletişim e-postası: `batuhanemreandac@gmail.com`
 7. Bağlantı: App Store sayfası yayına girince (`?ct=instagram` ekiyle). O zamana kadar boş.
 8. Öne çıkanlar: `one-cikan-acil`, `-bakim`, `-sor`, `-ilkyardim`. İlk hikâyeleri bu başlıklara ekle.
 
