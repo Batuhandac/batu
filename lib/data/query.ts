@@ -163,8 +163,26 @@ export function searchScore(c: Clinic, query: string): number {
 }
 
 /** Tek gömülü klinik (detay ekranı için). */
+/**
+ * App Store incelemesindeki demo hekim hesabının kliniği. Listelerde, haritada ve aramada
+ * çıkmaz; yalnızca kimliğiyle açılır ("Klinik sayfanız"). Gerçek bir kliniği temsil etmez.
+ */
+export const DEMO_CLINIC: SeedClinic = {
+  id: 'patiport-ornek',
+  name: 'Örnek Veteriner Kliniği',
+  address: null,
+  district: 'Çankaya',
+  city: 'Ankara',
+  lat: 39.9208,
+  lng: 32.8541,
+  phone: null,
+  opening_hours: 'Mo-Fr 09:00-18:00',
+  emergency: false,
+  approx: 'area',
+};
+
 export function getClinicById(id: string): SeedClinic | null {
-  return SEEDS.find((c) => c.id === id) ?? null;
+  return SEEDS.find((c) => c.id === id) ?? (id === DEMO_CLINIC.id ? DEMO_CLINIC : null);
 }
 
 /** Ada göre gömülü klinik arama (veteriner hekim ekranı için). */

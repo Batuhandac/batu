@@ -1,0 +1,28 @@
+name: Demo hekim hesabı (App Store incelemesi)
+
+# Tek seferlik: App Store incelemesindeki demo hesabı onaylı hekim yapar
+# (scripts/demo-account.mjs). Yalnızca bu dosya değişince çalışır.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/demo-account.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  approve:
+    if: github.repository == 'Batuhandac/batu'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Demo hekimi onayla
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DEMO_UID: eBK5VrY9TMZi7bMTJNlwh4tI5De2
+        run: node scripts/demo-account.mjs

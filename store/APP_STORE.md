@@ -37,10 +37,12 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
    - Firestore → Rules: `firestore.rules` içeriğini yapıştır → Publish.
      (Şu an yayında değil: `app_banners` okuması 403 dönüyor.)
    - Storage → Rules: `storage.rules` → Publish.
-5. **İnceleme için hekim hesabı.** Hekim paneli girişli çalıştığı için Apple bir demo
-   hesap ister. Uygulamada "Veteriner hekimim → Hesap oluştur" ile bir hesap aç, bir
-   test kliniği seç ve `YONETICI_REHBERI.md` 6. bölümdeki gibi onayla. E-posta ve şifreyi
-   yalnızca App Store Connect'teki "Sign-in required" alanına yaz, depoya yazma.
+5. **İnceleme için hekim hesabı.** Hazır: `inceleme@patiport.app` (şifre yalnızca App Store
+   Connect'teki "Sign-in information" alanında; depoya yazma). Hesap, listelerde ve haritada
+   görünmeyen "Örnek Veteriner Kliniği"nin (`patiport-ornek`, `lib/data/query.ts` →
+   `DEMO_CLINIC`) onaylı hekimidir; onay `scripts/demo-account.mjs` ile yapıldı. İnceleme
+   ekibinin topluluğa yazdıkları "Veteriner hekim · Örnek Veteriner Kliniği" rozetiyle
+   görünür; onaydan sonra gerekirse Console'dan silersin.
 6. **Moderasyon sözü.** Koşullarda ve uygulamada "bildirilen içerikleri 24 saat içinde
    inceliyoruz" yazıyor (Apple 1.2 bunu şart koşar). `content_reports` koleksiyonuna
    her gün bak (`YONETICI_REHBERI.md`).
