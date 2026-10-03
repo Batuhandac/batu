@@ -1,7 +1,8 @@
 name: iOS → TestFlight
 
 # Manuel tetiklenir (Actions → Run workflow, istediğin branch'i seçebilirsin),
-# depo olayıyla (repository_dispatch, tür "ios-build"; varsayılan dalda çalışır)
+# "ios-build-" ile başlayan bir etiket gönderilince (git tag ios-build-2026-10-03 &&
+# git push origin ios-build-2026-10-03; etiketlerde dosya filtresine bakılmaz)
 # VEYA main'e push olunca otomatik. Yalnızca site, belge, iş akışı ya da veri
 # üreticisi değiştiyse derleme yapılmaz (EAS derleme hakkı boşa gitmesin);
 # gerekirse elle çalıştırılır.
@@ -12,11 +13,11 @@ on:
         description: "EAS build profili"
         required: true
         default: "production"
-  repository_dispatch:
-    types: [ios-build]
   push:
     branches:
       - main
+    tags:
+      - "ios-build-*"
     paths-ignore:
       - "site/**"
       - "docs/**"
@@ -70,7 +71,7 @@ jobs:
       - name: iOS build + TestFlight gönderimi
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          PROFILE: ${{ github.event.inputs.profile || github.event.client_payload.profile || 'production' }}
+          PROFILE: ${{ github.event.inputs.profile || 'production' }}
         run: |
           case "$PROFILE" in
             production|preview|development) ;;
