@@ -140,7 +140,8 @@ Klinik bilgileri OpenStreetMap katkıcılarından, Google Maps'ten, Apple Harita
 
 ### Ekran görüntüleri
 
-`store/screenshots/` içinde 8 görsel, 1290×2796 (6,7"/6,9" iPhone). Bu sırayla yükle:
+`store/screenshots/` içinde 8 görsel, 1290×2796 (6,9" iPhone). App Store Connect 6,5" bölümünü
+istiyorsa aynı görsellerin 1284×2778 kopyaları `store/screenshots/6.5/` içinde. Bu sırayla yükle:
 
 1. `01_acil.png` Acilde en yakın açık veteriner
 2. `02_bakim.png` Aşı ve parazit gününü unutma
