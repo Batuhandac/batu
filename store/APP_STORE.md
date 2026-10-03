@@ -12,14 +12,14 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
    başka bir geliştiricinin olduğu için değişti). App Store Connect → uygulama → App
    Information → Name: `Patiport: Açık Veteriner, Aşı` (29). Bundle ID (`com.patisos.app`)
    kullanıcıya görünmez, aynı kalır.
-2. **patiport.app alan adını al ve e-postayı kur.** Alan adı bugün boş; biri almadan al
-   (Cloudflare, Namecheap ya da Squarespace, yıllık yaklaşık 15 USD). Sonra:
+2. **patiport.app alan adını al ve e-postayı kur.** Biri almadan al
+   (son bakıldığında boştu; Cloudflare, Namecheap ya da Squarespace, yıllık yaklaşık 15 USD). Sonra:
    - E-posta yönlendirme (Cloudflare Email Routing ücretsiz):
      `destek@patiport.app` → kendi e-postan. Uygulama ve sayfalar bu adresi yazıyor
      (`lib/links.ts` → `SUPPORT_EMAIL`, `site/*.html`).
-   - İstersen GitHub Pages'e özel alan adı olarak bağla (batu → Settings → Pages →
-     Custom domain). Eski `batuhandac.github.io/batu/...` bağlantıları kendiliğinden yeni
-     adrese yönlenir; uygulamayı yeniden derlemek gerekmez.
+   - Siteyi ve paneli alan adına bağla (aşağıda **Alan adı**). Eski
+     `batuhandac.github.io/batu/...` bağlantıları kendiliğinden yeni adrese yönlenir;
+     uygulamayı yeniden derlemek gerekmez.
    - Marka tescili için TÜRKPATENT'te "Patiport" araması yap; boşsa 44. ve 9. sınıflarda
      başvurmayı düşün.
 3. **Gizlilik ve destek sayfalarını yayınla.** `site/` klasörü herkese açık
@@ -46,6 +46,29 @@ Bunları yalnızca hesap sahibi yapabilir. Sırayla:
 7. **PostHog (isteğe bağlı).** `EXPO_PUBLIC_POSTHOG_KEY` tanımlı değilse uygulama hiçbir
    kullanım verisi göndermez. Tanımlarsan aşağıdaki gizlilik yanıtlarına
    "Usage Data" satırını ekle.
+
+## Alan adı
+
+Site, hekim paneli ve ödeme sunucusu yayın adresini GitHub Pages ayarından okur; kodda
+bir şey değiştirmek gerekmez. Örnek alan adı `patiport.app`:
+
+1. **DNS** (alan adını aldığın yerde): kök alan adı için dört `A` kaydı
+   `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`;
+   `www` için `CNAME` → `batuhandac.github.io`. DNS Cloudflare'deyse bu kayıtlarda turuncu
+   bulutu kapat ("DNS only"), yoksa GitHub sertifika alamaz.
+2. **Alan adını doğrula** (önerilir, başkası senin alan adını GitHub'da kullanamasın):
+   GitHub → profil → Settings → Pages → Add a domain; verilen `TXT` kaydını DNS'e ekle.
+3. **batu → Settings → Pages → Custom domain**: `patiport.app` → Save. DNS kontrolü yeşil
+   olunca **Enforce HTTPS**'i işaretle (sertifika birkaç dakika ile bir saat arası sürer).
+4. **Actions → "Site → GitHub Pages" → Run workflow.** Panel `patiport.app/app/panel`
+   adresine derlenir, ödeme sunucusu yeni adresten gelen istekleri kabul eder.
+5. **Firebase Console → Authentication → Settings → Authorized domains**: `patiport.app`
+   ekle.
+6. Kontrol: `patiport.app/hekim/`, `patiport.app/app/panel` açılıyor; panelde giriş,
+   Ayarlar'dan iyzico bağlama ve bir nakit tahsilat çalışıyor.
+
+Uygulamanın içindeki bağlantılar (`lib/links.ts`) eski adresi kullanmaya devam eder ve
+yönlendirilir; bir sonraki uygulama sürümünde `SITE` yeni adrese çevrilebilir.
 
 ## Uygulama bilgileri
 

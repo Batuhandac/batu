@@ -6,7 +6,7 @@
 //    (server/odeme) ödeme sayfasını açar, para doğrudan kliniğin hesabına geçer.
 //  - "iyzico_test": Patiport'un iyzico deneme hesabı; para sahtedir.
 //  - "cash": nakit; hekim "alındı" yapar.
-//  - "test": panelin sanal POS terminali (/panel/pos).
+//  - "test": eski sanal POS denemeleri (artık oluşturulmaz; geçmişte görünür).
 // Klinik Paraşüt'ü bağladıysa onaylı tahsilat için e-SMM ya da e-Arşiv kesilir
 // (edoc_* alanlarını yalnızca sunucu yazar). Anahtarlar yalnızca sunucuda durur.
 import {
@@ -107,7 +107,7 @@ export interface SaleInput {
 }
 
 /** Bekleyen satış yazar; satış kimliğini döner. */
-export async function createSale(vet: VetProfile, input: SaleInput, mode: SaleMode = 'test'): Promise<string> {
+export async function createSale(vet: VetProfile, input: SaleInput, mode: 'iyzico' | 'cash'): Promise<string> {
   if (!Number.isSafeInteger(input.amount_kurus) || input.amount_kurus < 100 || input.amount_kurus > MAX_SALE_KURUS) {
     throw new Error('amount');
   }
@@ -134,21 +134,6 @@ export function watchSale(clinicId: string, id: string, cb: (s: Sale | null) => 
   );
 }
 
-/** Test POS ekranı: bekleyen test satışlarını canlı izler (eskiden yeniye). */
-export function watchPendingSales(clinicId: string, cb: (s: Sale[]) => void): () => void {
-  return onSnapshot(
-    query(salesCol(clinicId), where('status', '==', 'pending')),
-    (snap) =>
-      cb(
-        snap.docs
-          .map((d) => toSale(d.id, d.data()))
-          .filter((s) => s.mode === 'test')
-          .sort((a, b) => (a.created_ms ?? 0) - (b.created_ms ?? 0))
-      ),
-    () => cb([])
-  );
-}
-
 /** Bugünkü satışlar (panel özeti), yeniden eskiye. */
 export async function listTodaySales(clinicId: string): Promise<Sale[]> {
   const start = new Date();
@@ -163,19 +148,9 @@ export async function listPatientSales(clinicId: string, patientId: string): Pro
   return snap.docs.map((d) => toSale(d.id, d.data())).sort((a, b) => (b.created_ms ?? 0) - (a.created_ms ?? 0));
 }
 
-/** Test onay kodu: 6 hane. */
-export function testAuthCode(rand: () => number = Math.random): string {
-  return String(Math.floor(rand() * 1_000_000)).padStart(6, '0');
-}
-
-/** Test POS'unda ya da nakitte sonucu yazar; panelden bekleyen satışı iptal eder. */
+/** Panelden bekleyen satışı iptal eder. */
 export async function resolveSale(vet: VetProfile, sale: Sale, status: Exclude<SaleStatus, 'pending'>): Promise<void> {
-  await updateDoc(doc(salesCol(vet.clinic_id), sale.id), {
-    status,
-    resolved_at: serverTimestamp(),
-    resolved_by: vet.uid,
-    ...(status === 'approved' && sale.mode === 'test' ? { card_last4: '4242', auth_code: testAuthCode() } : {}),
-  });
+  await updateDoc(doc(salesCol(vet.clinic_id), sale.id), { status, resolved_at: serverTimestamp(), resolved_by: vet.uid });
 }
 
 /** Nakit tahsilat: satışı yazıp hemen "alındı" yapar. */

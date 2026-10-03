@@ -5,7 +5,9 @@ Cloudflare Workers üzerinde ücretsiz çalışır; kredi kartı istemez.
 
 - **Kliniğin kendi iyzico hesabı:** Hekim Ayarlar'da kendi API anahtarlarını girer; sunucu
   anahtarları iyzico'da dener, şifreleyip saklar. Kartla ödemeler doğrudan kliniğin
-  hesabına geçer. Bağlamamış klinikler Patiport'un deneme hesabıyla dener (para sahte).
+  hesabına geçer. Bağlamamış klinikte panel kartla ödeme yerine "iyzico hesabını bağla" der.
+  Patiport'un deneme hesabı (`IYZICO_API_KEY`) yalnızca eski deneme kayıtları (`iyzico_test`)
+  için durur; panel artık bu modda satış açmaz.
 - **Paraşüt:** Hekim "Paraşüt'e bağlan" der, Paraşüt'ün kendi sayfasında izin verir (şifresi
   bize gelmez). Nakit ve canlı kart tahsilatlarında e-SMM ya da e-Arşiv kendiliğinden
   kesilir. Deneme ödemelerine belge kesilmez.

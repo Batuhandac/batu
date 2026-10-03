@@ -146,7 +146,7 @@ function IyzicoCard({ vet, pay, vaultReady }: { vet: VetProfile; pay: ClinicPay 
     setMsg({ ok: true, text: r.env === 'live' ? 'Bağlandı. Kartla ödemeler artık doğrudan iyzico hesabınıza geçecek.' : 'Deneme hesabınız bağlandı. Gerçek ödeme için canlı anahtarlarınızla yeniden bağlayın.' });
   };
   const remove = () =>
-    confirmAsk('iyzico bağlantısı kaldırılsın mı? Kartla ödemeler Patiport deneme hesabına döner.', async () => {
+    confirmAsk('iyzico bağlantısı kaldırılsın mı? Yeniden bağlayana kadar kartla ödeme alınamaz.', async () => {
       setBusy(true);
       const ok = await disconnectProvider(vet.clinic_id, 'iyzico');
       setBusy(false);
@@ -275,7 +275,7 @@ function ParasutCard({ vet, pay, available, vaultReady }: { vet: VetProfile; pay
       </View>
       <Text variant="callout" tone="muted">
         Nakit ve kartla tahsilatlarda e-SMM (muayenehane) ya da e-Arşiv fatura (şirket) Paraşüt hesabınızdan kesilir ve tahsilatın makbuzunda görünür.
-        Paraşüt şifreniz bize gelmez; bağlanırken Paraşüt'ün kendi sayfasında izin verirsiniz. Deneme ödemelerine belge kesilmez.
+        Paraşüt şifreniz bize gelmez; bağlanırken Paraşüt'ün kendi sayfasında izin verirsiniz. iyzico deneme hesabıyla alınan ödemelere belge kesilmez.
       </Text>
 
       {!available ? (

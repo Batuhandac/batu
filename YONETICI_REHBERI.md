@@ -148,18 +148,17 @@ uygulamada "Veterinerime bağla" ile kod alır; hekim kodu girince kayıtlar sah
 takvimine düşer. Yönetici olarak yapman gereken bir şey yok; bir kliniğin kayıtlarını
 silmek gerekirse Firestore'da `clinic_patients/{clinic_id}` altını sil.
 
-**Test POS (tahsilat test modu).** Hasta kartındaki "Tahsilat" kutusuna tutar yazılıp
-"POS'a gönder"e basılınca `clinic_pos/{clinic_id}/sales` altına `status: pending,
-mode: test` bir belge düşer. Aynı hekim hesabıyla başka bir sekmede ya da telefonda
-panelin üst menüsünden **Test POS** açılır; "Kartı okut" onaylar, "Reddet" reddeder ve
-sonuç hasta kartında kendiliğinden görünür. Bankadan çekim yapılmaz, e-SMM kesilmez.
-Satış belgeleri silinemez (kural gereği); gerekirse Console'dan sen silersin. Bu özellik
-için `firestore.rules` dosyasının güncel hâlini Firebase'e yeniden yayınla.
+**Tahsilat kayıtları.** Her tahsilat `clinic_pos/{clinic_id}/sales` altında bir belgedir
+(`mode`: `iyzico` kartla, `cash` nakit). Eski sürümlerin deneme kayıtları (`test`,
+`iyzico_test`) geçmişte "Deneme" olarak görünür ve günlük ciroya sayılmaz; panel artık
+yeni deneme kaydı açmaz. Satış belgeleri silinemez (kural gereği); gerekirse Console'dan
+sen silersin.
 
-**Kartla ödeme, nakit ve e-belge.** Tahsilat kutusunda üç yöntem var: **Kartla** (hasta
-sahibi QR'ı okutup iyzico sayfasında öder), **Nakit** ve **Sanal POS (test)**. Hekim panelin
-**Ayarlar** sayfasında kendi iyzico hesabını bağlarsa kartla ödemeler doğrudan kliniğin
-hesabına geçer; bağlamazsa Patiport'un iyzico deneme hesabı kullanılır (para sahte). Paraşüt
+**Kartla ödeme, nakit ve e-belge.** Tahsilat kutusunda iki yöntem var: **Kartla** (hasta
+sahibi QR'ı okutup iyzico sayfasında öder) ve **Nakit**. Kartla ödeme için hekim panelin
+**Ayarlar** sayfasında kliniğin iyzico hesabını bağlar; ödemeler doğrudan kliniğin
+hesabına geçer. Bağlı değilse panel "iyzico hesabını bağla" der. iyzico deneme
+("sandbox-") anahtarlarıyla bağlanan klinikte ödemeler "Deneme" olarak işaretlenir. Paraşüt
 bağlıysa nakit ve canlı kart tahsilatlarında e-SMM ya da e-Arşiv kendiliğinden kesilir.
 Kurulum, Paraşüt başvurusu ve şifreli kasa: `server/odeme/README.md`. Yönetici olarak
 `clinic_pay` koleksiyonunda hangi kliniğin neyi bağladığını görürsün; anahtarlar

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patiport Hekim</title>
-<meta name="description" content="Veteriner hekimler için ücretsiz hasta takibi. Aşıyı kaydedin; kayıt hayvanın sahibinin Patiport uygulamasına düşsün, sonraki aşının hatırlatması kendiliğinden kurulsun. Tutarı panelden POS'a göndermeyi test modunda deneyin.">
+<meta name="description" content="Veteriner hekimler için ücretsiz hasta takibi. Aşıyı kaydedin; kayıt hayvanın sahibinin Patiport uygulamasına düşsün, sonraki aşının hatırlatması kendiliğinden kurulsun. Kartla ya da nakit tahsil edin; para doğrudan kendi iyzico hesabınıza geçer.">
 <meta property="og:title" content="Patiport Hekim">
 <meta property="og:description" content="Kaydı siz girin, hatırlatmayı sahibin telefonu yapsın. Ücretsiz hasta takibi, tarayıcıdan.">
 <meta property="og:image" content="https://batuhandac.github.io/batu/hekim/img/panel-hastalar.jpg">
@@ -180,7 +180,7 @@
   .term .keys b:first-child { background: #2e3b33; color: #f08a7e; }
   .term .keys b:last-child { background: #5cc79c; color: #10261c; }
 
-  /* Test POS döngüsü: tutar → işleniyor → onay (9 sn) */
+  /* Tahsilat döngüsü: tutar → işleniyor → onay (9 sn) */
   .s-a { animation: sA 9s infinite; }
   .s-b { animation: sB 9s infinite; opacity: 0; }
   .s-c { animation: sC 9s infinite; opacity: 0; }
@@ -446,7 +446,7 @@
           <figcaption class="cap">Hasta kartı: bilgiler, kayıt ekleme ve tahsilat.</figcaption>
         </figure>
         <ul>
-          <li><svg><use href="#i-check-c"/></svg><div><b>Tek ekranda her şey</b><span>Bilgiler solda, kayıt ekleme ve geçmiş sağda. Aşıyı kaydedip tutarı POS'a göndermek aynı sayfada.</span></div></li>
+          <li><svg><use href="#i-check-c"/></svg><div><b>Tek ekranda her şey</b><span>Bilgiler solda, kayıt ekleme ve geçmiş sağda. Aşıyı kaydetmek ve tahsilatı almak aynı sayfada.</span></div></li>
           <li><svg><use href="#i-check-c"/></svg><div><b>Alerji uyarısı göz önünde</b><span>Kayıtlı alerji hasta kartında kırmızıyla durur.</span></div></li>
           <li><svg><use href="#i-check-c"/></svg><div><b>Sahibe ne gittiğini bilirsiniz</b><span>Hasta sahibin uygulamasına bağlıysa kartta yazar; değilse WhatsApp düğmesi hazırdır.</span></div></li>
         </ul>
@@ -468,10 +468,10 @@
             <li>Sonuç panele anında düşer. Paraşüt bağlıysa e-SMM ya da e-Arşiv kendiliğinden kesilir.</li>
           </ol>
           <div class="ctas">
-            <a class="btn primary" href="../app/panel">Panelde deneyin</a>
+            <a class="btn primary" href="../app/panel">Panele girin</a>
             <a class="btn ghost" href="../app/panel/basvur">Hesabınız yoksa başvurun</a>
           </div>
-          <p class="fine">Paraşüt bağlantısı kısa süre içinde açılıyor. iyzico hesabınız yoksa akışı Patiport'un deneme hesabıyla deneyebilirsiniz; deneme ödemelerinde para çekilmez, belge kesilmez. Anahtarlarınız şifrelenip yalnızca ödeme sunucusunda saklanır.</p>
+          <p class="fine">Kartla ödeme için bir iyzico üye işyeri hesabı gerekir; nakit tahsilat için gerekmez. Anahtarlarınız şifrelenip yalnızca ödeme sunucusunda saklanır. Paraşüt bağlantısı kısa süre içinde açılıyor.</p>
         </div>
 
         <div class="demo" role="img" aria-label="Panelden açılan 1.250 TL'lik ödemenin hasta sahibinin telefonunda onaylanması">
@@ -617,8 +617,8 @@
         <details><summary>Sahip Patiport kullanmıyorsa?</summary><p>Hastayı elle eklersiniz. Aşısı yaklaşınca hazır mesajla WhatsApp'tan hatırlatırsınız.</p></details>
         <details><summary>Mevcut programımı bırakmam gerekir mi?</summary><p>Hayır. Patiport Hekim'i hatırlatma ve sahiple bağlantı için yanında kullanabilirsiniz.</p></details>
         <details><summary>Kliniği nasıl doğruluyorsunuz?</summary><p>Başvuruda verdiğiniz numarayı arayarak. Doğrulama telefonu uygulamada gösterilmez.</p></details>
-        <details><summary>Tahsilatı nasıl denerim?</summary><p>Panelde bir hasta kartı açın, Tahsilat'ta tutarı yazıp "Kartla"yı seçin ve "ödeme sayfası aç"a basın; QR'ı telefonla okutun. iyzico hesabınızı bağlamadıysanız Patiport'un deneme hesabı kullanılır: deneme kartı 5528 7900 0000 0008, son kullanma 12/30, CVC 123. Sonuç hasta kartında kendiliğinden görünür.</p></details>
-        <details><summary>Panel gerçekten çekim yapıyor, e-SMM kesiyor mu?</summary><p>Kendi iyzico hesabınızı Ayarlar'dan bağladığınızda evet: kartla ödemeler doğrudan iyzico hesabınıza geçer. e-SMM ve e-Arşiv için Paraşüt bağlantısı kısa süre içinde açılıyor. Hesap bağlamadan Patiport'un deneme hesabıyla denerseniz para çekilmez, belge kesilmez.</p></details>
+        <details><summary>Kartla tahsilata nasıl başlarım?</summary><p>Panelde Ayarlar'a girip iyzico üye işyeri hesabınızın API anahtarlarını bağlayın. Sonra hasta kartında tutarı yazıp "Kartla"yı seçin; hasta sahibi QR'ı telefonuyla okutup öder, sonuç hasta kartında kendiliğinden görünür. iyzico hesabınız yoksa iyzico'nun sitesinden üye işyeri başvurusu yapabilirsiniz. Nakit tahsilat için hesap gerekmez.</p></details>
+        <details><summary>Para kimin hesabına geçiyor?</summary><p>Doğrudan sizin iyzico hesabınıza; Patiport paraya dokunmaz. e-SMM ve e-Arşiv için Paraşüt bağlantısı kısa süre içinde açılıyor; bağlandığında nakit ve kartla tahsilatlarda belge kendiliğinden kesilir.</p></details>
         <details><summary>iyzico anahtarlarım güvende mi?</summary><p>Anahtarlar şifrelenip yalnızca ödeme sunucusunda saklanır; panelde, tarayıcıda ya da hasta sahibinin telefonunda görünmez. Bağlantıyı istediğiniz an Ayarlar'dan kaldırabilirsiniz.</p></details>
         <details><summary>Ücretli olacak mı?</summary><p>Hasta takibi her zaman ücretsiz. Tahsilat ve e-belge 31 Mart 2027'ye kadar ücretsiz; sonrası için ücretli bir paket gelecek. Fiyat en az 30 gün önce duyurulur. Geçmezseniz ücretsiz pakette kalırsınız, kayıtlarınız silinmez. Erken erişimde katılan ilk 50 kliniğin fiyatı 31 Mart 2029'a kadar sabit kalır.</p></details>
         <details><summary>Telefonda da çalışır mı?</summary><p>Evet, tarayıcıdan açılır. Bilgisayarda iki sütunlu, daha rahat bir görünümü var.</p></details>

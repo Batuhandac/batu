@@ -3,6 +3,11 @@ name: Site → GitHub Pages
 # Gizlilik, kullanım koşulları, destek ve hekim tanıtım sayfalarını (site/) ve
 # hekim panelini (uygulamanın web sürümü, /app/panel) yayınlar. Yalnızca herkese açık
 # Batuhandac/batu deposunda çalışır (Settings → Pages → Source: "GitHub Actions").
+#
+# Adres GitHub Pages'ten okunur: özel alan adı yoksa batuhandac.github.io/batu, varsa
+# (Settings → Pages → Custom domain) o alan adı. Panel ve ödeme sunucusu buna göre
+# derlenir; alan adına geçmek için ayardan sonra bu iş akışını yeniden çalıştırmak yeter
+# (store/APP_STORE.md, "Alan adı").
 on:
   workflow_dispatch:
   push:
@@ -34,6 +39,14 @@ jobs:
         with:
           node-version: 22
 
+      # Pages kapalıysa açmayı dener (Source: GitHub Actions). Depo ayarı buna
+      # izin vermezse bir kez Settings → Pages → Source: "GitHub Actions" seçilir.
+      # Çıktılar: origin (https://alan.adi), base_path ("/batu" ya da özel alan adında "")
+      - id: pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       # Kartla ödeme (iyzico) için sunucu: server/odeme. Başarısız olursa site yine
       # yayınlanır, panelde yalnızca iyzico seçeneği görünmez.
       - name: Ödeme sunucusunu yayınla (Cloudflare Worker)
@@ -50,7 +63,11 @@ jobs:
           # İsteğe bağlı: Patiport'un Paraşüt uygulama kimliği (Paraşüt'ten istenir)
           PARASUT_CLIENT_ID: ${{ secrets.PARASUT_CLIENT_ID }}
           PARASUT_CLIENT_SECRET: ${{ secrets.PARASUT_CLIENT_SECRET }}
+          SITE_ORIGIN: ${{ steps.pages.outputs.origin }}
         run: |
+          # Panelin yayınlandığı adres (özel alan adı dahil) ödeme isteklerine izinli olsun
+          node -e 'const fs=require("fs"),o=process.env.SITE_ORIGIN;if(!o)process.exit(0);let t=fs.readFileSync("wrangler.toml","utf8");t=t.replace(/ALLOWED_ORIGINS = "([^"]*)"/,(m,v)=>{const l=v.split(",");if(!l.includes(o))l.push(o);return `ALLOWED_ORIGINS = "${l.join(",")}"`});fs.writeFileSync("wrangler.toml",t)'
+          grep ALLOWED_ORIGINS wrangler.toml
           # Kopyala-yapıştırda gelen boşluk, satır sonu ya da Cloudflare'in "test"
           # komutu varsa içinden yalnızca token'ı ve hesap kimliğini al
           TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r' | grep -oE '[A-Za-z0-9_-]{40,}' | tail -1 || true)
@@ -93,20 +110,24 @@ jobs:
       - name: Hekim panelini derle (web)
         env:
           EXPO_PUBLIC_PAY_API_URL: ${{ steps.pay.outputs.url }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
         run: |
           npm install --legacy-peer-deps --no-audit --no-fund
-          EXPO_BASE_URL=/batu/app npx expo export --platform web --output-dir dist-web
+          BP="${BASE_PATH%/}"; BU="${BASE_URL%/}"
+          if [ -z "$BU" ]; then BP=/batu; BU=https://batuhandac.github.io/batu; fi
+          echo "Site adresi: $BU (panel: $BP/app)"
+          EXPO_BASE_URL="$BP/app" npx expo export --platform web --output-dir dist-web
+          # Sayfalardaki tam adresler (paylaşım görseli gibi) yayın adresine çevrilir
+          if [ "$BU" != "https://batuhandac.github.io/batu" ]; then
+            grep -rl 'https://batuhandac.github.io/batu' site --include='*.html' | xargs -r sed -i "s#https://batuhandac.github.io/batu#$BU#g"
+          fi
           mkdir -p site/app
           cp -R dist-web/. site/app/
           # Tek sayfalık uygulama: /app/panel/hasta/… gibi adresler yenilenince
           # GitHub Pages 404.html'i sunar; o da uygulamayı açıp doğru ekrana gider.
           cp dist-web/index.html site/404.html
 
-      # Pages kapalıysa açmayı dener (Source: GitHub Actions). Depo ayarı buna
-      # izin vermezse bir kez Settings → Pages → Source: "GitHub Actions" seçilir.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

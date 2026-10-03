@@ -1,12 +1,11 @@
 // Hasta kartında tahsilat: tutar → yöntem → canlı sonuç → makbuz (ve e-SMM).
-//  - Kartla: kliniğin kendi iyzico hesabı bağlıysa para doğrudan oraya; değilse
-//    Patiport'un iyzico deneme hesabı (para sahte). Hasta sahibi QR'ı telefonla okutur.
+//  - Kartla: kliniğin kendi iyzico hesabı (Ayarlar'dan bağlanır); para doğrudan oraya
+//    geçer. Hasta sahibi QR'ı telefonla okutur. Bağlı değilse bağlamaya yönlendirir.
 //  - Nakit: hekim "alındı" yapar.
-//  - Sanal POS (test): panelin test terminali.
 // Paraşüt bağlıysa nakit ve canlı kart tahsilatı için e-SMM / e-Arşiv kesilir.
+// Eski deneme satışları (test, iyzico_test) geçmişte "Deneme" olarak görünür.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Linking, Platform, ActivityIndicator } from 'react-native';
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Text, Button, Card, Field, Badge, Icon, Chip } from '@/components/ds';
 import { useTheme, radius } from '@/lib/theme';
@@ -34,16 +33,6 @@ import { QrCode } from './QrCode';
 import { usePlan } from './Plan';
 import { proAccess } from '@/lib/pos/plan';
 
-/** Test POS ekranını yeni sekmede açar (web); uygulamada aynı yığında. */
-export function openTestPos() {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const base = (Constants.expoConfig?.experiments as { baseUrl?: string } | undefined)?.baseUrl ?? '';
-    window.open(`${window.location.origin}${base}/panel/pos`, 'patiport-test-pos');
-  } else {
-    router.push('/panel/pos');
-  }
-}
-
 const when = (ms: number | null) =>
   ms ? new Date(ms).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
@@ -56,7 +45,6 @@ const START_ERRORS: Record<string, string> = {
   server: 'Ödeme sayfası açılamadı. Biraz sonra tekrar deneyin.',
 };
 
-const MODE_BADGE: Record<SaleMode, string> = { iyzico: 'iyzico', iyzico_test: 'iyzico deneme', cash: 'Nakit', test: 'Test modu' };
 const isOnline = (m: SaleMode) => m === 'iyzico' || m === 'iyzico_test';
 /** Deneme ödemesi mi (para sahte)? */
 const isSandboxSale = (s: Sale) => s.mode === 'test' || s.mode === 'iyzico_test' || (s.mode === 'iyzico' && s.pay_env !== 'live');
@@ -67,11 +55,11 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
   const [desc, setDesc] = useState(suggestion ?? 'Muayene');
   const [pay, setPay] = useState<ClinicPay>({ iyzico: null, parasut: null });
   useEffect(() => watchClinicPay(vet.clinic_id, setPay), [vet.clinic_id]);
-  // Kartla: kendi hesap bağlıysa o, değilse Patiport'un deneme hesabı
-  const cardMode: SaleMode | null = pay.iyzico ? 'iyzico' : onlinePayEnabled ? 'iyzico_test' : null;
-  const [picked, setPicked] = useState<'card' | 'cash' | 'test' | null>(null);
-  const choice = picked ?? (cardMode ? 'card' : 'cash');
-  const method: SaleMode = choice === 'card' && cardMode ? cardMode : choice === 'test' ? 'test' : 'cash';
+  // Kartla ödeme kliniğin kendi iyzico hesabıyla; bağlı değilse önce bağlanır
+  const cardReady = onlinePayEnabled && pay.iyzico != null;
+  const [picked, setPicked] = useState<'card' | 'cash' | null>(null);
+  const choice = picked ?? (cardReady ? 'card' : 'cash');
+  const method: SaleMode = choice === 'card' ? 'iyzico' : 'cash';
   const [saleId, setSaleId] = useState<string | null>(null);
   const [sale, setSale] = useState<Sale | null>(null);
   const [busy, setBusy] = useState(false);
@@ -135,10 +123,11 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
         if (pay.parasut) issueEdoc(vet.clinic_id, id, true).catch(() => {});
         return;
       }
-      const id = await createSale(vet, input, method);
+      if (!cardReady) return;
+      const id = await createSale(vet, input, 'iyzico');
       setSale(null);
       setSaleId(id);
-      if (isOnline(method)) await begin(id);
+      await begin(id);
     } catch {
       setError('Gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.');
     } finally {
@@ -158,15 +147,14 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
 
   const status = saleId ? sale?.status ?? 'pending' : null;
   const mode: SaleMode = sale?.mode ?? method;
+  // Deneme: kliniğin iyzico deneme anahtarları ya da eski deneme satışları (para çekilmez)
+  const sandbox = sale ? isSandboxSale(sale) : method === 'iyzico' && pay.iyzico != null && pay.iyzico.env !== 'live';
 
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Text variant="headline">Tahsilat</Text>
-        <Badge
-          label={mode === 'iyzico' && (sale ? sale.pay_env === 'live' : pay.iyzico?.env === 'live') ? 'Canlı' : MODE_BADGE[mode]}
-          tone={mode === 'cash' || (mode === 'iyzico' && (sale ? sale.pay_env === 'live' : pay.iyzico?.env === 'live')) ? 'open' : 'honey'}
-        />
+        {sandbox ? <Badge label="Deneme" tone="honey" /> : null}
       </View>
 
       {locked ? (
@@ -191,17 +179,10 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
               Nasıl ödenecek?
             </Text>
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-              {cardMode ? (
-                <Chip
-                  label={pay.iyzico ? (pay.iyzico.env === 'live' ? 'Kartla (QR / bağlantı)' : 'Kartla (iyzico deneme)') : 'Kartla (Patiport deneme)'}
-                  icon="qr-code-outline"
-                  active={choice === 'card'}
-                  onPress={() => setPicked('card')}
-                  onSurface
-                />
+              {onlinePayEnabled ? (
+                <Chip label="Kartla (QR / bağlantı)" icon="qr-code-outline" active={choice === 'card'} onPress={() => setPicked('card')} onSurface />
               ) : null}
               <Chip label="Nakit" icon="cash-outline" active={choice === 'cash'} onPress={() => setPicked('cash')} onSurface />
-              <Chip label="Sanal POS (test)" icon="card-outline" active={choice === 'test'} onPress={() => setPicked('test')} onSurface />
             </View>
           </View>
           {error ? (
@@ -209,38 +190,38 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
               {error}
             </Text>
           ) : null}
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {isOnline(method) ? (
-              <Button title={kurus ? `${formatTL(kurus)} için ödeme sayfası aç` : 'Ödeme sayfası aç'} icon="qr-code-outline" loading={busy} disabled={!kurus} onPress={send} />
-            ) : method === 'cash' ? (
-              <Button title={kurus ? `${formatTL(kurus)} nakit alındı` : 'Nakit alındı'} icon="cash-outline" loading={busy} disabled={!kurus} onPress={send} />
-            ) : (
-              <>
-                <Button title={kurus ? `${formatTL(kurus)} POS'a gönder` : "POS'a gönder"} icon="card-outline" loading={busy} disabled={!kurus} onPress={send} />
-                <Button title="Test POS'u aç" variant="ghost" size="sm" icon="open-outline" onPress={openTestPos} />
-              </>
-            )}
-          </View>
-          <Text variant="caption" tone="subtle">
-            {method === 'iyzico'
-              ? pay.iyzico?.env === 'live'
-                ? 'Para doğrudan kliniğinizin iyzico hesabına geçer. Hasta sahibi QR\'ı okutup kartla öder (3D Secure dahil).'
-                : 'iyzico deneme hesabınız bağlı: gerçek ödeme sayfası açılır, deneme kartıyla ödenir; para çekilmez.'
-              : method === 'iyzico_test'
-                ? 'Patiport\'un iyzico deneme hesabı: gerçek ödeme sayfası açılır, deneme kartıyla ödenir; para çekilmez. Kendi hesabınızı Ayarlar\'dan bağlayın.'
-                : method === 'cash'
-                  ? pay.parasut
+          {method === 'iyzico' && !cardReady ? (
+            <View style={{ padding: 14, borderRadius: radius.md, backgroundColor: t.surfaceAlt, gap: 10 }}>
+              <Text variant="callout">
+                Kartla ödeme almak için kliniğinizin iyzico hesabını bağlayın. Hasta sahibi QR'ı okutup kartla öder, para doğrudan sizin hesabınıza geçer.
+              </Text>
+              <Button title="iyzico hesabını bağla" size="sm" icon="link-outline" onPress={() => router.push('/panel/ayarlar')} style={{ alignSelf: 'flex-start' }} />
+            </View>
+          ) : (
+            <>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                {method === 'iyzico' ? (
+                  <Button title={kurus ? `${formatTL(kurus)} için ödeme sayfası aç` : 'Ödeme sayfası aç'} icon="qr-code-outline" loading={busy} disabled={!kurus} onPress={send} />
+                ) : (
+                  <Button title={kurus ? `${formatTL(kurus)} nakit alındı` : 'Nakit alındı'} icon="cash-outline" loading={busy} disabled={!kurus} onPress={send} />
+                )}
+              </View>
+              <Text variant="caption" tone="subtle">
+                {method === 'iyzico'
+                  ? pay.iyzico?.env === 'live'
+                    ? 'Para doğrudan kliniğinizin iyzico hesabına geçer. Hasta sahibi QR\'ı okutup kartla öder (3D Secure dahil).'
+                    : 'iyzico deneme anahtarlarınız bağlı: ödeme sayfası deneme ortamında açılır, para çekilmez. Gerçek ödeme için Ayarlar\'dan canlı anahtarlarınızı bağlayın.'
+                  : pay.parasut
                     ? 'Nakit tahsilat kaydedilir; Paraşüt bağlı olduğu için makbuz ayarlarınıza göre kesilir.'
-                    : 'Nakit tahsilat kaydedilir. Paraşüt\'ü Ayarlar\'dan bağlarsanız e-SMM kendiliğinden kesilir.'
-                  : 'Test modunda tutar, başka bir sekmede ya da telefonda açtığınız sanal POS ekranına gider. Bankadan çekim yapılmaz.'}
-          </Text>
-          {!pay.iyzico && onlinePayEnabled ? (
-            <Button title="Kendi iyzico hesabımı bağla" variant="ghost" size="sm" icon="settings-outline" onPress={() => router.push('/panel/ayarlar')} style={{ alignSelf: 'flex-start' }} />
-          ) : null}
+                    : 'Nakit tahsilat kaydedilir. Paraşüt\'ü Ayarlar\'dan bağlarsanız e-SMM kendiliğinden kesilir.'}
+              </Text>
+            </>
+          )}
         </>
       ) : status === 'pending' && isOnline(mode) ? (
         <OnlinePending
           sale={sale}
+          sandbox={sandbox}
           kurus={kurus}
           desc={desc}
           startError={startError}
@@ -256,30 +237,19 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           onCancel={cancel}
         />
       ) : status === 'pending' ? (
+        // Panelin eski deneme ekranından kalan bekleyen işlem: artık tamamlanamaz
         <View style={{ gap: 10 }}>
-          <View style={{ padding: 14, borderRadius: radius.md, backgroundColor: t.surfaceAlt, gap: 4 }}>
-            <Text variant="caption" tone="muted">
-              POS'ta bekleniyor
-            </Text>
-            <Text variant="display" style={{ fontSize: 30, lineHeight: 38 }}>
-              {sale ? formatTL(sale.amount_kurus) : kurus ? formatTL(kurus) : ''}
-            </Text>
-            <Text variant="callout" tone="muted">
-              {sale?.description ?? desc}
-            </Text>
-          </View>
-          <Text variant="callout">Kartı test POS ekranında okutun ya da reddedin; sonuç burada kendiliğinden görünür.</Text>
-          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-            <Button title="Test POS'u aç" icon="open-outline" onPress={openTestPos} />
-            <Button title="İptal" variant="ghost" onPress={cancel} />
-          </View>
+          <Text variant="callout" tone="muted">
+            {sale ? `${formatTL(sale.amount_kurus)} · ${sale.description}: ` : ''}Bu bekleyen işlem eski deneme ekranından kaldı ve tamamlanamaz. İptal edip yeniden tahsil edin.
+          </Text>
+          <Button title="İptal et" variant="secondary" onPress={cancel} style={{ alignSelf: 'flex-start' }} />
         </View>
       ) : status === 'approved' && sale ? (
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="checkmark-circle" size={22} color={t.open} />
             <Text variant="bodyStrong" color={t.open}>
-              {sale.mode === 'cash' ? 'Nakit alındı' : sale.mode === 'test' ? 'Ödeme alındı (test)' : isSandboxSale(sale) ? 'Ödeme alındı (iyzico deneme)' : 'Ödeme alındı'}
+              {sale.mode === 'cash' ? 'Nakit alındı' : isSandboxSale(sale) ? 'Ödeme alındı (deneme)' : 'Ödeme alındı'}
             </Text>
           </View>
           <Receipt sale={sale} clinicName={vet.clinic_name} ownerName={patient.owner_name} />
@@ -291,7 +261,7 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="close-circle" size={22} color={t.danger} />
             <Text variant="bodyStrong" color={t.danger}>
-              {status === 'declined' ? (sale && isOnline(sale.mode) ? 'Ödeme tamamlanmadı' : 'Kart reddedildi (test)') : 'İşlem iptal edildi'}
+              {status === 'declined' ? 'Ödeme tamamlanmadı' : 'İşlem iptal edildi'}
             </Text>
           </View>
           {status === 'declined' && sale?.fail_reason ? (
@@ -324,9 +294,10 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
   );
 }
 
-/** iyzico ödeme sayfası hazır: QR, bağlantı, deneme kartı bilgisi. */
+/** iyzico ödeme sayfası hazır: QR, bağlantı (deneme hesabında deneme kartı bilgisi). */
 function OnlinePending({
   sale,
+  sandbox,
   kurus,
   desc,
   startError,
@@ -337,6 +308,7 @@ function OnlinePending({
   onCancel,
 }: {
   sale: Sale | null;
+  sandbox: boolean;
   kurus: number | null;
   desc: string;
   startError: string | null;
@@ -434,15 +406,17 @@ function OnlinePending({
           {checkMsg}
         </Text>
       ) : null}
-      <View style={{ padding: 12, borderRadius: radius.md, backgroundColor: t.honeySoft, gap: 2 }}>
-        <Text variant="caption" style={{ fontWeight: '800' }}>
-          Deneme kartı
-        </Text>
-        <Text variant="caption">5528 7900 0000 0008 · SKT 12/30 · CVC 123 · SMS şifresi sorulursa 123456</Text>
-        <Text variant="caption" tone="muted">
-          Reddedilen ödemeyi denemek için: 4129 1111 1111 1111. Deneme ortamında kimseden para çekilmez.
-        </Text>
-      </View>
+      {sandbox ? (
+        <View style={{ padding: 12, borderRadius: radius.md, backgroundColor: t.honeySoft, gap: 2 }}>
+          <Text variant="caption" style={{ fontWeight: '800' }}>
+            iyzico deneme hesabı
+          </Text>
+          <Text variant="caption">Deneme kartı: 5528 7900 0000 0008 · SKT 12/30 · CVC 123 · SMS şifresi sorulursa 123456</Text>
+          <Text variant="caption" tone="muted">
+            Deneme ortamında kimseden para çekilmez.
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -464,7 +438,7 @@ function Receipt({ sale, clinicName, ownerName }: { sale: Sale; clinicName: stri
   const sandbox = isSandboxSale(sale);
   return (
     <View style={{ padding: 14, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: t.borderStrong, gap: 6 }}>
-      <Text variant="bodyStrong">{sandbox ? 'Makbuz taslağı' : 'Tahsilat özeti'}</Text>
+      <Text variant="bodyStrong">{sandbox ? 'Deneme ödemesi' : 'Tahsilat özeti'}</Text>
       {row('Klinik', clinicName)}
       {row('Hasta sahibi', ownerName ?? '-')}
       {row('Hizmet', sale.description)}
@@ -475,7 +449,7 @@ function Receipt({ sale, clinicName, ownerName }: { sale: Sale; clinicName: stri
       {row('Tarih', when(sale.resolved_ms ?? sale.created_ms))}
       <Text variant="caption" tone="subtle" style={{ marginTop: 4 }}>
         {sandbox
-          ? 'Deneme ödemesi: kimseden para çekilmedi, resmî belge kesilmez. Bu bir önizlemedir.'
+          ? 'Kimseden para çekilmedi, resmî belge kesilmez.'
           : sale.edoc_status === 'issued'
             ? 'Resmî belge Paraşüt üzerinden kesildi; bu sayfa özetidir.'
             : 'Bu bir makbuz özetidir; resmî belge değildir.'}

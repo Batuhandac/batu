@@ -50,12 +50,10 @@ function TopBar({ vet }: { vet: VetProfile }) {
   // Telefonda menü ikinci satıra iner; klinik adı tek satırda kalır
   const inlineNav = width >= 640;
   const path = usePathname();
-  const onPos = path.endsWith('/panel/pos');
   const onSettings = path.endsWith('/panel/ayarlar');
   const nav = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <NavLink label="Hastalar" active={!onPos && !onSettings} onPress={() => router.replace('/panel')} />
-      <NavLink label="Test POS" active={onPos} onPress={() => router.replace('/panel/pos')} />
+      <NavLink label="Hastalar" active={!onSettings} onPress={() => router.replace('/panel')} />
       <NavLink label="Ayarlar" active={onSettings} onPress={() => router.replace('/panel/ayarlar')} />
     </View>
   );

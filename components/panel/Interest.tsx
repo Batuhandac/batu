@@ -58,7 +58,7 @@ export function InterestCard({ uid, clinicName, compact }: { uid: string; clinic
     try {
       await saveVetInterest(uid, { clinic_name: clinicName, current_software: software, pos_brand: pos, esmm_way: esmm, wants, note });
       setJoined(true);
-      setMsg({ ok: true, text: 'Teşekkürler. Tahsilat hazır olunca ilk sizinle deneyeceğiz.' });
+      setMsg({ ok: true, text: 'Teşekkürler. POS bağlantısı hazır olunca ilk sizinle deneyeceğiz.' });
       if (compact) setOpen(false);
     } catch {
       setMsg({ ok: false, text: 'Kaydedilemedi. Bağlantınızı kontrol edip tekrar deneyin.' });
@@ -69,10 +69,10 @@ export function InterestCard({ uid, clinicName, compact }: { uid: string; clinic
 
   return (
     <Card style={{ gap: 4 }}>
-      <Text variant="headline">Gerçek POS bağlantısı</Text>
+      <Text variant="headline">Yazarkasa POS bağlantısı</Text>
       <Text variant="callout" tone="muted" style={{ marginBottom: 10 }}>
-        Tutarı panelden POS'a göndermeyi test modunda deneyebilirsiniz. Sırada kliniğinizdeki cihaza bağlanmak ve e-SMM'yi kendiliğinden
-        kesmek var; hangi cihaz ve programla başlayacağımızı sizin cevaplarınız belirleyecek.
+        Kartla ve nakit tahsilat panelde hazır. Sırada kliniğinizdeki yazarkasa POS cihazına bağlanmak var; hangi cihazla başlayacağımızı
+        sizin cevaplarınız belirleyecek.
       </Text>
       {!loaded ? null : !open ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
