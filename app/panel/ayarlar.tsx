@@ -6,6 +6,7 @@ import { View, Platform, Alert } from 'react-native';
 import Constants from 'expo-constants';
 import { Text, Button, Card, Field, Segmented, SwitchRow, Badge } from '@/components/ds';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
+import { PlanCard } from '@/components/panel/Plan';
 import { useTheme, radius } from '@/lib/theme';
 import {
   beginParasut,
@@ -82,10 +83,11 @@ function Settings({ vet }: { vet: VetProfile }) {
         <View style={{ gap: 4 }}>
           <Text variant="title">Ayarlar</Text>
           <Text variant="callout" tone="muted">
-            Kartla ödemenin hangi hesaba geçeceği ve makbuzun nasıl kesileceği.
+            Paketiniz, kartla ödemenin hangi hesaba geçeceği ve makbuzun nasıl kesileceği.
           </Text>
         </View>
         {banner ? <Notice ok={banner.ok} text={banner.text} /> : null}
+        <PlanCard clinicId={vet.clinic_id} />
         {!onlinePayEnabled ? (
           <Card>
             <Text variant="callout" tone="muted">

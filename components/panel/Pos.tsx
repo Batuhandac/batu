@@ -31,6 +31,8 @@ import {
 import { waNumber, type Patient } from '@/lib/data/vetRecords';
 import type { VetProfile } from '@/lib/auth';
 import { QrCode } from './QrCode';
+import { usePlan } from './Plan';
+import { proAccess } from '@/lib/pos/plan';
 
 /** Test POS ekranını yeni sekmede açar (web); uygulamada aynı yığında. */
 export function openTestPos() {
@@ -108,6 +110,9 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
   }, [vet.clinic_id, saleId, loadPast]);
 
   const kurus = parseTL(amount);
+  // Ücretli özellik kilidi (lib/pos/plan.ts, şimdilik kapalı)
+  const plan = usePlan(vet.clinic_id);
+  const locked = plan != null && !proAccess(plan) && !saleId;
 
   const begin = async (id: string) => {
     setStartError(null);
@@ -164,7 +169,14 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
         />
       </View>
 
-      {!saleId ? (
+      {locked ? (
+        <View style={{ gap: 10 }}>
+          <Text variant="callout" tone="muted">
+            Erken erişim sona erdi; tahsilat ve e-belge ücretli pakette. Hasta kayıtlarınız ve hatırlatmalar ücretsiz devam ediyor.
+          </Text>
+          <Button title="Paketi gör" size="sm" variant="secondary" onPress={() => router.push('/panel/ayarlar')} />
+        </View>
+      ) : !saleId ? (
         <>
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
             <View style={{ flexGrow: 1, flexBasis: 140 }}>

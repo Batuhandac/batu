@@ -1,6 +1,7 @@
 name: iOS → TestFlight
 
-# Manuel tetiklenir (Actions → Run workflow, istediğin branch'i seçebilirsin)
+# Manuel tetiklenir (Actions → Run workflow, istediğin branch'i seçebilirsin),
+# depo olayıyla (repository_dispatch, tür "ios-build"; varsayılan dalda çalışır)
 # VEYA main'e push olunca otomatik. Yalnızca site, belge, iş akışı ya da veri
 # üreticisi değiştiyse derleme yapılmaz (EAS derleme hakkı boşa gitmesin);
 # gerekirse elle çalıştırılır.
@@ -11,6 +12,8 @@ on:
         description: "EAS build profili"
         required: true
         default: "production"
+  repository_dispatch:
+    types: [ios-build]
   push:
     branches:
       - main
@@ -67,9 +70,14 @@ jobs:
       - name: iOS build + TestFlight gönderimi
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          PROFILE: ${{ github.event.inputs.profile || github.event.client_payload.profile || 'production' }}
         run: |
+          case "$PROFILE" in
+            production|preview|development) ;;
+            *) echo "Bilinmeyen profil: $PROFILE"; exit 1 ;;
+          esac
           eas build \
             --platform ios \
-            --profile "${{ github.event.inputs.profile || 'production' }}" \
+            --profile "$PROFILE" \
             --non-interactive \
             --auto-submit

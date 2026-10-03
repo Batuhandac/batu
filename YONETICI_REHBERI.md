@@ -165,6 +165,17 @@ Kurulum, Paraşüt başvurusu ve şifreli kasa: `server/odeme/README.md`. Yönet
 `clinic_pay` koleksiyonunda hangi kliniğin neyi bağladığını görürsün; anahtarlar
 `clinic_secrets` içinde şifrelidir, Console'da bile okunamaz.
 
+**Paket: erken erişim ve kurucu klinik.** 31 Mart 2027'ye kadar tahsilat ve e-belge dahil her
+şey ücretsiz (erken erişim); hasta takibi her zaman ücretsiz. Bu dönemde panele giren ilk 50
+klinik **kurucu klinik** olur: ücretli paket geldiğinde fiyatları 31 Mart 2029'a kadar sabit.
+Sıra, hekim paneli ilk açtığında ödeme sunucusu tarafından verilir ve
+`clinic_plans/{clinicId}` belgesine yazılır (`plan`, `founder`, `founder_no`,
+`price_locked_until`); sayaç `plan_meta/founders`. Uygulama bu belgeleri okuyamaz ve
+yazamaz; Console'dan sen değiştirebilirsin (ör. bir kliniği elle kurucu yapmak için
+`founder: true`, ücretli pakete geçen klinik için `plan: "pro"`). Ücretli özellik kilidi
+`lib/pos/plan.ts` içindeki `PAYWALL_ON` ile açılır; abonelikle ödeme kurulana kadar kapalı
+kalmalı. Tarihler `lib/pos/plan.ts` ve `server/odeme/src/plan.js` içinde aynı olmalı.
+
 ## 7. Topluluk ve şikayetler (`content_reports`)
 
 Kullanıcılar soru, yanıt, yorum ve mesajları **Bildir** ile şikayet edebilir. Her şikayet

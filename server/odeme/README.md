@@ -108,10 +108,13 @@ başvuru üzerine verir.
 ## Geliştirme
 
 - Kod: `src/` (bağımlılık yok): `index.js` uçlar, `iyzico.js`, `parasut.js`, `vault.js`
-  (şifreli kasa), `firebase.js`, `util.js`.
+  (şifreli kasa), `plan.js` (erken erişim ve kurucu klinik), `firebase.js`, `util.js`.
 - Uçlar: `POST /start`, `POST /callback`, `POST /check`, `POST /connect/iyzico`,
   `POST /disconnect`, `POST /connect/parasut/begin`, `GET /connect/parasut/callback`,
-  `POST /edoc/issue`, `POST /edoc/pdf`, `GET /health`.
+  `POST /edoc/issue`, `POST /edoc/pdf`, `POST /plan`, `GET /health`.
+- Paket: `POST /plan` kliniğin paketini döner, ilk kez soruluyorsa `clinic_plans/{clinicId}`
+  belgesini oluşturur. Erken erişimde (31 Mart 2027 dahil) ilk 50 klinik kurucu klinik
+  sırası alır; sayaç (`plan_meta/founders`) ve paket tek yazımda, ön koşulla güncellenir.
 - Satış belgesi: `clinic_pos/{clinicId}/sales/{saleId}`; kurallar `firestore.rules`.
 - Hekim oturumu (Firebase ID token) Google'ın açık anahtarlarıyla sunucuda doğrulanır.
 - Testte `FIRESTORE_URL`, `AUTH_URL`, `DEV_BEARER` ve `JWKS_URL` ile emülatöre ve sahte anahtarlara bağlanır.

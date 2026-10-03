@@ -5,6 +5,7 @@ import { Text, Button, Card, Field, Segmented, SearchField, Badge, Icon } from '
 import { PetFace } from '@/components/art';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
 import { InterestCard } from '@/components/panel/Interest';
+import { PlanStrip } from '@/components/panel/Plan';
 import { formatTL } from '@/lib/pos/money';
 import { listTodaySales, type Sale } from '@/lib/pos/sales';
 
@@ -133,7 +134,8 @@ function Dashboard({ vet }: { vet: VetProfile }) {
 
   return (
     <PanelPage>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
+      <PlanStrip clinicId={vet.clinic_id} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
         <Stat label="Hasta" value={String(stats.total)} hint={`${stats.linked} tanesi uygulamada`} />
         <Stat label="Bu hafta" value={String(stats.soon)} hint="aşı ya da kontrol" tone={stats.soon ? 'honey' : undefined} />
         <Stat label="Geciken" value={String(stats.overdue)} hint="hatırlatma bekliyor" tone={stats.overdue ? 'sos' : undefined} />

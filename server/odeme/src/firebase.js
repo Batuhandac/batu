@@ -119,7 +119,21 @@ async function commit(env, writes) {
  * precondition: { updateTime } okuduğumuzdan beri değişmişse yazmaz; { exists: true }
  * belge yoksa yazmaz. Değeri undefined olan alan silinir.
  */
-export async function updateDoc(env, path, fields, { serverTime = [], precondition = null } = {}) {
+export async function updateDoc(env, path, fields, opts = {}) {
+  await commit(env, [updateWrite(env, path, fields, opts)]);
+}
+
+/** Yeni belge oluşturur; zaten varsa PreconditionFailed. */
+export async function createDoc(env, path, fields, opts = {}) {
+  await commit(env, [createWrite(env, path, fields, opts)]);
+}
+
+/** Birden çok yazımı tek seferde yapar: ya hepsi yazılır ya hiçbiri. */
+export async function commitAll(env, writes) {
+  await commit(env, writes);
+}
+
+export function updateWrite(env, path, fields, { serverTime = [], precondition = null } = {}) {
   const present = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
   const write = {
     update: { name: docName(env, path), fields: encodeFields(present) },
@@ -127,12 +141,15 @@ export async function updateDoc(env, path, fields, { serverTime = [], preconditi
     updateTransforms: serverTime.map((f) => ({ fieldPath: f, setToServerValue: 'REQUEST_TIME' })),
   };
   if (precondition) write.currentDocument = precondition;
-  await commit(env, [write]);
+  return write;
 }
 
-/** Yeni belge oluşturur; zaten varsa PreconditionFailed. */
-export async function createDoc(env, path, fields) {
-  await commit(env, [{ update: { name: docName(env, path), fields: encodeFields(fields) }, currentDocument: { exists: false } }]);
+export function createWrite(env, path, fields, { serverTime = [] } = {}) {
+  return {
+    update: { name: docName(env, path), fields: encodeFields(fields) },
+    updateTransforms: serverTime.map((f) => ({ fieldPath: f, setToServerValue: 'REQUEST_TIME' })),
+    currentDocument: { exists: false },
+  };
 }
 
 export async function deleteDoc(env, path) {

@@ -58,8 +58,11 @@ yerler doğrulanmamıştır; görüşmelerle test edilecek.
    gerçek bir dert (bkz. HEKIM_YOL_HARITASI.md).
 4. **Taşımak zorunda değil.** Mevcut programının yanında kullanır. Taşımak isterse Excel/CSV
    ile hastalarını **biz aktarırız** (rakipte de var [4], yoksa geçişte eksik kalırız).
-5. **Kurucu klinik teklifi:** ilk 50 klinik için ücretli paket 6 ay ücretsiz ve fiyat 2 yıl
-   kilitli. Başka programın sözleşmesi sürüyorsa bitene kadar ücretsiz.
+5. **Erken erişim ve kurucu klinik (yayında):** tahsilat ve e-belge dahil her şey 31 Mart
+   2027'ye kadar ücretsiz; bu dönemde panele giren ilk 50 kliniğin fiyatı ücretli paket
+   geldiğinde 31 Mart 2029'a kadar sabit. Fiyat en az 30 gün önce duyurulur; ücretli pakete
+   geçmeyen klinik ücretsiz pakette kalır, kayıtları silinmez. Panel sırayı ve kalan günü
+   gösterir (`lib/pos/plan.ts`).
 
 ### Sahip için
 
@@ -123,8 +126,9 @@ hasta, randevu isteği sayısı, ücretliye geçen klinik, ayrılan klinik.
 2. **Geri gelen hasta raporu:** hatırlatma gönderilen hastalardan kaçının kliniğe döndüğü.
    Hekimin "parama değiyor mu?" sorusunun cevabı.
 3. **Excel/CSV ile hasta aktarımı:** geçiş engelini kaldırır.
-4. **Paket ve abonelik altyapısı:** klinik planı (ücretsiz/Pro), özellik kilidi, iyzico
-   aboneliğiyle aylık otomatik ödeme.
+4. **Paket ve abonelik altyapısı:** klinik paketi, erken erişim, kurucu klinik sırası ve
+   (kapalı) özellik kilidi hazır. Kalan: iyzico aboneliğiyle aylık otomatik ödeme ve kliniğe
+   aylık fatura. Önce şirket, vergi kaydı ve Patiport adına iyzico üye işyeri hesabı gerekir.
 5. **e-SMM:** tahsilatın ardından makbuzun kendiliğinden kesilmesi (sağlayıcı seçimi ve mali
    müşavir görüşü gerekli).
 

@@ -188,7 +188,7 @@ export async function recordCashSale(vet: VetProfile, input: SaleInput): Promise
 export type StartPaymentError = 'offline' | 'auth' | 'forbidden' | 'iyzico' | 'not_connected' | 'server';
 
 /** Ödeme sunucusuna hekim adına istek (Firebase oturum belgesiyle). */
-async function callPay(path: string, body: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: Record<string, unknown> } | null> {
+export async function callPay(path: string, body: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: Record<string, unknown> } | null> {
   const user = getAuthInstance()?.currentUser;
   if (!PAY_API_URL || !user) return { ok: false, status: 401, data: {} };
   try {

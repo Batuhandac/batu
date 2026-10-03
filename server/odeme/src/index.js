@@ -15,6 +15,9 @@
 //  6. Klinik Paraşüt'ü bağladıysa ve "kendiliğinden kes" açıksa e-SMM ya da e-Arşiv kesilir
 //     (POST /edoc/issue elle de çağrılabilir; nakit tahsilatlar için de).
 //
+// Paket: POST /plan kliniğin paketini döner, ilk kez soruluyorsa oluşturur (erken erişim,
+// kurucu klinik sırası; bkz. plan.js).
+//
 // Hesap bağlama: POST /connect/iyzico (anahtarlar denenir, şifreli kasaya yazılır),
 // POST /connect/parasut/begin + GET /connect/parasut/callback (Paraşüt'te oturum açılır,
 // şifre bize gelmez), POST /disconnect.
@@ -30,12 +33,13 @@
 //   PARASUT_CLIENT_ID, _SECRET          secret; Patiport'un Paraşüt uygulama kimliği (isteğe bağlı)
 //   FIREBASE_PROJECT_ID, ALLOWED_ORIGINS
 //   Yalnızca testte: FIRESTORE_URL, AUTH_URL, DEV_BEARER, JWKS_URL, IYZICO_CLINIC_URL,
-//                    PARASUT_URL, PARASUT_POLL_MS
+//                    PARASUT_URL, PARASUT_POLL_MS, PLAN_TODAY
 import { corsHeaders, defer, istanbulDate, json, page, randomId, redirect, safeReturnUrl, str } from './util.js';
 import { createDoc, deleteDoc, getDoc, PreconditionFailed, updateDoc, verifyIdToken } from './firebase.js';
 import { open, seal, vaultReady } from './vault.js';
 import { clinicCreds, demoCreds, envOfKey, formatPrice, initializeCheckout, retrieveCheckout, validateKeys } from './iyzico.js';
 import { authorizeUrl, companies, documentPdf, exchangeCode, issueDocument, ParasutError, parasutConfigured, refreshTokens } from './parasut.js';
+import { ensurePlan } from './plan.js';
 
 export { formatPrice, iyzicoAuth } from './iyzico.js';
 export { signJwt, verifyIdToken } from './firebase.js';
@@ -70,6 +74,8 @@ export default {
           return await edocIssue(request, env, cors);
         case 'POST /edoc/pdf':
           return await edocPdf(request, env, cors);
+        case 'POST /plan':
+          return await plan(request, env, cors);
         case 'GET /health':
           return json(
             {
@@ -116,6 +122,14 @@ async function authVet(request, env, cors, { needSale = false } = {}) {
   const vet = await getDoc(env, `vets/${uid}`);
   if (!vet || vet.data.clinic_id !== clinicId) return { res: json({ error: 'forbidden' }, 403, cors) };
   return { uid, vet, clinicId, saleId, body };
+}
+
+// ─── Paket ───────────────────────────────────────────────────────────────────
+
+async function plan(request, env, cors) {
+  const v = await authVet(request, env, cors);
+  if (v.res) return v.res;
+  return json({ ok: true, ...(await ensurePlan(env, v.clinicId, v.uid)) }, 200, cors);
 }
 
 // ─── Kliniğin iyzico hesabı ──────────────────────────────────────────────────

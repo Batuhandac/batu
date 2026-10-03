@@ -182,6 +182,13 @@ service cloud.firestore {
     match /oauth_states/{state} {
       allow read, write: if false;
     }
+    // Klinik paketi ve kurucu klinik sayacı: panel sunucudan (POST /plan) okur
+    match /clinic_plans/{clinicId} {
+      allow read, write: if false;
+    }
+    match /plan_meta/{id} {
+      allow read, write: if false;
+    }
 
     // ── Klinik e-belge ayarları: belge türü, KDV oranı, il/ilçe, kendiliğinden kes ──
     match /clinic_settings/{clinicId} {
