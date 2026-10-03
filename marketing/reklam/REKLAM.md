@@ -99,6 +99,47 @@ müzikler reklamda kullanılamaz.
 - Başlık: Aşı gününü unutma
 - Düğme: Yükle
 
+## Takvim
+
+Organik paylaşım sırası `../sosyal-medya/INSTAGRAM.md` içinde (3–20 Ekim, akşam 20:00).
+Reklamlar onunla birlikte şöyle yürür:
+
+| Tarih | İş |
+| --- | --- |
+| 3 Eki Cmt | Profil kurulumu. Biyografiye iki bağlantı: "Hekimler için" → hekim sayfası; App Store bağlantısı onaydan sonra eklenir. |
+| 5 Eki Pzt | Hekim kampanyası açılır: üç video ve üç görsel aynı reklam setinde, yalnızca reklam olarak. |
+| 6 Eki Sal | İsteğe bağlı ısınma: R1 (Gece 03:00, organik sürüm) için Ankara'daki hayvan sahiplerine düşük bütçeli "video görüntüleme" kampanyası. Amaç satış değil, onaydan sonra yeniden hedeflenecek bir izleyici havuzu. |
+| 12 Eki Pzt | Hekim kampanyasının 7. günü: tıklama başı maliyeti en düşük iki reklamı bırak, diğerlerini kapat. |
+| Onay günü | Biyografiye App Store bağlantısı; duyuru gönderisi ve hikâye. Hayvan sahibi kampanyası açılır: önce ısınmadaki izleyiciler, sonra ilgi alanı kitlesi. |
+| Onaydan 2 hafta sonra | Yükleyenlerden ya da video izleyenlerden benzer kitle (Türkiye %1). Meta en az 100 kişilik kaynak kitle ister. |
+
+## Doğru kitle
+
+Reklam hedeflemesi tek başına yetmez; iki kitle için yol farklı.
+
+**Hayvan sahipleri: ısıt, yeniden hedefle, genişlet**
+1. Organik Reels ve kaydırmalı gönderiler Ankara'daki hayvan sahiplerine ulaşsın: konuma
+   "Ankara" ekle, yerel etiketleri genel olanlarla karıştır (#ankara #çankaya #kedi #köpek
+   #veteriner).
+2. Reklam Yöneticisi → Kitleler → **Özel hedef kitle**: "Videonun en az %50'sini izleyenler"
+   ve "Instagram hesabıyla etkileşime geçenler" (son 90 gün). Onaydan sonra yükleme
+   reklamları önce bu kitleye gider; tanıyan kişi daha kolay yükler.
+3. Sonra ilgi alanı kitlesi (Kediler, Köpekler, Evcil hayvanlar; Ankara; yalnızca iOS) ve
+   en son benzer kitle.
+4. Yerel hesaplarla ortak gönderi: Ankara'daki pet shop, bakım salonu, barınak gönüllüleri.
+   Sahibinin yazılı izni şart; klinik tanıtımı yapılmaz.
+
+**Hekimler: reklam destek, asıl kanal doğrudan temas**
+1. Instagram'da Ankara'daki hekim kitlesi küçüktür; reklam, tanıtım ve hatırlatma işi görür.
+   Kitle: Ankara, ilgi alanı "Veterinerlik", iş unvanı "Veteriner hekim".
+2. Asıl kanal doğrudan temas: klinikleri ara ya da uğra, `hekim-02_tahsilat.mp4` ve
+   `hekim-01_hatirlatma.mp4` videolarını WhatsApp'tan gönder, hekim sayfası bağlantısını
+   ekle (`docs/SATIS_PLANI.md`, ilk 90 gün).
+3. Klinik telefon listesini Meta'ya "müşteri listesi" olarak yükleme: kişiler bu kullanıma
+   onay vermedi (KVKK).
+4. Kurucu klinik olan her klinik kayıt masasına QR'lı afiş koyabilir; hasta sahipleri
+   uygulamaya oradan gelir, iki kitle birbirini besler.
+
 ## Kurallar ve dikkat
 
 - **Kişisel özellik dili kullanma.** Meta, kişinin sağlığına ya da durumuna dair bilgi

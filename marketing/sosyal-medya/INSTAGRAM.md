@@ -1,4 +1,4 @@
-# Instagram açılışı (28 Eylül – 15 Ekim 2026)
+# Instagram açılışı (3 – 20 Ekim 2026)
 
 İlk üç haftanın hazır paketi: 9 gönderi, 3 Reels, profil ve kurulum. Görseller
 `gorseller/`, videolar `reels/` klasöründe. Genel kurallar `REHBER.md`. Ücretli reklamlar
@@ -27,18 +27,22 @@ Profilde en yeni gönderi sol üstte görünür. Bu sıra ızgarada renkleri den
 
 | # | Tarih | Tür | Dosya | Metin |
 | --- | --- | --- | --- | --- |
-| 1 | 28 Eyl Pzt | Gönderi | `gorseller/00_merhaba.png` | Merhaba |
-| 2 | 30 Eyl Çar | Gönderi | `gorseller/01_tanitim.png` | Tanıtım |
-| R1 | 1 Eki Per | Reels | `reels/01_gece-0300.mp4` | Gece 03:00 |
-| 3 | 2 Eki Cum | Kaydırmalı (7) | `gorseller/06a` … `06g` | 5 durum |
-| 4 | 4 Eki Paz | Gönderi | `gorseller/05_4-ekim.png` | 4 Ekim |
-| 5 | 5 Eki Pzt | Gönderi | `gorseller/03_takvim.png` | Aşı takvimi |
-| 6 | 7 Eki Çar | Gönderi | `gorseller/02_insan-ilaci.png` | İnsan ilacı |
-| R2 | 8 Eki Per | Reels | `reels/02_asi-10-saniye.mp4` | Aşı 10 saniyede |
-| 7 | 9 Eki Cum | Gönderi | `gorseller/10_kim-patron.png` | Evde patron kim? |
-| 8 | 12 Eki Pzt | Gönderi | `gorseller/09_maskotunu-sec.png` | Maskotunu seç |
-| 9 | 14 Eki Çar | Gönderi | `gorseller/04_veterinere-sor.png` | Veterinere sor |
-| R3 | 15 Eki Per | Reels | `reels/03_maskotunu-sec.mp4` | Maskotunu seç |
+| 1 | 3 Eki Cmt | Gönderi | `gorseller/00_merhaba.png` | Merhaba |
+| 2 | 4 Eki Paz | Gönderi | `gorseller/05_4-ekim.png` | 4 Ekim (tarihli; kaydırılamaz) |
+| 3 | 5 Eki Pzt | Gönderi | `gorseller/01_tanitim.png` | Tanıtım |
+| R1 | 6 Eki Sal | Reels | `reels/01_gece-0300.mp4` | Gece 03:00 |
+| 4 | 8 Eki Per | Kaydırmalı (7) | `gorseller/06a` … `06g` | 5 durum |
+| 5 | 10 Eki Cmt | Gönderi | `gorseller/03_takvim.png` | Aşı takvimi |
+| 6 | 12 Eki Pzt | Gönderi | `gorseller/02_insan-ilaci.png` | İnsan ilacı |
+| R2 | 13 Eki Sal | Reels | `reels/02_asi-10-saniye.mp4` | Aşı 10 saniyede |
+| 7 | 15 Eki Per | Gönderi | `gorseller/10_kim-patron.png` | Evde patron kim? |
+| 8 | 17 Eki Cmt | Gönderi | `gorseller/09_maskotunu-sec.png` | Maskotunu seç |
+| 9 | 19 Eki Pzt | Gönderi | `gorseller/04_veterinere-sor.png` | Veterinere sor |
+| R3 | 20 Eki Sal | Reels | `reels/03_maskotunu-sec.mp4` | Maskotunu seç |
+
+Hekim reklamları profilde paylaşılmaz; 5 Ekim'de Reklam Yöneticisi'nden "yalnızca reklam"
+olarak açılır (`../reklam/REKLAM.md`, "Takvim"). App Store onayı gelince bir duyuru gönderisi
+araya girer ve sıradaki gönderiler bir gün kayar.
 
 Reels'ler sessizdir. Paylaşırken Instagram'ın kendi müzik kitaplığından trend bir ses ekle.
 Kapak olarak `reels/*_kapak.png` dosyasını seç.
