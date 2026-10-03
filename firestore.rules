@@ -134,10 +134,11 @@ service cloud.firestore {
                             && (data().title == null || str(data().title, 1, 30));
     }
 
-    // ── Tahsilat (lib/pos/sales.ts): panel "pending" yazar, POS sonucu yazar ──
-    // İki mod: "test" (panelin sanal terminali) ve "iyzico_test" (iyzico deneme
-    // ortamında gerçek ödeme sayfası, server/odeme). Yalnızca kliniğin onaylı
-    // hekimleri görür ve yazar; sonuçlanan satış bir daha değişmez, silinmez.
+    // ── Tahsilat (lib/pos/sales.ts): panel "pending" yazar, sonucu POS ya da sunucu yazar ──
+    // Modlar: "test" (panelin sanal terminali), "iyzico_test" (Patiport'un iyzico deneme
+    // hesabı), "iyzico" (kliniğin kendi iyzico hesabı, server/odeme), "cash" (nakit).
+    // Yalnızca kliniğin onaylı hekimleri görür ve yazar; sonuçlanan satış değişmez,
+    // silinmez. Ödeme ve e-belge alanlarını (pay_*, edoc_*) yalnızca sunucu yazar.
     match /clinic_pos/{clinicId}/sales/{saleId} {
       allow read: if isClinicVet(clinicId);
       allow create: if isClinicVet(clinicId)
@@ -146,11 +147,11 @@ service cloud.firestore {
                     && str(data().description, 1, 120)
                     && (data().patient_id == null || str(data().patient_id, 1, 80))
                     && (data().patient_name == null || str(data().patient_name, 1, 60))
-                    && data().status == 'pending' && data().mode in ['test', 'iyzico_test']
+                    && data().status == 'pending' && data().mode in ['test', 'iyzico_test', 'iyzico', 'cash']
                     && data().created_by == me() && stamped();
-      // Test POS'ta sonucu hekimin sanal terminali yazar. iyzico satışlarında sonucu
-      // yalnızca ödeme sunucusu (hizmet hesabı, kurallara tabi değil) yazar; hekim
-      // bekleyen satışı yalnızca iptal edebilir.
+      // Test POS'ta sonucu hekimin sanal terminali, nakitte hekim yazar. iyzico
+      // satışlarında sonucu yalnızca ödeme sunucusu (hizmet hesabı, kurallara tabi değil)
+      // yazar; hekim bekleyen satışı yalnızca iptal edebilir.
       allow update: if isClinicVet(clinicId)
                     && resource.data.status == 'pending'
                     && onlyChanged(['status', 'resolved_at', 'resolved_by', 'card_last4', 'auth_code'])
@@ -159,8 +160,39 @@ service cloud.firestore {
                          && data().status in ['approved', 'declined', 'cancelled']
                          && (data().status != 'approved'
                              || (str(data().card_last4, 4, 4) && str(data().auth_code, 6, 6))))
-                        || (resource.data.mode != 'test' && data().status == 'cancelled'
+                        || (resource.data.mode == 'cash' && data().status in ['approved', 'cancelled']
+                            && onlyChanged(['status', 'resolved_at', 'resolved_by']))
+                        || (resource.data.mode in ['iyzico', 'iyzico_test'] && data().status == 'cancelled'
                             && onlyChanged(['status', 'resolved_at', 'resolved_by'])));
+      allow delete: if false;
+    }
+
+    // ── Kliniğin bağlı hesapları (server/odeme): iyzico ve Paraşüt bağlantı özeti ──
+    // Anahtar yok; yalnızca ortam, anahtarın son 4 hanesi, firma adı gibi bilgiler.
+    // Yalnızca sunucu yazar.
+    match /clinic_pay/{clinicId} {
+      allow read: if isClinicVet(clinicId);
+      allow write: if false;
+    }
+
+    // ── Şifreli anahtar kasası ve OAuth durumları: uygulamadan hiç okunamaz ─────
+    match /clinic_secrets/{clinicId} {
+      allow read, write: if false;
+    }
+    match /oauth_states/{state} {
+      allow read, write: if false;
+    }
+
+    // ── Klinik e-belge ayarları: belge türü, KDV oranı, il/ilçe, kendiliğinden kes ──
+    match /clinic_settings/{clinicId} {
+      allow read: if isClinicVet(clinicId);
+      allow create, update: if isClinicVet(clinicId)
+                            && data().keys().hasOnly(['edoc_type', 'vat_rate', 'edoc_auto', 'edoc_city', 'edoc_district', 'updated_by', 'updated_at'])
+                            && data().edoc_type in ['e_smm', 'e_archive']
+                            && data().vat_rate in [0, 1, 10, 20]
+                            && data().edoc_auto is bool
+                            && str(data().edoc_city, 0, 40) && str(data().edoc_district, 0, 40)
+                            && data().updated_by == me() && data().updated_at == request.time;
       allow delete: if false;
     }
 

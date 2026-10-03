@@ -5,9 +5,10 @@ import { Text, Button, Card, Field, Segmented, SearchField, Badge, Icon } from '
 import { PetFace } from '@/components/art';
 import { PanelGate, PanelPage, useWide } from '@/components/panel/Shell';
 import { InterestCard } from '@/components/panel/Interest';
-import { openTestPos } from '@/components/panel/Pos';
 import { formatTL } from '@/lib/pos/money';
 import { listTodaySales, type Sale } from '@/lib/pos/sales';
+
+const isTrialSale = (s: Sale) => s.mode === 'test' || s.mode === 'iyzico_test' || (s.mode === 'iyzico' && s.pay_env !== 'live');
 import { daysUntil } from '@/lib/utils/dates';
 import { DueBadge, PatientForm, speciesLabel } from '@/components/panel/Forms';
 import { useTheme, radius } from '@/lib/theme';
@@ -62,8 +63,10 @@ function Dashboard({ vet }: { vet: VetProfile }) {
       linked: list.filter((p) => p.owner_uid).length,
       overdue: list.filter((p) => p.next_due && daysUntil(p.next_due) < 0).length,
       soon: soon.length,
-      todayKurus: approved.reduce((a, s) => a + s.amount_kurus, 0),
-      todayCount: approved.length,
+      // Deneme ödemeleri (sanal POS, iyzico deneme) gerçek tahsilattan ayrı sayılır
+      todayKurus: approved.filter((s) => !isTrialSale(s)).reduce((a, s) => a + s.amount_kurus, 0),
+      todayCount: approved.filter((s) => !isTrialSale(s)).length,
+      trialCount: approved.filter(isTrialSale).length,
     };
   }, [patients, soon, sales]);
 
@@ -137,8 +140,8 @@ function Dashboard({ vet }: { vet: VetProfile }) {
         <Stat
           label="Bugün tahsilat"
           value={formatTL(stats.todayKurus)}
-          hint={`${stats.todayCount} işlem · test modu`}
-          action={{ label: "Test POS'u aç", onPress: openTestPos }}
+          hint={`${stats.todayCount} işlem${stats.trialCount ? ` · ${stats.trialCount} deneme` : ''}`}
+          action={{ label: 'Tahsilat ayarları', onPress: () => router.push('/panel/ayarlar') }}
         />
       </View>
       <View style={{ flexDirection: wide ? 'row' : 'column', gap: wide ? 28 : 32, marginTop: 28, alignItems: 'flex-start' }}>

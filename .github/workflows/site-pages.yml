@@ -47,6 +47,9 @@ jobs:
           IYZICO_API_KEY: ${{ secrets.IYZICO_API_KEY }}
           IYZICO_SECRET_KEY: ${{ secrets.IYZICO_SECRET_KEY }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # İsteğe bağlı: Patiport'un Paraşüt uygulama kimliği (Paraşüt'ten istenir)
+          PARASUT_CLIENT_ID: ${{ secrets.PARASUT_CLIENT_ID }}
+          PARASUT_CLIENT_SECRET: ${{ secrets.PARASUT_CLIENT_SECRET }}
         run: |
           # Kopyala-yapıştırda gelen boşluk, satır sonu ya da Cloudflare'in "test"
           # komutu varsa içinden yalnızca token'ı ve hesap kimliğini al
@@ -71,8 +74,16 @@ jobs:
           npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
           URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
           test -n "$URL"
+          # Kliniklerin anahtarlarını şifreleyen kasa anahtarı Cloudflare'de yalnızca bir kez
+          # üretilir, bir daha değişmez (değişirse bağlı hesaplar açılamaz). Liste
+          # okunamazsa dokunulmaz.
+          NEED_KEY=0
+          if LIST=$(npx --yes wrangler@4 secret list 2>/dev/null); then
+            echo "$LIST" | grep -q '"PAY_ENC_KEY"' || NEED_KEY=1
+          fi
           # Secret'lar dosyaya yalnızca bu adım süresince yazılır
-          node -e 'const e=process.env;require("fs").writeFileSync("s.json",JSON.stringify({IYZICO_API_KEY:e.IYZICO_API_KEY,IYZICO_SECRET_KEY:e.IYZICO_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT:e.FIREBASE_SERVICE_ACCOUNT}))'
+          NEED_KEY=$NEED_KEY node -e 'const e=process.env,c=require("crypto");const o={IYZICO_API_KEY:e.IYZICO_API_KEY,IYZICO_SECRET_KEY:e.IYZICO_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT:e.FIREBASE_SERVICE_ACCOUNT};if(e.NEED_KEY==="1")o.PAY_ENC_KEY=c.randomBytes(32).toString("base64");if(e.PARASUT_CLIENT_ID&&e.PARASUT_CLIENT_SECRET){o.PARASUT_CLIENT_ID=e.PARASUT_CLIENT_ID.trim();o.PARASUT_CLIENT_SECRET=e.PARASUT_CLIENT_SECRET.trim()}require("fs").writeFileSync("s.json",JSON.stringify(o))'
+          [ "$NEED_KEY" = 1 ] && echo "Şifreli kasa anahtarı ilk kez üretildi." || true
           if npx --yes wrangler@4 secret bulk s.json; then rc=0; else rc=1; fi
           rm -f s.json
           test $rc -eq 0

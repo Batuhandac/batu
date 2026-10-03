@@ -1,19 +1,18 @@
-// Panelden POS'a tahsilat. Bir satış clinic_pos/{clinicId}/sales/{id} belgesidir:
-// panel "pending" olarak yazar, POS tarafı sonucu (onay/ret) aynı belgeye yazar,
-// panel belgeyi canlı dinler.
+// Panelden tahsilat. Bir satış clinic_pos/{clinicId}/sales/{id} belgesidir: panel
+// "pending" olarak yazar, sonucu POS, sunucu ya da hekim yazar; panel belgeyi canlı dinler.
 //
-// İki mod:
-//  - "test": POS, panelin /panel/pos sayfasında (başka bir sekmede ya da telefonda)
-//    açılan sanal bir terminaldir; sonucu o terminal yazar.
-//  - "iyzico_test": ödeme sunucusu (server/odeme) iyzico'nun deneme ortamında gerçek
-//    bir ödeme sayfası açar; hasta sahibi telefonundan kartla öder, sonucu sunucu
-//    iyzico'dan doğrulayıp yazar. Para deneme ortamında sahtedir.
-// İkisinde de banka çekimi ve e-SMM yoktur. Gerçek cihaz ya da canlı iyzico
-// hesabı eklenince aynı belge yapısı kullanılır; anahtarlar yalnızca sunucuda durur
-// (docs/HEKIM_YOL_HARITASI.md, aşama 5).
+// Modlar:
+//  - "iyzico": kliniğin kendi iyzico hesabı (Ayarlar'dan bağlanır). Ödeme sunucusu
+//    (server/odeme) ödeme sayfasını açar, para doğrudan kliniğin hesabına geçer.
+//  - "iyzico_test": Patiport'un iyzico deneme hesabı; para sahtedir.
+//  - "cash": nakit; hekim "alındı" yapar.
+//  - "test": panelin sanal POS terminali (/panel/pos).
+// Klinik Paraşüt'ü bağladıysa onaylı tahsilat için e-SMM ya da e-Arşiv kesilir
+// (edoc_* alanlarını yalnızca sunucu yazar). Anahtarlar yalnızca sunucuda durur.
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -27,7 +26,10 @@ import { getDb } from '@/lib/firebase';
 import { getAuthInstance, type VetProfile } from '@/lib/auth';
 
 export type SaleStatus = 'pending' | 'approved' | 'declined' | 'cancelled';
-export type SaleMode = 'test' | 'iyzico_test';
+export type SaleMode = 'test' | 'iyzico_test' | 'iyzico' | 'cash';
+export type EdocStatus = 'issuing' | 'issued' | 'failed';
+export type EdocType = 'e_smm' | 'e_archive' | 'e_invoice';
+const MODES: SaleMode[] = ['test', 'iyzico_test', 'iyzico', 'cash'];
 
 export interface Sale {
   id: string;
@@ -48,6 +50,12 @@ export interface Sale {
   payment_id: string | null;
   card_brand: string | null;
   fail_reason: string | null;
+  pay_env: 'sandbox' | 'live' | null;
+  /** e-SMM / e-Arşiv (sunucu yazar) */
+  edoc_status: EdocStatus | null;
+  edoc_type: EdocType | null;
+  edoc_number: string | null;
+  edoc_error: string | null;
 }
 
 /** Ödeme sunucusunun adresi (web derlemesinde verilir); yoksa iyzico seçeneği gizlenir. */
@@ -72,7 +80,7 @@ function toSale(id: string, d: Record<string, unknown>): Sale {
     patient_id: (d.patient_id as string) ?? null,
     patient_name: (d.patient_name as string) ?? null,
     status: (d.status as SaleStatus) ?? 'pending',
-    mode: d.mode === 'iyzico_test' ? 'iyzico_test' : 'test',
+    mode: MODES.includes(d.mode as SaleMode) ? (d.mode as SaleMode) : 'test',
     created_by: String(d.created_by ?? ''),
     created_ms: ms(d.created_at),
     resolved_ms: ms(d.resolved_at),
@@ -83,6 +91,11 @@ function toSale(id: string, d: Record<string, unknown>): Sale {
     payment_id: typeof d.payment_id === 'string' ? d.payment_id : null,
     card_brand: typeof d.card_brand === 'string' ? d.card_brand : null,
     fail_reason: typeof d.fail_reason === 'string' ? d.fail_reason : null,
+    pay_env: d.pay_env === 'live' ? 'live' : d.pay_env === 'sandbox' ? 'sandbox' : null,
+    edoc_status: d.edoc_status === 'issued' || d.edoc_status === 'issuing' || d.edoc_status === 'failed' ? d.edoc_status : null,
+    edoc_type: d.edoc_type === 'e_smm' || d.edoc_type === 'e_archive' || d.edoc_type === 'e_invoice' ? d.edoc_type : null,
+    edoc_number: typeof d.edoc_number === 'string' ? d.edoc_number : null,
+    edoc_error: typeof d.edoc_error === 'string' ? d.edoc_error : null,
   };
 }
 
@@ -93,7 +106,7 @@ export interface SaleInput {
   patient_name: string | null;
 }
 
-/** Bekleyen satış yazar (test POS'u ya da iyzico için); satış kimliğini döner. */
+/** Bekleyen satış yazar; satış kimliğini döner. */
 export async function createSale(vet: VetProfile, input: SaleInput, mode: SaleMode = 'test'): Promise<string> {
   if (!Number.isSafeInteger(input.amount_kurus) || input.amount_kurus < 100 || input.amount_kurus > MAX_SALE_KURUS) {
     throw new Error('amount');
@@ -155,27 +168,34 @@ export function testAuthCode(rand: () => number = Math.random): string {
   return String(Math.floor(rand() * 1_000_000)).padStart(6, '0');
 }
 
-/** Test POS'unda sonucu yazar (ya da panelden bekleyen satışı iptal eder). */
+/** Test POS'unda ya da nakitte sonucu yazar; panelden bekleyen satışı iptal eder. */
 export async function resolveSale(vet: VetProfile, sale: Sale, status: Exclude<SaleStatus, 'pending'>): Promise<void> {
   await updateDoc(doc(salesCol(vet.clinic_id), sale.id), {
     status,
     resolved_at: serverTimestamp(),
     resolved_by: vet.uid,
-    ...(status === 'approved' ? { card_last4: '4242', auth_code: testAuthCode() } : {}),
+    ...(status === 'approved' && sale.mode === 'test' ? { card_last4: '4242', auth_code: testAuthCode() } : {}),
   });
 }
 
-export type StartPaymentError = 'offline' | 'auth' | 'forbidden' | 'iyzico' | 'server';
+/** Nakit tahsilat: satışı yazıp hemen "alındı" yapar. */
+export async function recordCashSale(vet: VetProfile, input: SaleInput): Promise<string> {
+  const id = await createSale(vet, input, 'cash');
+  await updateDoc(doc(salesCol(vet.clinic_id), id), { status: 'approved', resolved_at: serverTimestamp(), resolved_by: vet.uid });
+  return id;
+}
+
+export type StartPaymentError = 'offline' | 'auth' | 'forbidden' | 'iyzico' | 'not_connected' | 'server';
 
 /** Ödeme sunucusuna hekim adına istek (Firebase oturum belgesiyle). */
-async function callPay(path: string, clinicId: string, saleId: string): Promise<{ ok: boolean; status: number; data: Record<string, unknown> } | null> {
+async function callPay(path: string, body: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: Record<string, unknown> } | null> {
   const user = getAuthInstance()?.currentUser;
   if (!PAY_API_URL || !user) return { ok: false, status: 401, data: {} };
   try {
     const res = await fetch(`${PAY_API_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await user.getIdToken()}` },
-      body: JSON.stringify({ clinicId, saleId }),
+      body: JSON.stringify(body),
     });
     return { ok: res.ok, status: res.status, data: ((await res.json().catch(() => ({}))) as Record<string, unknown>) ?? {} };
   } catch {
@@ -191,12 +211,13 @@ export async function startOnlinePayment(
   clinicId: string,
   saleId: string
 ): Promise<{ url: string } | { error: StartPaymentError; message?: string }> {
-  const r = await callPay('/start', clinicId, saleId);
+  const r = await callPay('/start', { clinicId, saleId });
   if (!r) return { error: 'offline' };
   if (r.ok && typeof r.data.url === 'string') return { url: r.data.url };
   if (r.status === 401) return { error: 'auth' };
   if (r.status === 403) return { error: 'forbidden' };
   if (r.data.error === 'iyzico') return { error: 'iyzico', message: typeof r.data.message === 'string' ? r.data.message : undefined };
+  if (r.data.error === 'not_connected') return { error: 'not_connected' };
   return { error: 'server' };
 }
 
@@ -205,10 +226,125 @@ export async function startOnlinePayment(
  * "alındı" olur ve panel canlı görür; alınmadıysa beklemede kalır.
  */
 export async function checkOnlinePayment(clinicId: string, saleId: string): Promise<{ status: string; message?: string } | { error: StartPaymentError }> {
-  const r = await callPay('/check', clinicId, saleId);
+  const r = await callPay('/check', { clinicId, saleId });
   if (!r) return { error: 'offline' };
   if (r.ok && typeof r.data.status === 'string') return { status: r.data.status, message: typeof r.data.message === 'string' ? r.data.message : undefined };
   if (r.status === 401) return { error: 'auth' };
   if (r.status === 403) return { error: 'forbidden' };
   return { error: 'server' };
+}
+
+// ─── Kliniğin bağlı hesapları ve e-belge ─────────────────────────────────────
+
+export interface ClinicPay {
+  iyzico: { env: 'sandbox' | 'live'; key_hint: string; connected_ms: number } | null;
+  parasut: { company_id: number; company_name: string; status: 'ok' | 'reauth'; connected_ms: number } | null;
+}
+
+/** Bağlantı özeti (anahtar içermez); yalnızca sunucu yazar. */
+export function watchClinicPay(clinicId: string, cb: (p: ClinicPay) => void): () => void {
+  const db = getDb();
+  if (!db) {
+    cb({ iyzico: null, parasut: null });
+    return () => {};
+  }
+  return onSnapshot(
+    doc(db, 'clinic_pay', clinicId),
+    (snap) => {
+      const d = (snap.data() ?? {}) as Record<string, any>;
+      cb({
+        iyzico: d.iyzico ? { env: d.iyzico.env === 'live' ? 'live' : 'sandbox', key_hint: String(d.iyzico.key_hint ?? ''), connected_ms: Number(d.iyzico.connected_ms) || 0 } : null,
+        parasut: d.parasut
+          ? { company_id: Number(d.parasut.company_id), company_name: String(d.parasut.company_name ?? ''), status: d.parasut.status === 'reauth' ? 'reauth' : 'ok', connected_ms: Number(d.parasut.connected_ms) || 0 }
+          : null,
+      });
+    },
+    () => cb({ iyzico: null, parasut: null })
+  );
+}
+
+export interface ClinicSettings {
+  edoc_type: 'e_smm' | 'e_archive';
+  vat_rate: 0 | 1 | 10 | 20;
+  edoc_auto: boolean;
+  edoc_city: string;
+  edoc_district: string;
+}
+export const DEFAULT_SETTINGS: ClinicSettings = { edoc_type: 'e_smm', vat_rate: 20, edoc_auto: true, edoc_city: '', edoc_district: '' };
+
+export async function loadClinicSettings(clinicId: string): Promise<ClinicSettings> {
+  const db = getDb();
+  if (!db) return DEFAULT_SETTINGS;
+  const d = (await getDoc(doc(db, 'clinic_settings', clinicId))).data() as Partial<ClinicSettings> | undefined;
+  return { ...DEFAULT_SETTINGS, ...(d ?? {}) };
+}
+
+export async function saveClinicSettings(vet: VetProfile, s: ClinicSettings): Promise<void> {
+  const db = getDb();
+  if (!db) throw new Error('offline');
+  await setDoc(doc(db, 'clinic_settings', vet.clinic_id), {
+    edoc_type: s.edoc_type,
+    vat_rate: s.vat_rate,
+    edoc_auto: s.edoc_auto,
+    edoc_city: s.edoc_city.trim().slice(0, 40),
+    edoc_district: s.edoc_district.trim().slice(0, 40),
+    updated_by: vet.uid,
+    updated_at: serverTimestamp(),
+  });
+}
+
+export type ConnectError = 'offline' | 'auth' | 'forbidden' | 'invalid_keys' | 'vault' | 'parasut_not_configured' | 'server';
+const errOf = (r: { status: number; data: Record<string, unknown> } | null): ConnectError => {
+  if (!r) return 'offline';
+  if (r.status === 401) return 'auth';
+  if (r.status === 403) return 'forbidden';
+  const e = r.data.error;
+  return e === 'invalid_keys' || e === 'vault' || e === 'parasut_not_configured' ? e : 'server';
+};
+const msgOf = (r: { data: Record<string, unknown> } | null) => (r && typeof r.data.message === 'string' ? r.data.message : undefined);
+
+/** Kliniğin kendi iyzico anahtarlarını dener ve şifreli olarak saklatır. */
+export async function connectIyzico(clinicId: string, apiKey: string, secretKey: string): Promise<{ env: 'sandbox' | 'live' } | { error: ConnectError; message?: string }> {
+  const r = await callPay('/connect/iyzico', { clinicId, apiKey, secretKey });
+  if (r && r.ok) return { env: r.data.env === 'live' ? 'live' : 'sandbox' };
+  return { error: errOf(r), message: msgOf(r) };
+}
+
+export async function disconnectProvider(clinicId: string, provider: 'iyzico' | 'parasut'): Promise<boolean> {
+  const r = await callPay('/disconnect', { clinicId, provider });
+  return Boolean(r && r.ok);
+}
+
+/** Paraşüt giriş sayfasının adresi; hekim orada izin verir, panele geri döner. */
+export async function beginParasut(clinicId: string, returnUrl: string): Promise<{ url: string } | { error: ConnectError }> {
+  const r = await callPay('/connect/parasut/begin', { clinicId, returnUrl });
+  if (r && r.ok && typeof r.data.url === 'string') return { url: r.data.url };
+  return { error: errOf(r) };
+}
+
+/** e-SMM / e-Arşiv keser (onlyIfAuto: yalnızca "kendiliğinden kes" açıksa). */
+export async function issueEdoc(clinicId: string, saleId: string, onlyIfAuto = false): Promise<{ status?: string; message?: string; skipped?: boolean; error?: string }> {
+  const r = await callPay('/edoc/issue', { clinicId, saleId, onlyIfAuto });
+  if (!r) return { error: 'offline' };
+  return r.data as { status?: string; message?: string; skipped?: boolean; error?: string };
+}
+
+export async function edocPdf(clinicId: string, saleId: string): Promise<{ url?: string; pending?: boolean; error?: string }> {
+  const r = await callPay('/edoc/pdf', { clinicId, saleId });
+  if (!r) return { error: 'offline' };
+  return r.data as { url?: string; pending?: boolean; error?: string };
+}
+
+let healthCache: Promise<{ vault: boolean; parasut: boolean } | null> | null = null;
+/** Sunucunun neleri açık: şifreli kasa (kendi iyzico) ve Paraşüt. */
+export function payServerFeatures(): Promise<{ vault: boolean; parasut: boolean } | null> {
+  if (!PAY_API_URL) return Promise.resolve(null);
+  healthCache ??= fetch(`${PAY_API_URL}/health`)
+    .then((r) => r.json())
+    .then((d) => ({ vault: Boolean(d.vault), parasut: Boolean(d.parasut) }))
+    .catch(() => {
+      healthCache = null;
+      return null;
+    });
+  return healthCache;
 }

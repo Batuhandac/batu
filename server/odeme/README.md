@@ -1,7 +1,19 @@
-# Patiport ödeme sunucusu (iyzico, deneme ortamı)
+# Patiport ödeme sunucusu (iyzico ve Paraşüt)
 
-Hekim panelindeki **Tahsilat → Telefondan kartla (iyzico)** seçeneğinin arkasındaki
-küçük sunucu. Cloudflare Workers üzerinde ücretsiz çalışır; kredi kartı istemez.
+Hekim panelindeki **Tahsilat** ve **Ayarlar** sayfalarının arkasındaki küçük sunucu.
+Cloudflare Workers üzerinde ücretsiz çalışır; kredi kartı istemez.
+
+- **Kliniğin kendi iyzico hesabı:** Hekim Ayarlar'da kendi API anahtarlarını girer; sunucu
+  anahtarları iyzico'da dener, şifreleyip saklar. Kartla ödemeler doğrudan kliniğin
+  hesabına geçer. Bağlamamış klinikler Patiport'un deneme hesabıyla dener (para sahte).
+- **Paraşüt:** Hekim "Paraşüt'e bağlan" der, Paraşüt'ün kendi sayfasında izin verir (şifresi
+  bize gelmez). Nakit ve canlı kart tahsilatlarında e-SMM ya da e-Arşiv kendiliğinden
+  kesilir. Deneme ödemelerine belge kesilmez.
+- **Şifreli kasa:** Kliniklerin anahtarları ve Paraşüt oturumları AES-256-GCM ile şifrelenip
+  `clinic_secrets` koleksiyonunda durur; uygulamadan okunamaz. Şifreleme anahtarı
+  (`PAY_ENC_KEY`) yalnızca Cloudflare'de durur, yayın akışı ilk kez rastgele üretir ve
+  bir daha değiştirmez. **Bu secret'ı silmeyin:** silinirse bağlı hesaplar açılamaz,
+  klinikler yeniden bağlamak zorunda kalır.
 
 Ne yapar:
 
@@ -65,17 +77,41 @@ repository secret** ekranına eklenir: https://github.com/Batuhandac/batu/settin
 Reddedilen ödeme için **4129 1111 1111 1111** ("Do not honour"), yetersiz bakiye için
 **4111 1111 1111 1129**. Tam liste: https://docs.iyzico.com/ek-bilgiler/test-kartlari
 
-## Canlıya geçiş (şimdilik değil)
+## Paraşüt'ü açmak (bir kez, yönetici)
 
-- Kliniğin (ya da Patiport'un pazar yeri olarak) iyzico ile sözleşmesi gerekir.
-- `wrangler.toml` içinde `IYZICO_BASE_URL = "https://api.iyzipay.com"`, secret'lara canlı anahtarlar.
-- Ödeme sayfasındaki alıcı bilgileri (ad, kimlik no, e-posta) şu an yer tutucu; canlıda
-  sözleşmeye ve mali müşavir görüşüne göre ele alınmalı. e-SMM ayrı bir adım.
-- Satış modu `iyzico_test` yerine canlı bir mod ve kurallarda karşılığı eklenmeli.
+Paraşüt API'sini kullanmak için Patiport'un bir uygulama kimliği olmalı; Paraşüt bunu
+başvuru üzerine verir.
+
+1. **destek@parasut.com** adresine e-posta: "Patiport adlı veteriner kliniği yazılımımız
+   için API erişimi (client_id ve client_secret) istiyoruz. Kullanıcılarımız kendi Paraşüt
+   hesaplarıyla authorization code akışıyla bağlanacak. Yönlendirme adresi:
+   `https://patiport-odeme.patiport-2e6f12.workers.dev/connect/parasut/callback`"
+2. Gelen değerleri batu deposuna secret olarak ekle: `PARASUT_CLIENT_ID`,
+   `PARASUT_CLIENT_SECRET`.
+3. Actions → **Site → GitHub Pages → Run workflow**. Panelde Ayarlar → Paraşüt kartındaki
+   "Yakında" kalkar, "Paraşüt'e bağlan" düğmesi çıkar.
+
+## Hekim için: kendi iyzico hesabını bağlamak
+
+1. iyzico üye işyeri paneli → **Ayarlar → Firma Ayarları → API Anahtarları**.
+2. Patiport paneli → **Ayarlar → Kartla ödeme: iyzico** → iki anahtarı yapıştır → **Bağla ve dene**.
+3. "Bağlı · Canlı" görünür; bundan sonra hasta kartındaki **Kartla** seçeneği kliniğin
+   hesabını kullanır. "sandbox-" ile başlayan anahtarlar deneme ortamında çalışır.
+
+## Canlıya geçişte dikkat
+
+- Canlı ödemeler kliniğin kendi iyzico sözleşmesiyle olur (Patiport'un deneme hesabı yalnızca
+  deneme içindir; `IYZICO_BASE_URL` sandbox kalmalı).
+- Ödeme sayfasındaki ve e-belgedeki alıcı bilgileri nihai tüketici yer tutucularıdır (kimlik no
+  11111111111); hekim kendi mali müşaviriyle belge türünü ve KDV oranını Ayarlar'da belirler.
 
 ## Geliştirme
 
-- Kod: `src/index.js` (bağımlılık yok). Uçlar: `POST /start`, `POST /callback`, `GET /health`.
+- Kod: `src/` (bağımlılık yok): `index.js` uçlar, `iyzico.js`, `parasut.js`, `vault.js`
+  (şifreli kasa), `firebase.js`, `util.js`.
+- Uçlar: `POST /start`, `POST /callback`, `POST /check`, `POST /connect/iyzico`,
+  `POST /disconnect`, `POST /connect/parasut/begin`, `GET /connect/parasut/callback`,
+  `POST /edoc/issue`, `POST /edoc/pdf`, `GET /health`.
 - Satış belgesi: `clinic_pos/{clinicId}/sales/{saleId}`; kurallar `firestore.rules`.
 - Hekim oturumu (Firebase ID token) Google'ın açık anahtarlarıyla sunucuda doğrulanır.
 - Testte `FIRESTORE_URL`, `AUTH_URL`, `DEV_BEARER` ve `JWKS_URL` ile emülatöre ve sahte anahtarlara bağlanır.

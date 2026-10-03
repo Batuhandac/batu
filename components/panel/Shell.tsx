@@ -51,10 +51,12 @@ function TopBar({ vet }: { vet: VetProfile }) {
   const inlineNav = width >= 640;
   const path = usePathname();
   const onPos = path.endsWith('/panel/pos');
+  const onSettings = path.endsWith('/panel/ayarlar');
   const nav = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <NavLink label="Hastalar" active={!onPos} onPress={() => router.replace('/panel')} />
+      <NavLink label="Hastalar" active={!onPos && !onSettings} onPress={() => router.replace('/panel')} />
       <NavLink label="Test POS" active={onPos} onPress={() => router.replace('/panel/pos')} />
+      <NavLink label="Ayarlar" active={onSettings} onPress={() => router.replace('/panel/ayarlar')} />
     </View>
   );
   return (

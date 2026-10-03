@@ -156,13 +156,14 @@ sonuç hasta kartında kendiliğinden görünür. Bankadan çekim yapılmaz, e-S
 Satış belgeleri silinemez (kural gereği); gerekirse Console'dan sen silersin. Bu özellik
 için `firestore.rules` dosyasının güncel hâlini Firebase'e yeniden yayınla.
 
-**Telefondan kartla ödeme (iyzico deneme ortamı).** Aynı Tahsilat kutusunda ikinci bir
-seçenek: panel iyzico'nun gerçek ödeme sayfasını açar, QR'ı hasta sahibi telefonuyla okutup
-kartla öder, sonuç panele kendiliğinden düşer. Deneme ortamında para sahtedir. Bunun için
-küçük bir ödeme sunucusu (Cloudflare Worker, ücretsiz) gerekir; kurulumu
-`server/odeme/README.md` anlatır (iyzico deneme hesabı, Firebase hizmet hesabı ve
-Cloudflare anahtarları GitHub secret olarak eklenir). Secret'lar eklenmeden panelde bu
-seçenek görünmez.
+**Kartla ödeme, nakit ve e-belge.** Tahsilat kutusunda üç yöntem var: **Kartla** (hasta
+sahibi QR'ı okutup iyzico sayfasında öder), **Nakit** ve **Sanal POS (test)**. Hekim panelin
+**Ayarlar** sayfasında kendi iyzico hesabını bağlarsa kartla ödemeler doğrudan kliniğin
+hesabına geçer; bağlamazsa Patiport'un iyzico deneme hesabı kullanılır (para sahte). Paraşüt
+bağlıysa nakit ve canlı kart tahsilatlarında e-SMM ya da e-Arşiv kendiliğinden kesilir.
+Kurulum, Paraşüt başvurusu ve şifreli kasa: `server/odeme/README.md`. Yönetici olarak
+`clinic_pay` koleksiyonunda hangi kliniğin neyi bağladığını görürsün; anahtarlar
+`clinic_secrets` içinde şifrelidir, Console'da bile okunamaz.
 
 ## 7. Topluluk ve şikayetler (`content_reports`)
 

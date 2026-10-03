@@ -1,60 +1,104 @@
-// Patiport ödeme sunucusu (Cloudflare Worker): hekim panelinden kartla tahsilat.
+// Patiport ödeme sunucusu (Cloudflare Worker): hekim panelinden tahsilat ve e-belge.
 //
-// Akış:
-//  1. Panel satış belgesini yazar: clinic_pos/{clinicId}/sales/{saleId},
-//     status "pending", mode "iyzico_test".
-//  2. Panel POST /start çağırır (Authorization: Bearer <Firebase ID token>).
-//     Sunucu hekimi doğrular, tutarı belgeden okur (istekten değil), iyzico ödeme
-//     formunu başlatır; ödeme sayfası adresini belgeye yazar ve panele döner.
-//  3. Hasta sahibi sayfayı telefonunda açıp kartla öder (3D Secure dahil).
-//  4. iyzico tarayıcıyı POST /callback?c=…&s=…'ye yollar (form alanı: token). Sunucu
-//     token'ın o satışa ait olduğunu kontrol eder, sonucu iyzico'ya kendisi sorar ve
-//     satış belgesine yazar; panel canlı dinlediği için sonuç anında görünür.
-//     Ödeyene sade bir sonuç sayfası gösterilir.
-//  5. Dönüş kaçarsa (ödeyen sayfayı erken kapatırsa) panel POST /check ile sunucuya
-//     iyzico'dan yeniden sordurur; ödeme alındıysa kayıt "alındı" olur.
+// Tahsilat akışı:
+//  1. Panel satış belgesini yazar: clinic_pos/{clinicId}/sales/{saleId}, status "pending",
+//     mode "iyzico" (kliniğin kendi iyzico hesabı) ya da "iyzico_test" (Patiport'un deneme
+//     hesabı).
+//  2. Panel POST /start çağırır. Sunucu hekimi doğrular, tutarı belgeden okur (istekten
+//     değil), doğru hesabın anahtarlarıyla iyzico ödeme formunu başlatır ve sayfa adresini
+//     belgeye yazar.
+//  3. Hasta sahibi QR'ı okutup kartla öder (3D Secure dahil); para kliniğin kendi iyzico
+//     hesabına geçer.
+//  4. iyzico tarayıcıyı POST /callback?c=…&s=…'ye yollar (form: token). Sunucu token'ın o
+//     satışa ait olduğunu kontrol eder, sonucu iyzico'ya kendisi sorar ve belgeye yazar.
+//  5. Dönüş kaçarsa panel POST /check ile yeniden sordurur.
+//  6. Klinik Paraşüt'ü bağladıysa ve "kendiliğinden kes" açıksa e-SMM ya da e-Arşiv kesilir
+//     (POST /edoc/issue elle de çağrılabilir; nakit tahsilatlar için de).
 //
-// Anahtarlar yalnızca burada (Cloudflare secret) durur, tarayıcıya hiç gitmez.
-// Firestore'a hizmet hesabıyla yazılır; bu yazımlar güvenlik kurallarına takılmaz,
-// bu yüzden her adımda sahiplik ve tutar burada ayrıca kontrol edilir.
+// Hesap bağlama: POST /connect/iyzico (anahtarlar denenir, şifreli kasaya yazılır),
+// POST /connect/parasut/begin + GET /connect/parasut/callback (Paraşüt'te oturum açılır,
+// şifre bize gelmez), POST /disconnect.
 //
-// Ortam değişkenleri (wrangler.toml [vars] ve secret'lar):
-//   IYZICO_API_KEY, IYZICO_SECRET_KEY   secret; sandbox anahtarları "sandbox-" ile başlar
-//   IYZICO_BASE_URL                     https://sandbox-api.iyzipay.com (canlı: https://api.iyzipay.com)
+// Anahtarlar tarayıcıya hiç gitmez. Firestore'a hizmet hesabıyla yazılır; bu yazımlar
+// güvenlik kurallarına takılmaz, bu yüzden her uçta sahiplik ayrıca kontrol edilir.
+//
+// Ortam değişkenleri:
+//   IYZICO_API_KEY, IYZICO_SECRET_KEY   secret; Patiport'un iyzico deneme hesabı
+//   IYZICO_BASE_URL                     deneme hesabının adresi (sandbox)
 //   FIREBASE_SERVICE_ACCOUNT            secret; Firebase hizmet hesabı JSON'u
-//   FIREBASE_PROJECT_ID
-//   ALLOWED_ORIGINS                     virgülle ayrılmış panel adresleri (CORS)
-//   Yalnızca testte: FIRESTORE_URL, AUTH_URL, DEV_BEARER (emülatöre bağlanmak için),
-//                    JWKS_URL (oturum anahtarlarını sahte sunucudan almak için)
+//   PAY_ENC_KEY                         secret; şifreli kasa anahtarı (yayında ilk kez üretilir)
+//   PARASUT_CLIENT_ID, _SECRET          secret; Patiport'un Paraşüt uygulama kimliği (isteğe bağlı)
+//   FIREBASE_PROJECT_ID, ALLOWED_ORIGINS
+//   Yalnızca testte: FIRESTORE_URL, AUTH_URL, DEV_BEARER, JWKS_URL, IYZICO_CLINIC_URL,
+//                    PARASUT_URL, PARASUT_POLL_MS
+import { corsHeaders, defer, istanbulDate, json, page, randomId, redirect, safeReturnUrl, str } from './util.js';
+import { createDoc, deleteDoc, getDoc, PreconditionFailed, updateDoc, verifyIdToken } from './firebase.js';
+import { open, seal, vaultReady } from './vault.js';
+import { clinicCreds, demoCreds, envOfKey, formatPrice, initializeCheckout, retrieveCheckout, validateKeys } from './iyzico.js';
+import { authorizeUrl, companies, documentPdf, exchangeCode, issueDocument, ParasutError, parasutConfigured, refreshTokens } from './parasut.js';
 
-const SALES_MODE = 'iyzico_test';
+export { formatPrice, iyzicoAuth } from './iyzico.js';
+export { signJwt, verifyIdToken } from './firebase.js';
+export { seal, open } from './vault.js';
+export { netOfVat } from './parasut.js';
+
+const ONLINE_MODES = ['iyzico', 'iyzico_test'];
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    const route = `${request.method} ${url.pathname}`;
     try {
-      if (url.pathname === '/start' && request.method === 'POST') return await start(request, env, url, cors);
-      if (url.pathname === '/callback' && request.method === 'POST') return await callback(request, env, url);
-      if (url.pathname === '/check' && request.method === 'POST') return await check(request, env, cors);
-      if (url.pathname === '/health') {
-        return json({ ok: true, sandbox: isSandbox(env), configured: Boolean(env.IYZICO_API_KEY && env.IYZICO_SECRET_KEY && env.FIREBASE_SERVICE_ACCOUNT) }, 200, cors);
+      switch (route) {
+        case 'POST /start':
+          return await start(request, env, url, cors);
+        case 'POST /callback':
+          return await callback(request, env, url, ctx);
+        case 'POST /check':
+          return await check(request, env, cors, ctx);
+        case 'POST /connect/iyzico':
+          return await connectIyzico(request, env, cors);
+        case 'POST /disconnect':
+          return await disconnect(request, env, cors);
+        case 'POST /connect/parasut/begin':
+          return await parasutBegin(request, env, url, cors);
+        case 'GET /connect/parasut/callback':
+          return await parasutCallback(env, url);
+        case 'POST /edoc/issue':
+          return await edocIssue(request, env, cors);
+        case 'POST /edoc/pdf':
+          return await edocPdf(request, env, cors);
+        case 'GET /health':
+          return json(
+            {
+              ok: true,
+              sandbox: (env.IYZICO_BASE_URL || '').includes('sandbox'),
+              configured: Boolean(env.IYZICO_API_KEY && env.IYZICO_SECRET_KEY && env.FIREBASE_SERVICE_ACCOUNT),
+              vault: vaultReady(env),
+              parasut: parasutConfigured(env),
+            },
+            200,
+            cors
+          );
+        default:
+          return json({ error: 'not_found' }, 404, cors);
       }
-      return json({ error: 'not_found' }, 404, cors);
     } catch (e) {
       console.error('odeme', e && e.stack ? e.stack : String(e));
       // Ödeyen kişi ham hata değil, sade bir sayfa görsün
       if (url.pathname === '/callback') return page(false, 'Sonuç kaydedilemedi. Ödemeniz alındıysa klinik panelinde görünecektir.');
+      if (url.pathname === '/connect/parasut/callback') return page(false, 'Paraşüt bağlantısı tamamlanamadı. Panelden yeniden deneyin.', 'Paraşüt bağlanamadı');
       return json({ error: 'server_error' }, 500, cors);
     }
   },
 };
 
-// ─── /start ──────────────────────────────────────────────────────────────────
+// ─── Hekim isteği ────────────────────────────────────────────────────────────
 
-/** Panel isteği: hekimi doğrular, klinik ve satış kimliğini döner (ya da hata yanıtı). */
-async function vetRequest(request, env, cors) {
+/** Hekimi doğrular; klinik (ve istenirse satış) kimliğini döner ya da hata yanıtı. */
+async function authVet(request, env, cors, { needSale = false } = {}) {
   const idToken = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
   if (!idToken) return { res: json({ error: 'auth' }, 401, cors) };
   let body;
@@ -64,19 +108,63 @@ async function vetRequest(request, env, cors) {
     return { res: json({ error: 'bad_request' }, 400, cors) };
   }
   const clinicId = str(body.clinicId, 1, 200);
-  const saleId = str(body.saleId, 1, 100);
-  if (!clinicId || !saleId || /[/]/.test(clinicId + saleId)) return { res: json({ error: 'bad_request' }, 400, cors) };
+  const saleId = needSale ? str(body.saleId, 1, 100) : null;
+  if (!clinicId || (needSale && !saleId) || /[/]/.test(clinicId + (saleId || ''))) return { res: json({ error: 'bad_request' }, 400, cors) };
 
   const uid = await verifyIdToken(env, idToken);
   if (!uid) return { res: json({ error: 'auth' }, 401, cors) };
-
   const vet = await getDoc(env, `vets/${uid}`);
   if (!vet || vet.data.clinic_id !== clinicId) return { res: json({ error: 'forbidden' }, 403, cors) };
-  return { uid, vet, clinicId, saleId };
+  return { uid, vet, clinicId, saleId, body };
 }
 
+// ─── Kliniğin iyzico hesabı ──────────────────────────────────────────────────
+
+async function clinicIyzico(env, clinicId) {
+  if (!vaultReady(env)) return null;
+  const sec = await getDoc(env, `clinic_secrets/${clinicId}`);
+  if (!sec || !sec.data.iyzico) return null;
+  const k = await open(env, sec.data.iyzico, `${clinicId}:iyzico`);
+  return clinicCreds(env, k.apiKey, k.secretKey);
+}
+
+/** Satışın hangi hesapla yürüyeceği: kliniğin kendi hesabı ya da Patiport'un deneme hesabı. */
+async function credsForSale(env, clinicId, sale) {
+  return sale.data.mode === 'iyzico' ? clinicIyzico(env, clinicId) : demoCreds(env);
+}
+
+async function connectIyzico(request, env, cors) {
+  const v = await authVet(request, env, cors);
+  if (v.res) return v.res;
+  if (!vaultReady(env)) return json({ error: 'vault' }, 503, cors);
+  const apiKey = str(typeof v.body.apiKey === 'string' ? v.body.apiKey.trim() : null, 8, 200);
+  const secretKey = str(typeof v.body.secretKey === 'string' ? v.body.secretKey.trim() : null, 8, 200);
+  if (!apiKey || !secretKey || /\s/.test(apiKey + secretKey)) return json({ error: 'bad_request' }, 400, cors);
+
+  const checked = await validateKeys(clinicCreds(env, apiKey, secretKey));
+  if (!checked.ok) return json({ error: 'invalid_keys', message: checked.message }, 400, cors);
+
+  await updateDoc(env, `clinic_secrets/${v.clinicId}`, { iyzico: await seal(env, { apiKey, secretKey }, `${v.clinicId}:iyzico`) });
+  const info = { env: envOfKey(apiKey), key_hint: apiKey.slice(-4), connected_ms: Date.now(), connected_by: v.uid };
+  await updateDoc(env, `clinic_pay/${v.clinicId}`, { iyzico: info });
+  return json({ ok: true, ...info }, 200, cors);
+}
+
+async function disconnect(request, env, cors) {
+  const v = await authVet(request, env, cors);
+  if (v.res) return v.res;
+  const provider = v.body.provider;
+  if (provider !== 'iyzico' && provider !== 'parasut') return json({ error: 'bad_request' }, 400, cors);
+  // Değeri undefined olan alan silinir
+  await updateDoc(env, `clinic_secrets/${v.clinicId}`, { [provider]: undefined });
+  await updateDoc(env, `clinic_pay/${v.clinicId}`, { [provider]: undefined });
+  return json({ ok: true }, 200, cors);
+}
+
+// ─── Kartla tahsilat ─────────────────────────────────────────────────────────
+
 async function start(request, env, url, cors) {
-  const v = await vetRequest(request, env, cors);
+  const v = await authVet(request, env, cors, { needSale: true });
   if (v.res) return v.res;
   const { uid, vet, clinicId, saleId } = v;
 
@@ -84,14 +172,17 @@ async function start(request, env, url, cors) {
   const sale = await getDoc(env, salePath);
   if (!sale) return json({ error: 'not_found' }, 404, cors);
   const s = sale.data;
-  if (s.created_by !== uid || s.mode !== SALES_MODE) return json({ error: 'forbidden' }, 403, cors);
+  if (s.created_by !== uid || !ONLINE_MODES.includes(s.mode)) return json({ error: 'forbidden' }, 403, cors);
   if (s.status !== 'pending') return json({ error: 'not_pending' }, 409, cors);
   if (s.pay_url) return json({ url: s.pay_url }, 200, cors); // aynı satış için ikinci çağrı
+
+  const creds = await credsForSale(env, clinicId, sale);
+  if (!creds) return json({ error: 'not_connected' }, 409, cors);
 
   const kurus = Number(s.amount_kurus);
   if (!Number.isInteger(kurus) || kurus < 100) return json({ error: 'bad_amount' }, 400, cors);
   const price = formatPrice(kurus);
-  const owner = splitName();
+  const place = vet.data.clinic_name || 'Veteriner kliniği';
 
   const req = {
     locale: 'tr',
@@ -101,34 +192,21 @@ async function start(request, env, url, cors) {
     paymentGroup: 'PRODUCT',
     buyer: {
       id: `patiport-${uid.slice(0, 20)}`,
-      name: owner.name,
-      surname: owner.surname,
+      name: 'Hasta',
+      surname: 'Sahibi',
       // Kimlik ve iletişim bilgisi toplamıyoruz; iyzico alanları zorunlu tuttuğu için
-      // yer tutucu gönderilir. Canlıya geçerken ödeme sözleşmesine göre yeniden ele alınacak.
+      // nihai tüketici yer tutucuları gönderilir.
       identityNumber: '11111111111',
       email: 'odeme@example.com',
       gsmNumber: '+905000000000',
-      registrationAddress: vet.data.clinic_name || 'Veteriner kliniği',
+      registrationAddress: place,
       city: 'Türkiye',
       country: 'Turkey',
       ip: request.headers.get('CF-Connecting-IP') || '85.34.78.112',
     },
-    billingAddress: {
-      contactName: `${owner.name} ${owner.surname}`,
-      city: 'Türkiye',
-      country: 'Turkey',
-      address: vet.data.clinic_name || 'Veteriner kliniği',
-    },
-    basketItems: [
-      {
-        id: saleId,
-        name: (s.description || 'Veteriner hizmeti').slice(0, 120),
-        category1: 'Veteriner hizmeti',
-        itemType: 'VIRTUAL',
-        price,
-      },
-    ],
-    // Satış, dönüş adresinden bulunur (iyzico'nun sorgu yanıtındaki conversationId o
+    billingAddress: { contactName: 'Hasta Sahibi', city: 'Türkiye', country: 'Turkey', address: place },
+    basketItems: [{ id: saleId, name: (s.description || 'Veteriner hizmeti').slice(0, 120), category1: 'Veteriner hizmeti', itemType: 'VIRTUAL', price }],
+    // Satış dönüş adresinden bulunur (iyzico'nun sorgu yanıtındaki conversationId o
     // sorgunun kendi değerini yansıtır, başlatmadakini değil)
     callbackUrl: `${url.origin}/callback?c=${encodeURIComponent(clinicId)}&s=${encodeURIComponent(saleId)}`,
     currency: 'TRY',
@@ -136,27 +214,24 @@ async function start(request, env, url, cors) {
     enabledInstallments: [1],
   };
 
-  const r = await iyzico(env, '/payment/iyzipos/checkoutform/initialize/auth/ecom', req);
+  const r = await initializeCheckout(creds, req);
   if (r.status !== 'success' || !r.token || !r.paymentPageUrl) {
     console.error('iyzico initialize', r.errorCode, r.errorMessage);
     return json({ error: 'iyzico', message: r.errorMessage || null }, 502, cors);
   }
   const expiresMs = Date.now() + (Number(r.tokenExpireTime) || 1800) * 1000;
-  await commit(env, salePath, { pay_token: r.token, pay_url: r.paymentPageUrl, pay_expires_ms: expiresMs }, [], sale.updateTime);
+  await updateDoc(
+    env,
+    salePath,
+    { pay_token: r.token, pay_url: r.paymentPageUrl, pay_expires_ms: expiresMs, pay_env: s.mode === 'iyzico' ? envOfKey(creds.apiKey) : 'sandbox' },
+    { precondition: { updateTime: sale.updateTime } }
+  );
   return json({ url: r.paymentPageUrl, expires_ms: expiresMs }, 200, cors);
-}
-
-// ─── /callback ve /check ─────────────────────────────────────────────────────
-
-/** iyzico'ya bu token'ın sonucunu sorar. */
-function retrieve(env, token, saleId) {
-  return iyzico(env, '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', conversationId: saleId || undefined, token });
 }
 
 /**
  * iyzico sonucunu satış belgesine işler. final: iyzico formun bittiğini bildirdi
- * (geri dönüş); yalnızca o zaman başarısız sonuç "olmadı" olarak yazılır. Kontrol
- * isteğinde ödeme tamamlanmamışsa satış beklemede kalır.
+ * (geri dönüş); yalnızca o zaman başarısız sonuç "olmadı" olarak yazılır.
  */
 async function settle(env, salePath, sale, r, final) {
   const s = sale.data;
@@ -183,11 +258,11 @@ async function settle(env, salePath, sale, r, final) {
         resolved_by: 'iyzico',
         fail_reason: str(r.errorMessage, 1, 200) || (amountOk ? 'Ödeme tamamlanmadı' : 'Tutar uyuşmadı'),
       };
-  await commit(env, salePath, fields, ['resolved_at'], sale.updateTime);
+  await updateDoc(env, salePath, fields, { serverTime: ['resolved_at'], precondition: { updateTime: sale.updateTime } });
   return ok ? { status: 'approved', message: 'Ödemeniz alındı. Bu sayfayı kapatabilirsiniz.' } : { status: 'declined', message: fields.fail_reason };
 }
 
-async function callback(request, env, url) {
+async function callback(request, env, url, ctx) {
   const form = await request.formData().catch(() => null);
   const token = form && typeof form.get('token') === 'string' ? form.get('token') : '';
   if (!token || token.length > 200) return page(false, 'Ödeme bilgisi alınamadı.');
@@ -196,8 +271,8 @@ async function callback(request, env, url) {
   let saleId = str(url.searchParams.get('s'), 1, 100);
   let r = null;
   if (!clinicId || !saleId) {
-    // Eski biçimli dönüş adresi: satışı iyzico'nun yanıtındaki sepet bilgisinden bul
-    r = await retrieve(env, token);
+    // Eski biçimli dönüş adresi (yalnızca deneme hesabıyla açılmış ödemeler)
+    r = await retrieveCheckout(demoCreds(env), token);
     clinicId = str(r.basketId, 1, 200);
     saleId = str(r.itemTransactions && r.itemTransactions[0] && r.itemTransactions[0].itemId, 1, 100);
   }
@@ -209,248 +284,207 @@ async function callback(request, env, url) {
   if (!sale || sale.data.pay_token !== token) return page(false, 'Ödeme bulunamadı.');
 
   // Sonucu tarayıcıdan gelen veriye değil, iyzico'ya kendimiz sorarak öğreniriz
-  if (!r) r = await retrieve(env, token, saleId);
+  if (!r || sale.data.mode === 'iyzico') {
+    const creds = await credsForSale(env, clinicId, sale);
+    if (!creds) return page(false, 'Klinik ödeme hesabı bağlı değil. Ödemeniz alındıysa klinik panelinde görünecektir.');
+    r = await retrieveCheckout(creds, token, saleId);
+  }
   const out = await settle(env, salePath, sale, r, true);
+  if (out.status === 'approved') await defer(ctx, issueEdoc(env, clinicId, saleId, { onlyIfAuto: true }));
   return page(out.status === 'approved', out.message);
 }
 
-async function check(request, env, cors) {
-  const v = await vetRequest(request, env, cors);
+async function check(request, env, cors, ctx) {
+  const v = await authVet(request, env, cors, { needSale: true });
   if (v.res) return v.res;
   const salePath = `clinic_pos/${v.clinicId}/sales/${v.saleId}`;
   const sale = await getDoc(env, salePath);
   if (!sale) return json({ error: 'not_found' }, 404, cors);
-  if (sale.data.mode !== SALES_MODE) return json({ error: 'forbidden' }, 403, cors);
+  if (!ONLINE_MODES.includes(sale.data.mode)) return json({ error: 'forbidden' }, 403, cors);
   if (sale.data.status === 'approved' || !sale.data.pay_token) return json({ status: sale.data.status }, 200, cors);
-  const r = await retrieve(env, sale.data.pay_token, v.saleId);
+  const creds = await credsForSale(env, v.clinicId, sale);
+  if (!creds) return json({ error: 'not_connected' }, 409, cors);
+  const r = await retrieveCheckout(creds, sale.data.pay_token, v.saleId);
   const out = await settle(env, salePath, sale, r, false);
+  if (out.status === 'approved') await defer(ctx, issueEdoc(env, v.clinicId, v.saleId, { onlyIfAuto: true }));
   return json(out, 200, cors);
 }
 
-// ─── iyzico ──────────────────────────────────────────────────────────────────
+// ─── Paraşüt bağlantısı ──────────────────────────────────────────────────────
 
-function isSandbox(env) {
-  return (env.IYZICO_BASE_URL || '').includes('sandbox');
+const callbackUri = (url) => `${url.origin}/connect/parasut/callback`;
+
+function withQuery(base, params) {
+  const u = new URL(base);
+  for (const [k, val] of Object.entries(params)) u.searchParams.set(k, val);
+  return u.toString();
 }
 
-/** iyzico fiyat biçimi (resmî kütüphaneyle aynı): 1250 → "1250.0", 1250.5 → "1250.5" */
-export function formatPrice(kurus) {
-  const s = String(parseFloat((kurus / 100).toFixed(2)));
-  return s.includes('.') ? s : `${s}.0`;
-}
-
-/** IYZWSv2 yetkilendirme başlığı: HMAC-SHA256(rnd + yol + gövde) hex, sonra base64. */
-export async function iyzicoAuth(apiKey, secretKey, path, bodyText, rnd) {
-  const sig = await hmacHex(secretKey, rnd + path + bodyText);
-  return `IYZWSv2 ${btoa(`apiKey:${apiKey}&randomKey:${rnd}&signature:${sig}`)}`;
-}
-
-async function iyzico(env, path, body) {
-  const bodyText = JSON.stringify(body);
-  const rnd = `${Date.now()}${Math.random().toString(8).slice(2, 10)}`;
-  const res = await fetch((env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com') + path, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'x-iyzi-rnd': rnd,
-      Authorization: await iyzicoAuth(env.IYZICO_API_KEY, env.IYZICO_SECRET_KEY, path, bodyText, rnd),
-    },
-    body: bodyText,
+async function parasutBegin(request, env, url, cors) {
+  const v = await authVet(request, env, cors);
+  if (v.res) return v.res;
+  if (!parasutConfigured(env)) return json({ error: 'parasut_not_configured' }, 503, cors);
+  if (!vaultReady(env)) return json({ error: 'vault' }, 503, cors);
+  const state = randomId(24);
+  await createDoc(env, `oauth_states/${state}`, {
+    provider: 'parasut',
+    clinic_id: v.clinicId,
+    uid: v.uid,
+    exp_ms: Date.now() + 10 * 60 * 1000,
+    return_url: safeReturnUrl(env, v.body.returnUrl),
   });
-  return res.json().catch(() => ({ status: 'failure', errorMessage: `HTTP ${res.status}` }));
+  return json({ url: authorizeUrl(env, callbackUri(url), state) }, 200, cors);
 }
 
-async function hmacHex(secret, text) {
-  const key = await crypto.subtle.importKey('raw', enc(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc(text)));
-  return [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+async function parasutCallback(env, url) {
+  const state = str(url.searchParams.get('state'), 10, 100);
+  const st = state ? await getDoc(env, `oauth_states/${state}`) : null;
+  if (!st || st.data.provider !== 'parasut') return page(false, 'Bu bağlantı isteği bulunamadı ya da kullanılmış. Panelden yeniden deneyin.', 'Paraşüt bağlanamadı');
+  await deleteDoc(env, `oauth_states/${state}`); // tek kullanımlık
+  const back = st.data.return_url;
+  const fail = (msg) => (back ? redirect(withQuery(back, { parasut: 'error', reason: msg })) : page(false, msg, 'Paraşüt bağlanamadı'));
+  if (!(st.data.exp_ms > Date.now())) return fail('Süre doldu, yeniden deneyin.');
+  const code = str(url.searchParams.get('code'), 1, 1000);
+  if (url.searchParams.get('error') || !code) return fail('Paraşüt izni verilmedi.');
 
-// ─── Firebase ────────────────────────────────────────────────────────────────
+  const clinicId = st.data.clinic_id;
+  const vet = await getDoc(env, `vets/${st.data.uid}`);
+  if (!vet || vet.data.clinic_id !== clinicId) return fail('Bu klinik adına bağlama yetkiniz görünmüyor.');
 
-/**
- * Firebase ID token'ını doğrular; geçerliyse kullanıcı kimliğini (uid) döner.
- * İmza Google'ın açık anahtarlarıyla (RS256) burada kontrol edilir; web API anahtarına
- * ihtiyaç yoktur. Yalnızca emülatör testinde (AUTH_URL) Auth emülatörüne sorulur.
- */
-export async function verifyIdToken(env, idToken) {
-  if (env.AUTH_URL) {
-    const res = await fetch(`${env.AUTH_URL}/v1/accounts:lookup?key=emulator`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
-    const d = res.ok ? await res.json().catch(() => null) : null;
-    const u = d && d.users && d.users[0];
-    return u && typeof u.localId === 'string' ? u.localId : null;
-  }
-  const parts = idToken.split('.');
-  if (parts.length !== 3) return null;
-  let header, claims;
+  let tokens, list;
   try {
-    header = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[0])));
-    claims = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[1])));
-  } catch {
-    return null;
+    tokens = await exchangeCode(env, code, callbackUri(url));
+    list = await companies(env, tokens.access_token);
+  } catch (e) {
+    return fail(e instanceof ParasutError ? e.message : 'Paraşüt ile bağlantı kurulamadı.');
   }
-  if (header.alg !== 'RS256' || typeof header.kid !== 'string') return null;
-  const now = Math.floor(Date.now() / 1000);
-  const project = env.FIREBASE_PROJECT_ID;
-  if (claims.aud !== project || claims.iss !== `https://securetoken.google.com/${project}`) return null;
-  if (typeof claims.sub !== 'string' || !claims.sub || claims.sub.length > 128) return null;
-  if (!(claims.exp > now) || !(claims.iat <= now + 300) || !(claims.auth_time <= now + 300)) return null;
-  const jwk = (await googleKeys(env)).find((k) => k.kid === header.kid);
-  if (!jwk) return null;
-  const key = await crypto.subtle.importKey('jwk', { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: 'RS256', ext: true }, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-  const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlDecode(parts[2]), enc(`${parts[0]}.${parts[1]}`));
-  return valid ? claims.sub : null;
-}
-
-let cachedKeys = null; // { keys, exp }
-async function googleKeys(env) {
-  if (cachedKeys && cachedKeys.exp > Date.now()) return cachedKeys.keys;
-  const res = await fetch(env.JWKS_URL || 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com');
-  const d = await res.json();
-  const maxAge = Number(/max-age=(\d+)/.exec(res.headers.get('Cache-Control') || '')?.[1] || 3600);
-  cachedKeys = { keys: Array.isArray(d.keys) ? d.keys : [], exp: Date.now() + Math.min(maxAge, 6 * 3600) * 1000 };
-  return cachedKeys.keys;
-}
-
-let cachedToken = null; // { token, exp }
-
-/** Hizmet hesabıyla Google OAuth erişim belirteci (Firestore için), ~1 saat önbellekte. */
-async function accessToken(env) {
-  if (env.DEV_BEARER) return env.DEV_BEARER;
-  if (cachedToken && cachedToken.exp > Date.now() + 60_000) return cachedToken.token;
-  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-  const now = Math.floor(Date.now() / 1000);
-  const jwt = await signJwt(
-    { alg: 'RS256', typ: 'JWT' },
-    { iss: sa.client_email, scope: 'https://www.googleapis.com/auth/datastore', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 },
-    sa.private_key
-  );
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${jwt}`,
+  if (!list.length) return fail('Paraşüt hesabınızda firma bulunamadı.');
+  const company = list[0];
+  await updateDoc(env, `clinic_secrets/${clinicId}`, { parasut: await seal(env, { ...tokens, company_id: company.id }, `${clinicId}:parasut`) });
+  await updateDoc(env, `clinic_pay/${clinicId}`, {
+    parasut: { company_id: company.id, company_name: company.name, companies: list.length, connected_ms: Date.now(), connected_by: st.data.uid, status: 'ok' },
   });
-  const d = await res.json();
-  if (!d.access_token) throw new Error(`oauth: ${d.error || res.status}`);
-  cachedToken = { token: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000 };
-  return cachedToken.token;
+  return back ? redirect(withQuery(back, { parasut: 'ok' })) : page(true, 'Paraşüt bağlandı. Bu sayfayı kapatabilirsiniz.', 'Paraşüt bağlandı');
 }
 
-export async function signJwt(header, claims, pem) {
-  const der = Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
-  const input = `${b64url(enc(JSON.stringify(header)))}.${b64url(enc(JSON.stringify(claims)))}`;
-  const sig = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, enc(input)));
-  return `${input}.${b64url(sig)}`;
+/** Geçerli Paraşüt erişim belirteci; süresi dolduysa yeniler ve yenisini saklar. */
+async function parasutAccess(env, clinicId) {
+  const path = `clinic_secrets/${clinicId}`;
+  const aad = `${clinicId}:parasut`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const sec = await getDoc(env, path);
+    if (!sec || !sec.data.parasut) throw new ParasutError('Paraşüt bağlı değil.', 409);
+    const t = await open(env, sec.data.parasut, aad);
+    if (t.access_token && t.access_exp_ms > Date.now() + 120_000) return t;
+    let fresh;
+    try {
+      fresh = await refreshTokens(env, t.refresh_token);
+    } catch (e) {
+      if (!(e instanceof ParasutError) || !e.reauth) throw e;
+      // Başka bir istek az önce yenilemiş olabilir (yenileme belirteci her seferinde değişir)
+      const again = await getDoc(env, path);
+      if (again && again.data.parasut !== sec.data.parasut) continue;
+      const payDoc = await getDoc(env, `clinic_pay/${clinicId}`).catch(() => null);
+      if (payDoc && payDoc.data.parasut) await updateDoc(env, `clinic_pay/${clinicId}`, { parasut: { ...payDoc.data.parasut, status: 'reauth' } }).catch(() => {});
+      throw new ParasutError('Paraşüt oturumu sona erdi; Ayarlar\'dan yeniden bağlayın.', 401, true);
+    }
+    const next = { ...t, ...fresh, refresh_token: fresh.refresh_token || t.refresh_token };
+    try {
+      await updateDoc(env, path, { parasut: await seal(env, next, aad) }, { precondition: { updateTime: sec.updateTime } });
+      return next;
+    } catch (e) {
+      if (!(e instanceof PreconditionFailed)) throw e;
+    }
+  }
+  throw new ParasutError('Paraşüt oturumu yenilenemedi; birazdan yeniden deneyin.', 503);
 }
 
-function docsBase(env) {
-  const base = env.FIRESTORE_URL || 'https://firestore.googleapis.com';
-  return `${base}/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-}
+// ─── e-SMM / e-Arşiv ─────────────────────────────────────────────────────────
 
-async function getDoc(env, path) {
-  const res = await fetch(`${docsBase(env)}/${path.split('/').map(encodeURIComponent).join('/')}`, { headers: { Authorization: `Bearer ${await accessToken(env)}` } });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`firestore get ${res.status}`);
-  const d = await res.json();
-  return { data: decodeFields(d.fields || {}), updateTime: d.updateTime };
-}
+const VAT_RATES = [0, 1, 10, 20];
+const ISSUING_STALE_MS = 3 * 60 * 1000;
 
 /**
- * Belgeyi günceller. updateTime ön koşulu: okuduğumuzdan beri değişmişse yazmaz
- * (aynı ödeme için iki geri dönüş gelirse ikincisi boşa düşer).
+ * Onaylı bir tahsilat için e-belge keser. onlyIfAuto: yalnızca klinik "kendiliğinden kes"
+ * dediyse. Aynı satış için ikinci kez kesmez.
  */
-async function commit(env, path, fields, serverTimeFields, updateTime) {
-  const name = `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`;
-  const write = {
-    update: { name, fields: encodeFields(fields) },
-    updateMask: { fieldPaths: Object.keys(fields) },
-    updateTransforms: serverTimeFields.map((f) => ({ fieldPath: f, setToServerValue: 'REQUEST_TIME' })),
-    currentDocument: updateTime ? { updateTime } : { exists: true },
-  };
-  const res = await fetch(`${docsBase(env)}:commit`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${await accessToken(env)}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ writes: [write] }),
-  });
-  if (!res.ok) throw new Error(`firestore commit ${res.status} ${await res.text()}`);
+async function issueEdoc(env, clinicId, saleId, { onlyIfAuto = false } = {}) {
+  const salePath = `clinic_pos/${clinicId}/sales/${saleId}`;
+  const sale = await getDoc(env, salePath);
+  if (!sale) return { error: 'not_found' };
+  const s = sale.data;
+  if (s.status !== 'approved') return { error: 'not_approved' };
+  // Paraşüt'te deneme ortamı yok; kesilen her belge resmîdir. Deneme ödemelerine kesilmez.
+  if (!(s.mode === 'cash' || (s.mode === 'iyzico' && s.pay_env === 'live'))) return { error: 'not_real' };
+  if (s.edoc_status === 'issued') return { status: 'issued', number: s.edoc_number || null };
+  if (s.edoc_status === 'issuing' && Date.now() - Number(s.edoc_started_ms || 0) < ISSUING_STALE_MS) return { status: 'issuing' };
+
+  const settings = (await getDoc(env, `clinic_settings/${clinicId}`))?.data || {};
+  if (onlyIfAuto && settings.edoc_auto !== true) return { skipped: true };
+  const pay = (await getDoc(env, `clinic_pay/${clinicId}`))?.data || {};
+  if (!pay.parasut || !parasutConfigured(env) || !vaultReady(env)) return { error: 'not_connected' };
+
+  try {
+    await updateDoc(env, salePath, { edoc_status: 'issuing', edoc_error: null, edoc_started_ms: Date.now() }, { precondition: { updateTime: sale.updateTime } });
+  } catch (e) {
+    if (e instanceof PreconditionFailed) return { status: 'busy' };
+    throw e;
+  }
+
+  try {
+    const tok = await parasutAccess(env, clinicId);
+    let buyerName = null;
+    if (s.patient_id) {
+      const p = await getDoc(env, `clinic_patients/${clinicId}/patients/${s.patient_id}`).catch(() => null);
+      buyerName = str(p && p.data.owner_name, 1, 80);
+    }
+    const out = await issueDocument(
+      env,
+      tok.access_token,
+      pay.parasut.company_id,
+      {
+        docType: settings.edoc_type === 'e_archive' ? 'e_archive' : 'e_smm',
+        amountKurus: Number(s.amount_kurus),
+        vatRate: VAT_RATES.includes(Number(settings.vat_rate)) ? Number(settings.vat_rate) : 20,
+        description: s.description || 'Veteriner hizmeti',
+        buyerName,
+        city: str(settings.edoc_city, 1, 40),
+        district: str(settings.edoc_district, 1, 40),
+        issueDate: istanbulDate(),
+        note: s.patient_name ? `Hasta: ${s.patient_name}` : undefined,
+      },
+      env.PARASUT_POLL_MS ? { pollMs: Number(env.PARASUT_POLL_MS) } : undefined
+    );
+    await updateDoc(env, salePath, { edoc_status: 'issued', edoc_type: out.docType, edoc_id: out.docId, edoc_number: out.number, edoc_invoice_id: out.invoiceId, edoc_error: null }, { serverTime: ['edoc_at'] });
+    return { status: 'issued', number: out.number };
+  } catch (e) {
+    const message = String((e && e.message) || e).slice(0, 200);
+    await updateDoc(env, salePath, { edoc_status: 'failed', edoc_error: message });
+    return { status: 'failed', message };
+  }
 }
 
-function decodeValue(v) {
-  if ('stringValue' in v) return v.stringValue;
-  if ('integerValue' in v) return Number(v.integerValue);
-  if ('doubleValue' in v) return v.doubleValue;
-  if ('booleanValue' in v) return v.booleanValue;
-  if ('timestampValue' in v) return v.timestampValue;
-  if ('mapValue' in v) return decodeFields(v.mapValue.fields || {});
-  if ('arrayValue' in v) return (v.arrayValue.values || []).map(decodeValue);
-  return null;
-}
-function decodeFields(f) {
-  return Object.fromEntries(Object.entries(f).map(([k, v]) => [k, decodeValue(v)]));
-}
-function encodeValue(v) {
-  if (v === null || v === undefined) return { nullValue: null };
-  if (typeof v === 'string') return { stringValue: v };
-  if (typeof v === 'boolean') return { booleanValue: v };
-  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-  throw new Error('encode');
-}
-function encodeFields(o) {
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, encodeValue(v)]));
+async function edocIssue(request, env, cors) {
+  const v = await authVet(request, env, cors, { needSale: true });
+  if (v.res) return v.res;
+  const out = await issueEdoc(env, v.clinicId, v.saleId, { onlyIfAuto: v.body.onlyIfAuto === true });
+  if (out.error === 'not_found') return json(out, 404, cors);
+  if (out.error) return json(out, 409, cors);
+  return json(out, 200, cors);
 }
 
-// ─── Yardımcılar ─────────────────────────────────────────────────────────────
-
-function enc(s) {
-  return new TextEncoder().encode(s);
-}
-function b64urlDecode(s) {
-  const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4));
-  return Uint8Array.from(b, (c) => c.charCodeAt(0));
-}
-function b64url(bytes) {
-  let s = '';
-  for (const b of bytes) s += String.fromCharCode(b);
-  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-function str(v, min, max) {
-  return typeof v === 'string' && v.length >= min && v.length <= max ? v : null;
-}
-/** Ödeme sayfasındaki ad soyad; bilgi toplamadığımız için sabit. */
-function splitName() {
-  return { name: 'Hasta', surname: 'Sahibi' };
-}
-
-function corsHeaders(request, env) {
-  const origin = request.headers.get('Origin') || '';
-  const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const h = { 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Max-Age': '600', Vary: 'Origin' };
-  if (allowed.includes(origin)) h['Access-Control-Allow-Origin'] = origin;
-  return h;
-}
-
-function json(obj, status, headers = {}) {
-  return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers } });
-}
-
-/** Ödeyenin telefonunda görünen sade sonuç sayfası. */
-function page(ok, message) {
-  const color = ok ? '#23845e' : '#b3261e';
-  const title = ok ? 'Ödeme alındı' : 'Ödeme tamamlanmadı';
-  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f3ef;color:#1c1b19;font:500 17px/1.5 system-ui,-apple-system,sans-serif;padding:24px;box-sizing:border-box}
-@media (prefers-color-scheme:dark){body{background:#1f1c19;color:#f7f2eb}}main{max-width:360px;text-align:center}
-.i{width:64px;height:64px;border-radius:50%;background:${color};display:grid;place-items:center;margin:0 auto 18px}
-h1{font-size:24px;margin:0 0 8px}p{margin:0;opacity:.8}small{display:block;margin-top:24px;opacity:.6}</style></head>
-<body><main><div class="i"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${ok ? '<path d="M5 12.5l4.5 4.5L19 7.5"/>' : '<path d="M7 7l10 10M17 7L7 17"/>'}</svg></div>
-<h1>${title}</h1><p>${esc(message)}</p><small>Patiport</small></main></body></html>`;
-  return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+async function edocPdf(request, env, cors) {
+  const v = await authVet(request, env, cors, { needSale: true });
+  if (v.res) return v.res;
+  const sale = await getDoc(env, `clinic_pos/${v.clinicId}/sales/${v.saleId}`);
+  if (!sale || sale.data.edoc_status !== 'issued' || !sale.data.edoc_id) return json({ error: 'not_issued' }, 409, cors);
+  const pay = (await getDoc(env, `clinic_pay/${v.clinicId}`))?.data || {};
+  if (!pay.parasut) return json({ error: 'not_connected' }, 409, cors);
+  try {
+    const tok = await parasutAccess(env, v.clinicId);
+    const pdf = await documentPdf(env, tok.access_token, pay.parasut.company_id, sale.data.edoc_type, sale.data.edoc_id);
+    return json(pdf ? { url: pdf } : { pending: true }, 200, cors);
+  } catch (e) {
+    return json({ error: 'parasut', message: String((e && e.message) || e).slice(0, 200) }, 502, cors);
+  }
 }

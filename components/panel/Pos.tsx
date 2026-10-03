@@ -1,8 +1,9 @@
-// Hasta kartında tahsilat: tutar → yöntem → canlı sonuç.
-//  - Test POS: tutar panelin sanal terminaline gider (/panel/pos, başka sekme ya da telefon).
-//  - iyzico (deneme): ödeme sunucusu iyzico'nun gerçek ödeme sayfasını açar; hasta sahibi
-//    QR'ı telefonuyla okutup kartla öder. Deneme ortamında para sahtedir.
-// İkisinde de banka çekimi ve e-SMM yok.
+// Hasta kartında tahsilat: tutar → yöntem → canlı sonuç → makbuz (ve e-SMM).
+//  - Kartla: kliniğin kendi iyzico hesabı bağlıysa para doğrudan oraya; değilse
+//    Patiport'un iyzico deneme hesabı (para sahte). Hasta sahibi QR'ı telefonla okutur.
+//  - Nakit: hekim "alındı" yapar.
+//  - Sanal POS (test): panelin test terminali.
+// Paraşüt bağlıysa nakit ve canlı kart tahsilatı için e-SMM / e-Arşiv kesilir.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Linking, Platform, ActivityIndicator } from 'react-native';
 import Constants from 'expo-constants';
@@ -13,12 +14,17 @@ import { formatTL, parseTL } from '@/lib/pos/money';
 import {
   checkOnlinePayment,
   createSale,
+  edocPdf,
+  issueEdoc,
   listPatientSales,
   onlinePayEnabled,
+  recordCashSale,
   resolveSale,
   startOnlinePayment,
+  watchClinicPay,
   watchSale,
   MAX_SALE_KURUS,
+  type ClinicPay,
   type Sale,
   type SaleMode,
 } from '@/lib/pos/sales';
@@ -44,14 +50,26 @@ const START_ERRORS: Record<string, string> = {
   auth: 'Oturumunuz yenilenmeli. Sayfayı yenileyip tekrar deneyin.',
   forbidden: 'Bu klinik adına ödeme başlatma yetkiniz görünmüyor.',
   iyzico: 'iyzico ödeme sayfasını açmadı.',
+  not_connected: 'Kliniğin iyzico hesabı bağlı değil. Ayarlar\'dan bağlayın.',
   server: 'Ödeme sayfası açılamadı. Biraz sonra tekrar deneyin.',
 };
+
+const MODE_BADGE: Record<SaleMode, string> = { iyzico: 'iyzico', iyzico_test: 'iyzico deneme', cash: 'Nakit', test: 'Test modu' };
+const isOnline = (m: SaleMode) => m === 'iyzico' || m === 'iyzico_test';
+/** Deneme ödemesi mi (para sahte)? */
+const isSandboxSale = (s: Sale) => s.mode === 'test' || s.mode === 'iyzico_test' || (s.mode === 'iyzico' && s.pay_env !== 'live');
 
 export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient: Patient; suggestion: string | null }) {
   const t = useTheme();
   const [amount, setAmount] = useState('');
   const [desc, setDesc] = useState(suggestion ?? 'Muayene');
-  const [method, setMethod] = useState<SaleMode>('test');
+  const [pay, setPay] = useState<ClinicPay>({ iyzico: null, parasut: null });
+  useEffect(() => watchClinicPay(vet.clinic_id, setPay), [vet.clinic_id]);
+  // Kartla: kendi hesap bağlıysa o, değilse Patiport'un deneme hesabı
+  const cardMode: SaleMode | null = pay.iyzico ? 'iyzico' : onlinePayEnabled ? 'iyzico_test' : null;
+  const [picked, setPicked] = useState<'card' | 'cash' | 'test' | null>(null);
+  const choice = picked ?? (cardMode ? 'card' : 'cash');
+  const method: SaleMode = choice === 'card' && cardMode ? cardMode : choice === 'test' ? 'test' : 'cash';
   const [saleId, setSaleId] = useState<string | null>(null);
   const [sale, setSale] = useState<Sale | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,7 +88,7 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           const open = list.find((x) => x.status === 'pending');
           if (open) {
             setSaleId((cur) => cur ?? open.id);
-            if (open.mode === 'iyzico_test' && open.pay_url) checkOnlinePayment(vet.clinic_id, open.id).catch(() => {});
+            if (isOnline(open.mode) && open.pay_url) checkOnlinePayment(vet.clinic_id, open.id).catch(() => {});
           }
         }
       })
@@ -103,10 +121,19 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
     setBusy(true);
     setError(null);
     try {
-      const id = await createSale(vet, { amount_kurus: kurus, description: desc, patient_id: patient.id, patient_name: patient.name }, method);
+      const input = { amount_kurus: kurus, description: desc, patient_id: patient.id, patient_name: patient.name };
+      if (method === 'cash') {
+        const id = await recordCashSale(vet, input);
+        setSale(null);
+        setSaleId(id);
+        // Paraşüt bağlı ve "kendiliğinden kes" açıksa e-SMM kesilir; sonuç makbuzda görünür
+        if (pay.parasut) issueEdoc(vet.clinic_id, id, true).catch(() => {});
+        return;
+      }
+      const id = await createSale(vet, input, method);
       setSale(null);
       setSaleId(id);
-      if (method === 'iyzico_test') await begin(id);
+      if (isOnline(method)) await begin(id);
     } catch {
       setError('Gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.');
     } finally {
@@ -131,7 +158,10 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Text variant="headline">Tahsilat</Text>
-        <Badge label={mode === 'iyzico_test' ? 'iyzico deneme' : 'Test modu'} tone="honey" />
+        <Badge
+          label={mode === 'iyzico' && (sale ? sale.pay_env === 'live' : pay.iyzico?.env === 'live') ? 'Canlı' : MODE_BADGE[mode]}
+          tone={mode === 'cash' || (mode === 'iyzico' && (sale ? sale.pay_env === 'live' : pay.iyzico?.env === 'live')) ? 'open' : 'honey'}
+        />
       </View>
 
       {!saleId ? (
@@ -144,25 +174,34 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
               <Field label="Açıklama" value={desc} onChangeText={setDesc} placeholder="Muayene, aşı…" />
             </View>
           </View>
-          {onlinePayEnabled ? (
-            <View style={{ gap: 8 }}>
-              <Text variant="caption" tone="muted">
-                Nasıl ödenecek?
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                <Chip label="Sanal POS (test)" icon="card-outline" active={method === 'test'} onPress={() => setMethod('test')} onSurface />
-                <Chip label="Telefondan kartla (iyzico)" icon="qr-code-outline" active={method === 'iyzico_test'} onPress={() => setMethod('iyzico_test')} onSurface />
-              </View>
+          <View style={{ gap: 8 }}>
+            <Text variant="caption" tone="muted">
+              Nasıl ödenecek?
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+              {cardMode ? (
+                <Chip
+                  label={pay.iyzico ? (pay.iyzico.env === 'live' ? 'Kartla (QR / bağlantı)' : 'Kartla (iyzico deneme)') : 'Kartla (Patiport deneme)'}
+                  icon="qr-code-outline"
+                  active={choice === 'card'}
+                  onPress={() => setPicked('card')}
+                  onSurface
+                />
+              ) : null}
+              <Chip label="Nakit" icon="cash-outline" active={choice === 'cash'} onPress={() => setPicked('cash')} onSurface />
+              <Chip label="Sanal POS (test)" icon="card-outline" active={choice === 'test'} onPress={() => setPicked('test')} onSurface />
             </View>
-          ) : null}
+          </View>
           {error ? (
             <Text variant="caption" tone="danger">
               {error}
             </Text>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {method === 'iyzico_test' ? (
+            {isOnline(method) ? (
               <Button title={kurus ? `${formatTL(kurus)} için ödeme sayfası aç` : 'Ödeme sayfası aç'} icon="qr-code-outline" loading={busy} disabled={!kurus} onPress={send} />
+            ) : method === 'cash' ? (
+              <Button title={kurus ? `${formatTL(kurus)} nakit alındı` : 'Nakit alındı'} icon="cash-outline" loading={busy} disabled={!kurus} onPress={send} />
             ) : (
               <>
                 <Button title={kurus ? `${formatTL(kurus)} POS'a gönder` : "POS'a gönder"} icon="card-outline" loading={busy} disabled={!kurus} onPress={send} />
@@ -171,12 +210,23 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
             )}
           </View>
           <Text variant="caption" tone="subtle">
-            {method === 'iyzico_test'
-              ? 'iyzico deneme ortamı: gerçek ödeme sayfası ve 3D Secure adımı açılır, deneme kartıyla ödenir; kimseden para çekilmez, e-SMM kesilmez.'
-              : 'Test modunda tutar, başka bir sekmede ya da telefonda açtığınız sanal POS ekranına gider. Bankadan çekim yapılmaz, e-SMM kesilmez.'}
+            {method === 'iyzico'
+              ? pay.iyzico?.env === 'live'
+                ? 'Para doğrudan kliniğinizin iyzico hesabına geçer. Hasta sahibi QR\'ı okutup kartla öder (3D Secure dahil).'
+                : 'iyzico deneme hesabınız bağlı: gerçek ödeme sayfası açılır, deneme kartıyla ödenir; para çekilmez.'
+              : method === 'iyzico_test'
+                ? 'Patiport\'un iyzico deneme hesabı: gerçek ödeme sayfası açılır, deneme kartıyla ödenir; para çekilmez. Kendi hesabınızı Ayarlar\'dan bağlayın.'
+                : method === 'cash'
+                  ? pay.parasut
+                    ? 'Nakit tahsilat kaydedilir; Paraşüt bağlı olduğu için makbuz ayarlarınıza göre kesilir.'
+                    : 'Nakit tahsilat kaydedilir. Paraşüt\'ü Ayarlar\'dan bağlarsanız e-SMM kendiliğinden kesilir.'
+                  : 'Test modunda tutar, başka bir sekmede ya da telefonda açtığınız sanal POS ekranına gider. Bankadan çekim yapılmaz.'}
           </Text>
+          {!pay.iyzico && onlinePayEnabled ? (
+            <Button title="Kendi iyzico hesabımı bağla" variant="ghost" size="sm" icon="settings-outline" onPress={() => router.push('/panel/ayarlar')} style={{ alignSelf: 'flex-start' }} />
+          ) : null}
         </>
-      ) : status === 'pending' && mode === 'iyzico_test' ? (
+      ) : status === 'pending' && isOnline(mode) ? (
         <OnlinePending
           sale={sale}
           kurus={kurus}
@@ -217,10 +267,11 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="checkmark-circle" size={22} color={t.open} />
             <Text variant="bodyStrong" color={t.open}>
-              {sale.mode === 'iyzico_test' ? 'Ödeme alındı (iyzico deneme)' : 'Ödeme alındı (test)'}
+              {sale.mode === 'cash' ? 'Nakit alındı' : sale.mode === 'test' ? 'Ödeme alındı (test)' : isSandboxSale(sale) ? 'Ödeme alındı (iyzico deneme)' : 'Ödeme alındı'}
             </Text>
           </View>
           <Receipt sale={sale} clinicName={vet.clinic_name} ownerName={patient.owner_name} />
+          <EdocStatus sale={sale} clinicId={vet.clinic_id} parasut={pay.parasut} />
           <Button title="Yeni tahsilat" variant="secondary" onPress={reset} style={{ alignSelf: 'flex-start' }} />
         </View>
       ) : (
@@ -228,7 +279,7 @@ export function PosCard({ vet, patient, suggestion }: { vet: VetProfile; patient
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="close-circle" size={22} color={t.danger} />
             <Text variant="bodyStrong" color={t.danger}>
-              {status === 'declined' ? (sale?.mode === 'iyzico_test' ? 'Ödeme tamamlanmadı' : 'Kart reddedildi (test)') : 'İşlem iptal edildi'}
+              {status === 'declined' ? (sale && isOnline(sale.mode) ? 'Ödeme tamamlanmadı' : 'Kart reddedildi (test)') : 'İşlem iptal edildi'}
             </Text>
           </View>
           {status === 'declined' && sale?.fail_reason ? (
@@ -397,22 +448,25 @@ function Receipt({ sale, clinicName, ownerName }: { sale: Sale; clinicName: stri
       </Text>
     </View>
   );
-  const online = sale.mode === 'iyzico_test';
+  const online = isOnline(sale.mode);
+  const sandbox = isSandboxSale(sale);
   return (
     <View style={{ padding: 14, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: t.borderStrong, gap: 6 }}>
-      <Text variant="bodyStrong">Makbuz taslağı</Text>
+      <Text variant="bodyStrong">{sandbox ? 'Makbuz taslağı' : 'Tahsilat özeti'}</Text>
       {row('Klinik', clinicName)}
       {row('Hasta sahibi', ownerName ?? '-')}
       {row('Hizmet', sale.description)}
       {row('Tutar', formatTL(sale.amount_kurus))}
-      {row('Kart', `${sale.card_brand ? `${cardBrand(sale.card_brand)} ` : ''}**** ${sale.card_last4 ?? '----'}`)}
+      {sale.mode === 'cash' ? row('Ödeme', 'Nakit') : row('Kart', `${sale.card_brand ? `${cardBrand(sale.card_brand)} ` : ''}**** ${sale.card_last4 ?? '----'}`)}
       {online && sale.payment_id ? row('iyzico ödeme no', sale.payment_id) : null}
-      {row('Onay kodu', sale.auth_code ?? '-')}
+      {sale.mode !== 'cash' ? row('Onay kodu', sale.auth_code ?? '-') : null}
       {row('Tarih', when(sale.resolved_ms ?? sale.created_ms))}
       <Text variant="caption" tone="subtle" style={{ marginTop: 4 }}>
-        {online
-          ? 'iyzico deneme ortamı: kimseden para çekilmedi, e-SMM kesilmedi. Bu bir önizlemedir.'
-          : 'Test modunda banka çekimi ve e-SMM yapılmaz; bu bir önizlemedir.'}
+        {sandbox
+          ? 'Deneme ödemesi: kimseden para çekilmedi, resmî belge kesilmez. Bu bir önizlemedir.'
+          : sale.edoc_status === 'issued'
+            ? 'Resmî belge Paraşüt üzerinden kesildi; bu sayfa özetidir.'
+            : 'Bu bir makbuz özetidir; resmî belge değildir.'}
       </Text>
     </View>
   );
@@ -420,4 +474,79 @@ function Receipt({ sale, clinicName, ownerName }: { sale: Sale; clinicName: stri
 
 function cardBrand(b: string): string {
   return ({ MASTER_CARD: 'Mastercard', VISA: 'Visa', AMERICAN_EXPRESS: 'Amex', TROY: 'Troy' } as Record<string, string>)[b] ?? b;
+}
+
+/** Makbuzun altında e-SMM / e-Arşiv durumu: kesildi (PDF), kesiliyor, kesilemedi, kes. */
+function EdocStatus({ sale, clinicId, parasut }: { sale: Sale; clinicId: string; parasut: ClinicPay['parasut'] }) {
+  const t = useTheme();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (isSandboxSale(sale)) return null;
+  const label = sale.edoc_type === 'e_archive' ? 'e-Arşiv fatura' : sale.edoc_type === 'e_invoice' ? 'e-Fatura' : 'e-SMM';
+
+  const issue = async () => {
+    setBusy(true);
+    setMsg(null);
+    const r = await issueEdoc(clinicId, sale.id);
+    setBusy(false);
+    if (r.error === 'not_connected') setMsg('Paraşüt bağlı değil. Ayarlar\'dan bağlayın.');
+    else if (r.error) setMsg('Kesilemedi. Biraz sonra tekrar deneyin.');
+  };
+  const openPdf = async () => {
+    setBusy(true);
+    setMsg(null);
+    const r = await edocPdf(clinicId, sale.id);
+    setBusy(false);
+    if (r.url) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.open(r.url, '_blank');
+      else Linking.openURL(r.url);
+    } else setMsg(r.pending ? 'Belge hazırlanıyor; birazdan tekrar deneyin.' : 'Belge açılamadı. Biraz sonra tekrar deneyin.');
+  };
+
+  let body: React.ReactNode;
+  if (sale.edoc_status === 'issued') {
+    body = (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <Icon name="document-text-outline" size={18} color={t.open} />
+        <Text variant="callout" color={t.open} style={{ flex: 1 }}>
+          {label} kesildi{sale.edoc_number ? ` · No ${sale.edoc_number}` : ''}
+        </Text>
+        <Button title="Belgeyi aç" size="sm" variant="secondary" loading={busy} onPress={openPdf} />
+      </View>
+    );
+  } else if (sale.edoc_status === 'issuing') {
+    body = (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <ActivityIndicator color={t.primary} />
+        <Text variant="callout">Belge Paraşüt'te kesiliyor…</Text>
+      </View>
+    );
+  } else if (sale.edoc_status === 'failed') {
+    body = (
+      <View style={{ gap: 6 }}>
+        <Text variant="callout" tone="danger">
+          Belge kesilemedi{sale.edoc_error ? `: ${sale.edoc_error}` : '.'}
+        </Text>
+        <Button title="Tekrar dene" size="sm" variant="secondary" loading={busy} onPress={issue} style={{ alignSelf: 'flex-start' }} />
+      </View>
+    );
+  } else if (parasut) {
+    body = <Button title="e-SMM / e-Arşiv kes" size="sm" icon="document-text-outline" loading={busy} onPress={issue} style={{ alignSelf: 'flex-start' }} />;
+  } else {
+    body = (
+      <Text variant="caption" tone="muted">
+        Paraşüt'ü Ayarlar'dan bağlarsanız e-SMM ya da e-Arşiv bu tahsilat için kendiliğinden kesilir.
+      </Text>
+    );
+  }
+  return (
+    <View style={{ gap: 6 }}>
+      {body}
+      {msg ? (
+        <Text variant="caption" tone="muted">
+          {msg}
+        </Text>
+      ) : null}
+    </View>
+  );
 }
