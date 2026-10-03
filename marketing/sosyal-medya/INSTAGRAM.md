@@ -1,7 +1,8 @@
 # Instagram açılışı (28 Eylül – 15 Ekim 2026)
 
 İlk üç haftanın hazır paketi: 9 gönderi, 3 Reels, profil ve kurulum. Görseller
-`gorseller/`, videolar `reels/` klasöründe. Genel kurallar `REHBER.md`.
+`gorseller/`, videolar `reels/` klasöründe. Genel kurallar `REHBER.md`. Ücretli reklamlar
+(hekim ve hayvan sahibi kampanyaları, videolar, görseller, metinler): `../reklam/REKLAM.md`.
 
 Her gönderi akşam 20:00'de paylaşılır. Emoji kullanılmaz (marka dili). Hashtag'ler
 metnin sonunda, 3–5 tane.
