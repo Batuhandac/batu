@@ -86,7 +86,7 @@ export default function ClinicDetailScreen() {
             .then(details => {
               if (!details) return;
               if (details.phone) {
-                setClinic(prev => prev ? { ...prev, phone: details.phone, is_24_7: details.is_24_7 } : prev);
+                setClinic((prev: Clinic | null) => prev ? { ...prev, phone: details.phone, is_24_7: details.is_24_7 } : prev);
               }
               if (details.weekday_text.length > 0) {
                 setPlacesHoursText(details.weekday_text);
@@ -274,7 +274,7 @@ export default function ClinicDetailScreen() {
           {hours.length === 0 && placesHoursText.length > 0 && (
             <View>
               <Text className="text-gray-muted text-xs font-bold uppercase tracking-wide mb-2">Çalışma Saatleri</Text>
-              {placesHoursText.map((line, i) => {
+              {placesHoursText.map((line: string, i: number) => {
                 const [day, ...rest] = line.split(':');
                 return (
                   <View key={i} className="flex-row justify-between py-0.5">
