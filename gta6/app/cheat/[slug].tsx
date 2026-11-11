@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, Section } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
+import { PhotoHeader } from '@/components/PhotoHeader';
 import { Bullets, StatusBanner } from '@/components/Detail';
-import { colors, fontSize, radius, spacing } from '@/constants/theme';
+import { ButtonGlyphs } from '@/components/ButtonGlyphs';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { STRINGS, t } from '@/constants/i18n';
+import { CHEAT_PHOTO } from '@/content/media';
 import { useContent } from '@/stores/contentStore';
 import { useSettings } from '@/stores/settingsStore';
-import type { GamePlatform } from '@/types';
 
-const ORDER: Array<GamePlatform | 'phone'> = ['ps5', 'xbox', 'pc', 'phone'];
+type Kind = 'ps5' | 'xbox' | 'pc' | 'phone';
+const ROWS: Array<{ k: Kind; icon: keyof typeof Ionicons.glyphMap; tr: string; en: string }> = [
+  { k: 'ps5', icon: 'logo-playstation', tr: 'PlayStation', en: 'PlayStation' },
+  { k: 'xbox', icon: 'logo-xbox', tr: 'Xbox', en: 'Xbox' },
+  { k: 'pc', icon: 'desktop-outline', tr: 'PC (~ tuşu ile konsol)', en: 'PC (console with ~ key)' },
+  { k: 'phone', icon: 'call', tr: 'Oyun içi telefon', en: 'In-game phone' },
+];
 
 export default function CheatDetail() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -18,56 +27,53 @@ export default function CheatDetail() {
   const cheat = useContent((s) => s.bundle.cheats.find((c) => c.slug === slug));
   const [copied, setCopied] = useState<string | null>(null);
 
-  if (!cheat) {
-    return (
-      <Screen>
-        <Header title="404" back />
-      </Screen>
-    );
-  }
+  if (!cheat) return <Screen><Header title="404" back /></Screen>;
 
   const copy = async (key: string, value: string) => {
     try {
-      // Clipboard is optional; web has navigator.clipboard, native needs expo-clipboard (not bundled to keep the app slim).
       const nav = (globalThis as any).navigator;
       if (nav?.clipboard?.writeText) await nav.clipboard.writeText(value);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1200);
-    } catch {
-      /* ignore */
-    }
+      setCopied(key); setTimeout(() => setCopied(null), 1200);
+    } catch { /* clipboard is optional */ }
   };
-
-  const entries = ORDER.filter((k) => cheat.codes[k] && cheat.codes[k] !== '—');
+  const rows = ROWS.filter((r) => cheat.codes[r.k] && cheat.codes[r.k] !== '—');
 
   return (
-    <Screen>
-      <Header title={t(cheat.title, lang)} subtitle={t(cheat.effect, lang)} back />
-      <StatusBanner status={cheat.status} updatedAt={cheat.updatedAt} />
-
-      <View style={styles.codes}>
-        {entries.length === 0 && <Text style={styles.none}>{STRINGS.common.noCodeYet[lang]}</Text>}
-        {entries.map((k) => (
-          <Pressable key={k} onPress={() => copy(k, cheat.codes[k]!)} style={styles.codeRow}>
-            <Text style={styles.platform}>{k === 'phone' ? (lang === 'tr' ? 'Telefon' : 'Phone') : STRINGS.platform[k][lang]}</Text>
-            <Text style={styles.code}>{cheat.codes[k]}</Text>
-            <Text style={styles.copy}>{copied === k ? STRINGS.common.copied[lang] : '⧉'}</Text>
+    <Screen bleed>
+      <PhotoHeader photo={CHEAT_PHOTO[cheat.category]} title={t(cheat.title, lang)} eyebrow={`${STRINGS.game[cheat.game][lang]} · ${STRINGS.cheatCategory[cheat.category][lang]}`} subtitle={t(cheat.effect, lang)} height={300} back />
+      <Section>
+        <StatusBanner status={cheat.status} updatedAt={cheat.updatedAt} />
+        {rows.length === 0 && (
+          <View style={styles.locked}>
+            <Ionicons name="lock-closed" size={22} color={colors.textFaint} />
+            <Text style={styles.lockedTitle}>{STRINGS.common.locked[lang]}</Text>
+            <Text style={styles.lockedText}>{STRINGS.common.codePending[lang]}</Text>
+          </View>
+        )}
+        {rows.map((r) => (
+          <Pressable key={r.k} onPress={() => copy(r.k, cheat.codes[r.k]!)} style={styles.block}>
+            <View style={styles.blockTop}>
+              <Ionicons name={r.icon} size={16} color={colors.textMuted} />
+              <Text style={styles.platform}>{lang === 'tr' ? r.tr : r.en}</Text>
+              <Text style={styles.copy}>{copied === r.k ? STRINGS.common.copied[lang] : ''}</Text>
+            </View>
+            <ButtonGlyphs code={cheat.codes[r.k]!} kind={r.k} size={r.k === 'pc' ? 34 : 33} />
           </Pressable>
         ))}
-      </View>
-
-      {cheat.notes ? <Bullets title={lang === 'tr' ? 'Notlar' : 'Notes'} items={[t(cheat.notes, lang)]} /> : null}
-      {cheat.source ? <Text style={styles.source}>{STRINGS.common.source[lang]}: {cheat.source}</Text> : null}
+        {cheat.notes ? <Bullets title={lang === 'tr' ? 'Notlar' : 'Notes'} items={[t(cheat.notes, lang)]} /> : null}
+        {cheat.source ? <Text style={styles.source}>{STRINGS.common.source[lang]}: {cheat.source}</Text> : null}
+      </Section>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  codes: { gap: spacing.sm },
-  none: { color: colors.textFaint, fontStyle: 'italic', textAlign: 'center', paddingVertical: spacing.lg },
-  codeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surfaceLow, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  platform: { color: colors.textFaint, fontSize: fontSize.xs, fontWeight: '800', width: 48, textTransform: 'uppercase' },
-  code: { flex: 1, color: colors.accent, fontFamily: 'monospace', fontSize: fontSize.md, fontWeight: '700', letterSpacing: 0.5 },
-  copy: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  source: { color: colors.textFaint, fontSize: fontSize.xs },
+  block: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: 12, borderWidth: 1, borderColor: colors.border },
+  blockTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  platform: { flex: 1, color: colors.textMuted, fontFamily: fonts.black, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
+  copy: { color: colors.success, fontFamily: fonts.bold, fontSize: 12 },
+  locked: { alignItems: 'center', gap: 6, padding: spacing.xxl, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong },
+  lockedTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, textTransform: 'uppercase' },
+  lockedText: { color: colors.textFaint, fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
+  source: { color: colors.textFaint, fontFamily: fonts.body, fontSize: 12 },
 });

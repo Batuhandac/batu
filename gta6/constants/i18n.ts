@@ -76,7 +76,10 @@ export const STRINGS = {
   map: {
     search: { tr: 'Konum ara', en: 'Search locations' },
     namedOnly: { tr: 'Sadece doğrulanmış isimler', en: 'Confirmed names only' },
-    attribution: { tr: 'Konum verisi: GTADB topluluk kataloğu (rolux, Yanis, Dupzor ve katkıda bulunanlar). Koordinatlar fragman ve ekran görüntülerinden türetilmiş yaklaşık değerlerdir.', en: 'Location data: GTADB community catalogue (rolux, Yanis, Dupzor & contributors). Coordinates are approximate, derived from trailers and screenshots.' },
+    attribution: { tr: 'Harita: Yanis, Dupzor · Veri: GTADB', en: 'Map: Yanis, Dupzor · Data: GTADB' },
+    regions: { tr: 'Bölgeler', en: 'Regions' },
+    openMap: { tr: 'Haritada aç', en: 'Open on map' },
+    places: { tr: 'Bilinen yerler', en: 'Known places' },
     count: { tr: 'konum', en: 'locations' },
   },
   common: {
@@ -93,8 +96,8 @@ export const STRINGS = {
     myPlatform: { tr: 'Platformum', en: 'My platform' },
     legal: { tr: 'Yasal uyarı', en: 'Legal' },
     legalBody: {
-      tr: 'Leonida Codes bağımsız, hayran yapımı bir rehberdir. Rockstar Games veya Take-Two Interactive ile bağlantılı değildir, onlar tarafından onaylanmamıştır. Grand Theft Auto ilgili sahiplerinin tescilli markasıdır. Uygulamadaki tüm harita ve görseller tarafımızca çizilmiştir, oyundan alınmamıştır.',
-      en: 'Leonida Codes is an independent, fan-made guide. It is not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of its respective owners. All maps and artwork in this app are drawn by us and not taken from the game.',
+      tr: 'Leonida Codes bağımsız, hayran yapımı bir rehberdir. Rockstar Games veya Take-Two Interactive ile bağlantılı değildir, onlar tarafından onaylanmamıştır. Grand Theft Auto ilgili sahiplerinin tescilli markasıdır. Ekran görüntüleri ve fragman kareleri Rockstar Games\'e aittir, tanıtım ve rehber amacıyla gösterilmektedir. Harita karoları Yanis ve Dupzor\'un topluluk çalışmasıdır; konum verisi GTADB topluluk kataloğundan gelir (rolux, Yanis, Dupzor ve katkıda bulunanlar).',
+      en: 'Leonida Codes is an independent, fan-made guide. It is not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of its respective owners. Screenshots and trailer frames belong to Rockstar Games and are shown for guide and commentary purposes. Map tiles are community work by Yanis and Dupzor; location data comes from the GTADB community catalogue (rolux, Yanis, Dupzor & contributors).',
     },
     copied: { tr: 'Kopyalandı', en: 'Copied' },
     noCodeYet: { tr: 'Kod henüz yok', en: 'No code yet' },
@@ -111,6 +114,8 @@ export const STRINGS = {
     source: { tr: 'Kaynak', en: 'Source' },
     updated: { tr: 'Güncellendi', en: 'Updated' },
     offline: { tr: 'Çevrimdışı içerik gösteriliyor.', en: 'Showing offline content.' },
+    locked: { tr: '19 Kasım\'da açılıyor', en: 'Unlocks November 19' },
+    codePending: { tr: 'Kod çıkış günü doğrulanacak', en: 'Code gets verified on launch day' },
     mapNote: { tr: 'Harita bizim çizimimiz, oyundan alınmadı. Konumlar fragmanlar ve resmi açıklamalara dayanır.', en: 'This map is our own drawing, not from the game. Locations are based on trailers and official statements.' },
     pro: { tr: 'Pro', en: 'Pro' },
   },

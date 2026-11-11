@@ -3,7 +3,7 @@ import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Chip } from '@/components/ui/Chip';
-import { colors, fontSize, radius, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { STRINGS } from '@/constants/i18n';
 import { registerForPush, unregisterPush } from '@/lib/notifications';
 import { useSettings } from '@/stores/settingsStore';
@@ -68,8 +68,8 @@ export default function Settings() {
 
 const styles = StyleSheet.create({
   block: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.border },
-  label: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
-  hint: { color: colors.textMuted, fontSize: fontSize.sm, marginTop: 2 },
+  label: { color: colors.text, fontFamily: fonts.display, fontSize: 20, textTransform: 'uppercase', letterSpacing: 0.5 },
+  hint: { color: colors.textMuted, fontFamily: fonts.body, fontSize: fontSize.sm, marginTop: 2 },
   row: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
 });

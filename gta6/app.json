@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B0F1A"
+      "backgroundColor": "#07050D"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0B0F1A"
+        "backgroundColor": "#07050D"
       },
       "package": "com.batu.leonidacodes"
     },
@@ -37,7 +37,8 @@
         {
           "color": "#FF5CA8"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "scheme": "leonida",
     "experiments": {

@@ -142,7 +142,8 @@ export const SEED_LOCATIONS: MapLocation[] = (leonida.locations as RawLoc[]).map
   y: l.y,
   area: l.area,
   description: { tr: l.desc ?? l.area, en: l.desc ?? l.area },
-  status: l.status as MapLocation['status'],
+  // Placeholder names such as "? (N)" are positions without a known name; never show them as verified.
+  status: (l.name.startsWith('?') ? 'unverified' : l.status) as MapLocation['status'],
   updatedAt: leonida.meta.fetchedAt,
 }));
 

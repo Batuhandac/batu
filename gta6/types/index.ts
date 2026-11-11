@@ -91,6 +91,18 @@ export interface ContentUpdate {
   createdAt: string;
 }
 
+export interface Region {
+  id: string;
+  name: string;
+  photo: string;
+  /** Dataset area names that belong to this region. */
+  match: string[];
+  tagline: Localized;
+  description: Localized;
+  /** Map view when opened from the region page (world metres, zoom). */
+  view: { x: number; y: number; z: number };
+}
+
 export interface GlossaryTerm {
   id: string;
   term: Localized;
