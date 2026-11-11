@@ -1,0 +1,6 @@
+{
+  "buildCommand": "EXPO_PUBLIC_APP_VERSION=${VERCEL_GIT_COMMIT_SHA:-local} npx expo export --platform web",
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
