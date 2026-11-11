@@ -40,27 +40,27 @@ async function writeCache(bundle: ContentBundle) {
 type Row = Record<string, unknown>;
 
 const rowToCheat = (r: Row): Cheat => ({
-  id: String(r.id), slug: String(r.slug), title: r.title as Cheat['title'],
+  id: String(r.id), slug: String(r.slug), game: (r.game ?? 'gta6') as Cheat['game'], title: r.title as Cheat['title'],
   category: r.category as Cheat['category'], effect: r.effect as Cheat['effect'],
   codes: (r.codes ?? {}) as Cheat['codes'], status: r.status as Cheat['status'],
   notes: (r.notes ?? undefined) as Cheat['notes'], source: (r.source ?? undefined) as string | undefined,
   verifiedAt: (r.verified_at ?? undefined) as string | undefined, updatedAt: String(r.updated_at),
 });
 const rowToMission = (r: Row): Mission => ({
-  id: String(r.id), slug: String(r.slug), order: Number(r.order_no ?? 0), title: r.title as Mission['title'],
+  id: String(r.id), slug: String(r.slug), game: (r.game ?? 'gta6') as Mission['game'], order: Number(r.order_no ?? 0), title: r.title as Mission['title'],
   chapter: r.chapter as Mission['chapter'], protagonist: r.protagonist as Mission['protagonist'],
   summary: r.summary as Mission['summary'], goldRequirements: (r.gold_requirements ?? []) as Mission['goldRequirements'],
   skipTips: (r.skip_tips ?? []) as Mission['skipTips'], tips: (r.tips ?? []) as Mission['tips'],
   status: r.status as Mission['status'], updatedAt: String(r.updated_at),
 });
 const rowToGuide = (r: Row): Guide => ({
-  id: String(r.id), slug: String(r.slug), title: r.title as Guide['title'], category: r.category as Guide['category'],
+  id: String(r.id), slug: String(r.slug), game: (r.game ?? 'gta6') as Guide['game'], title: r.title as Guide['title'], category: r.category as Guide['category'],
   summary: r.summary as Guide['summary'], body: (r.body ?? []) as Guide['body'],
   status: r.status as Guide['status'], updatedAt: String(r.updated_at),
 });
 const rowToLocation = (r: Row): MapLocation => ({
   id: String(r.id), slug: String(r.slug), name: r.name as MapLocation['name'], type: r.type as MapLocation['type'],
-  x: Number(r.x), y: Number(r.y), description: r.description as MapLocation['description'],
+  x: Number(r.x), y: Number(r.y), area: (r.area ?? undefined) as string | undefined, description: r.description as MapLocation['description'],
   status: r.status as MapLocation['status'], updatedAt: String(r.updated_at),
 });
 const rowToUpdate = (r: Row): ContentUpdate => ({
@@ -84,7 +84,7 @@ export async function fetchRemote(): Promise<ContentBundle | null> {
       cheats: (cheats.data ?? []).map(rowToCheat),
       missions: (missions.data ?? []).map(rowToMission),
       guides: (guides.data ?? []).map(rowToGuide),
-      locations: (locations.data ?? []).map(rowToLocation),
+      locations: (locations.data ?? []).length ? (locations.data ?? []).map(rowToLocation) : SEED_LOCATIONS,
       updates: (updates.data ?? []).map(rowToUpdate),
       fetchedAt: new Date().toISOString(),
       source: 'remote',

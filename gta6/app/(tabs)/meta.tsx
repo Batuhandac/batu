@@ -5,6 +5,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
+import { GameSwitch } from '@/components/GameSwitch';
 import { spacing } from '@/constants/theme';
 import { STRINGS, t } from '@/constants/i18n';
 import { useContent } from '@/stores/contentStore';
@@ -16,13 +17,16 @@ const CATS: Array<GuideCategory | 'all'> = ['all', 'launch', 'money', 'weapons',
 export default function Meta() {
   const router = useRouter();
   const lang = useSettings((s) => s.lang);
-  const guides = useContent((s) => s.bundle.guides);
+  const game = useSettings((s) => s.game);
+  const allGuides = useContent((s) => s.bundle.guides);
+  const guides = useMemo(() => allGuides.filter((g) => g.game === game), [allGuides, game]);
   const [cat, setCat] = useState<GuideCategory | 'all'>('all');
   const list = useMemo(() => guides.filter((g) => cat === 'all' || g.category === cat), [guides, cat]);
 
   return (
     <Screen>
-      <Header title={STRINGS.tabs.meta[lang]} subtitle={lang === 'tr' ? 'Para, silah, araç ve en hızlı ilerleme yolları.' : 'Money, weapons, vehicles and the fastest ways to progress.'} />
+      <Header title={STRINGS.tabs.meta[lang]} subtitle={lang === 'tr' ? 'Para, silah, araç ve en hızlı ilerleme yolları.' : 'Money, weapons, vehicles and the fastest ways to progress.'} right={<GameSwitch />} />
+      <Card meta="TR / EN" title={STRINGS.glossary.title[lang]} subtitle={STRINGS.glossary.subtitle[lang]} onPress={() => router.push('/glossary')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {CATS.map((c) => (
           <Chip key={c} label={c === 'all' ? STRINGS.common.all[lang] : STRINGS.guideCategory[c][lang]} active={cat === c} onPress={() => setCat(c)} />

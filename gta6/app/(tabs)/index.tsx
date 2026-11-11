@@ -15,11 +15,12 @@ export default function Home() {
   const lang = useSettings((s) => s.lang);
   const bundle = useContent((s) => s.bundle);
 
-  const verified = bundle.cheats.filter((c) => c.status === 'verified').length;
+  const verified6 = bundle.cheats.filter((c) => c.game === 'gta6' && c.status === 'verified').length;
+  const verified5 = bundle.cheats.filter((c) => c.game === 'gta5' && c.status === 'verified').length;
   const stats: Array<[number, string, string]> = [
-    [verified, lang === 'tr' ? 'doğrulanmış hile' : 'verified cheats', '/cheats'],
-    [bundle.missions.length, lang === 'tr' ? 'görev rehberi' : 'mission guides', '/missions'],
-    [bundle.guides.length, lang === 'tr' ? 'meta rehber' : 'meta guides', '/meta'],
+    [verified6, lang === 'tr' ? 'GTA VI hile' : 'GTA VI cheats', '/cheats'],
+    [verified5, lang === 'tr' ? 'GTA V hile' : 'GTA V cheats', '/cheats'],
+    [bundle.locations.filter((l) => l.status === 'verified').length, lang === 'tr' ? 'harita konumu' : 'map locations', '/map'],
   ];
 
   return (
@@ -44,6 +45,7 @@ export default function Home() {
         ))}
       </View>
 
+      <Card meta="TR / EN" title={STRINGS.glossary.title[lang]} subtitle={STRINGS.glossary.subtitle[lang]} onPress={() => router.push('/glossary')} />
       <Card title={STRINGS.common.howVerify[lang]} subtitle={STRINGS.common.howVerifyBody[lang]} onPress={() => router.push('/guide/how-we-verify')} />
 
       <SectionTitle title={STRINGS.common.latest[lang]} />

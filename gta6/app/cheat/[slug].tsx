@@ -38,7 +38,7 @@ export default function CheatDetail() {
     }
   };
 
-  const entries = ORDER.filter((k) => cheat.codes[k]);
+  const entries = ORDER.filter((k) => cheat.codes[k] && cheat.codes[k] !== '—');
 
   return (
     <Screen>

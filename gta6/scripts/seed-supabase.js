@@ -28,20 +28,20 @@ async function run() {
     console.log(`${table}: ${rows.length} rows`);
   };
   await up('cheats', seed.SEED_CHEATS.map((c) => ({
-    id: c.id, slug: c.slug, title: c.title, category: c.category, effect: c.effect, codes: c.codes,
+    id: c.id, slug: c.slug, game: c.game, title: c.title, category: c.category, effect: c.effect, codes: c.codes,
     status: c.status, notes: l(c.notes), source: l(c.source), verified_at: l(c.verifiedAt), updated_at: c.updatedAt,
   })));
   await up('missions', seed.SEED_MISSIONS.map((m) => ({
-    id: m.id, slug: m.slug, order_no: m.order, title: m.title, chapter: m.chapter, protagonist: m.protagonist,
+    id: m.id, slug: m.slug, game: m.game, order_no: m.order, title: m.title, chapter: m.chapter, protagonist: m.protagonist,
     summary: m.summary, gold_requirements: m.goldRequirements, skip_tips: m.skipTips, tips: m.tips,
     status: m.status, updated_at: m.updatedAt,
   })));
   await up('guides', seed.SEED_GUIDES.map((g) => ({
-    id: g.id, slug: g.slug, title: g.title, category: g.category, summary: g.summary, body: g.body,
+    id: g.id, slug: g.slug, game: g.game, title: g.title, category: g.category, summary: g.summary, body: g.body,
     status: g.status, updated_at: g.updatedAt,
   })));
-  await up('locations', seed.SEED_LOCATIONS.map((x) => ({
-    id: x.id, slug: x.slug, name: x.name, type: x.type, x: x.x, y: x.y, description: x.description,
+  if (process.argv.includes('--locations')) await up('locations', seed.SEED_LOCATIONS.map((x) => ({
+    id: x.id, slug: x.slug, name: x.name, type: x.type, area: x.area ?? null, x: x.x, y: x.y, description: x.description,
     status: x.status, updated_at: x.updatedAt,
   })));
   await up('updates', seed.SEED_UPDATES.map((u) => ({

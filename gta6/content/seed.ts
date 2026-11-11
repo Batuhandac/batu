@@ -1,4 +1,6 @@
-import type { Cheat, Mission, Guide, MapLocation, ContentUpdate } from '@/types';
+import type { Cheat, Mission, Guide, MapLocation, ContentUpdate, LocationType } from '@/types';
+import { GTAV_CHEATS } from '@/content/gtav-cheats';
+import leonida from '@/content/data/leonida-locations.json';
 
 const NOW = '2026-11-11T12:00:00Z';
 
@@ -7,78 +9,78 @@ const NOW = '2026-11-11T12:00:00Z';
  * Every cheat is `unverified` until the team tests it on a retail copy on launch day.
  * Replace / extend via Supabase after launch; this file is only the offline fallback.
  */
-export const SEED_CHEATS: Cheat[] = [
+const GTA6_CHEATS: Cheat[] = [
   {
-    id: 'c-invincibility', slug: 'invincibility', category: 'player',
+    id: 'c-invincibility', slug: 'invincibility', game: 'gta6', category: 'player',
     title: { tr: 'Ölümsüzlük', en: 'Invincibility' },
     effect: { tr: 'Belirli bir süre hasar almazsın.', en: 'Take no damage for a limited time.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
     notes: { tr: 'GTA III, Vice City, San Andreas, IV ve V hikaye modunda vardı. GTA VI için Rockstar açıklama yapmadı.', en: 'Present in story mode of GTA III, Vice City, San Andreas, IV and V. Rockstar has not confirmed it for GTA VI.' },
   },
   {
-    id: 'c-full-health-armor', slug: 'full-health-armor', category: 'player',
+    id: 'c-full-health-armor', slug: 'full-health-armor', game: 'gta6', category: 'player',
     title: { tr: 'Tam Can ve Zırh', en: 'Full Health & Armor' },
     effect: { tr: 'Can ve zırhı anında doldurur.', en: 'Instantly refills health and armor.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
     notes: { tr: 'Serinin en eski hilelerinden. Doğrulanana kadar beklenti.', en: 'One of the oldest series cheats. Expectation until verified.' },
   },
   {
-    id: 'c-weapons', slug: 'weapon-set', category: 'weapon',
+    id: 'c-weapons', slug: 'weapon-set', game: 'gta6', category: 'weapon',
     title: { tr: 'Silah Paketi', en: 'Weapon Set' },
     effect: { tr: 'Tüm temel silahları ve mermiyi verir.', en: 'Gives all basic weapons and ammo.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-wanted-down', slug: 'lower-wanted-level', category: 'world',
+    id: 'c-wanted-down', slug: 'lower-wanted-level', game: 'gta6', category: 'world',
     title: { tr: 'Aranma Seviyesini Düşür', en: 'Lower Wanted Level' },
     effect: { tr: 'Polis aranma seviyesini bir yıldız düşürür.', en: 'Drops the wanted level by one star.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-wanted-up', slug: 'raise-wanted-level', category: 'world',
+    id: 'c-wanted-up', slug: 'raise-wanted-level', game: 'gta6', category: 'world',
     title: { tr: 'Aranma Seviyesini Yükselt', en: 'Raise Wanted Level' },
     effect: { tr: 'Aranma seviyesini bir yıldız artırır.', en: 'Raises the wanted level by one star.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-spawn-sports', slug: 'spawn-sports-car', category: 'vehicle',
+    id: 'c-spawn-sports', slug: 'spawn-sports-car', game: 'gta6', category: 'vehicle',
     title: { tr: 'Spor Araba Çağır', en: 'Spawn Sports Car' },
     effect: { tr: 'Yanında bir spor araba belirir.', en: 'Spawns a sports car next to you.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-spawn-bike', slug: 'spawn-motorcycle', category: 'vehicle',
+    id: 'c-spawn-bike', slug: 'spawn-motorcycle', game: 'gta6', category: 'vehicle',
     title: { tr: 'Motosiklet Çağır', en: 'Spawn Motorcycle' },
     effect: { tr: 'Yanında bir motosiklet belirir.', en: 'Spawns a motorcycle next to you.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-spawn-heli', slug: 'spawn-helicopter', category: 'vehicle',
+    id: 'c-spawn-heli', slug: 'spawn-helicopter', game: 'gta6', category: 'vehicle',
     title: { tr: 'Helikopter Çağır', en: 'Spawn Helicopter' },
     effect: { tr: 'Yanında bir helikopter belirir.', en: 'Spawns a helicopter next to you.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-slow-mo', slug: 'slow-motion', category: 'world',
+    id: 'c-slow-mo', slug: 'slow-motion', game: 'gta6', category: 'world',
     title: { tr: 'Ağır Çekim', en: 'Slow Motion' },
     effect: { tr: 'Oyun hızını düşürür, tekrar girince kademeli artar.', en: 'Slows the game down, cycles with repeated entry.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-weather', slug: 'change-weather', category: 'world',
+    id: 'c-weather', slug: 'change-weather', game: 'gta6', category: 'world',
     title: { tr: 'Hava Durumunu Değiştir', en: 'Change Weather' },
     effect: { tr: 'Hava durumunu sırayla değiştirir.', en: 'Cycles through weather states.' },
     codes: {}, status: 'unverified', updatedAt: NOW,
   },
   {
-    id: 'c-moon-gravity', slug: 'moon-gravity', category: 'world',
+    id: 'c-moon-gravity', slug: 'moon-gravity', game: 'gta6', category: 'world',
     title: { tr: 'Ay Yerçekimi', en: 'Moon Gravity' },
     effect: { tr: 'Düşük yerçekimi.', en: 'Low gravity.' },
     codes: {}, status: 'rumor', updatedAt: NOW,
     notes: { tr: 'GTA V\'de vardı. GTA VI için sosyal medyada "sızdı" diye dolaşan kodlar GTA V kodlarının kopyası.', en: 'Was in GTA V. Codes "leaked" on social media for GTA VI are copies of GTA V codes.' },
   },
   {
-    id: 'c-online-cheats', slug: 'online-cheats', category: 'misc',
+    id: 'c-online-cheats', slug: 'online-cheats', game: 'gta6', category: 'misc',
     title: { tr: 'GTA Online Hileleri', en: 'GTA Online Cheats' },
     effect: { tr: 'Çevrimiçi modda hile kodu.', en: 'Cheat codes in the online mode.' },
     codes: {}, status: 'debunked', updatedAt: NOW,
@@ -86,11 +88,13 @@ export const SEED_CHEATS: Cheat[] = [
   },
 ];
 
+export const SEED_CHEATS: Cheat[] = [...GTA6_CHEATS, ...GTAV_CHEATS];
+
 export const SEED_MISSIONS: Mission[] = [];
 
 export const SEED_GUIDES: Guide[] = [
   {
-    id: 'g-launch-checklist', slug: 'launch-checklist', category: 'launch', status: 'verified', updatedAt: NOW,
+    id: 'g-launch-checklist', slug: 'launch-checklist', game: 'gta6', category: 'launch', status: 'verified', updatedAt: NOW,
     title: { tr: 'Çıkış Günü Kontrol Listesi', en: 'Launch Day Checklist' },
     summary: { tr: '19 Kasım\'da ilk saatte oynamak için yapman gerekenler.', en: 'What to do to be playing in the first hour on November 19.' },
     body: [
@@ -101,7 +105,7 @@ export const SEED_GUIDES: Guide[] = [
     ],
   },
   {
-    id: 'g-mission-skip', slug: 'mission-skip-explained', category: 'tricks', status: 'unverified', updatedAt: NOW,
+    id: 'g-mission-skip', slug: 'mission-skip-explained', game: 'gta6', category: 'tricks', status: 'unverified', updatedAt: NOW,
     title: { tr: 'Görev Atlama Nasıl Çalışır?', en: 'How Mission Skipping Works' },
     summary: { tr: 'GTA V\'deki sistem ve GTA VI\'da beklediklerimiz.', en: 'The GTA V system and what we expect in GTA VI.' },
     body: [
@@ -111,7 +115,7 @@ export const SEED_GUIDES: Guide[] = [
     ],
   },
   {
-    id: 'g-how-we-verify', slug: 'how-we-verify', category: 'launch', status: 'verified', updatedAt: NOW,
+    id: 'g-how-we-verify', slug: 'how-we-verify', game: 'gta6', category: 'launch', status: 'verified', updatedAt: NOW,
     title: { tr: 'Nasıl Doğruluyoruz?', en: 'How We Verify' },
     summary: { tr: 'Bu uygulamada "Doğrulandı" rozeti ne anlama geliyor.', en: 'What the Verified badge means in this app.' },
     body: [
@@ -122,29 +126,27 @@ export const SEED_GUIDES: Guide[] = [
   },
 ];
 
-export const SEED_LOCATIONS: MapLocation[] = [
-  { id: 'l-vice-city', slug: 'vice-city', type: 'city', x: 72, y: 70, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Vice City', en: 'Vice City' },
-    description: { tr: 'Leonida\'nın neon kalbi. Fragmanlarda ve resmi sitede gösterilen ana şehir.', en: 'The neon heart of Leonida. The main city shown in trailers and on the official site.' } },
-  { id: 'l-leonida-keys', slug: 'leonida-keys', type: 'region', x: 55, y: 90, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Leonida Keys', en: 'Leonida Keys' },
-    description: { tr: 'Güneydeki ada zinciri. Tekne, dalış ve kıyı yaşamı.', en: 'The island chain to the south. Boats, diving and coastal life.' } },
-  { id: 'l-grassrivers', slug: 'grassrivers', type: 'region', x: 45, y: 62, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Grassrivers', en: 'Grassrivers' },
-    description: { tr: 'Bataklıklar ve timsahlar. Airboat bölgesi.', en: 'Swamps and alligators. Airboat country.' } },
-  { id: 'l-port-gellhorn', slug: 'port-gellhorn', type: 'city', x: 22, y: 28, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Port Gellhorn', en: 'Port Gellhorn' },
-    description: { tr: 'Kuzeybatıdaki liman kasabası. Motel ve barlar.', en: 'Port town in the northwest. Motels and bars.' } },
-  { id: 'l-ambrosia', slug: 'ambrosia', type: 'region', x: 40, y: 18, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Ambrosia', en: 'Ambrosia' },
-    description: { tr: 'Kuzeyde sanayi ve tarım bölgesi.', en: 'Industrial and farming region in the north.' } },
-  { id: 'l-mount-kalaga', slug: 'mount-kalaga', type: 'landmark', x: 60, y: 12, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Mount Kalaga', en: 'Mount Kalaga' },
-    description: { tr: 'Kuzeydeki milli park ve dağlık alan.', en: 'National park and mountain area in the north.' } },
-  { id: 'l-hamlet', slug: 'hamlet', type: 'city', x: 30, y: 45, status: 'verified', updatedAt: NOW,
-    name: { tr: 'Hamlet', en: 'Hamlet' },
-    description: { tr: 'Küçük iç bölge kasabası.', en: 'Small inland town.' } },
-];
+/**
+ * Leonida locations come from the community GTADB catalogue (public domain / CC BY 4.0,
+ * rolux, Yanis, Dupzor & contributors), trimmed by scripts/import-leonida.js.
+ * Only entries with a confirmed name are shown as verified; the rest stay unverified.
+ */
+type RawLoc = { id: string; slug: string; name: string; area: string; category: string; x: number; y: number; status: string; named: boolean; desc: string | null };
+const CATS = new Set<string>(['transport','other','commercial','industrial','infrastructure','leisure','government','residential','hotel','nature','restaurant','entertainment','public','safehouse','service','landmark']);
+export const SEED_LOCATIONS: MapLocation[] = (leonida.locations as RawLoc[]).map((l) => ({
+  id: `l-${l.id}`,
+  slug: l.slug,
+  name: { tr: l.name, en: l.name },
+  type: (CATS.has(l.category) ? l.category : 'other') as LocationType,
+  x: l.x,
+  y: l.y,
+  area: l.area,
+  description: { tr: l.desc ?? l.area, en: l.desc ?? l.area },
+  status: l.status as MapLocation['status'],
+  updatedAt: leonida.meta.fetchedAt,
+}));
+
+export const SEED_AREAS = leonida.areas as Array<{ name: string; x: number; y: number; count: number }>;
 
 export const SEED_UPDATES: ContentUpdate[] = [
   {

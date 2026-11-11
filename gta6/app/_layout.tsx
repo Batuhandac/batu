@@ -46,6 +46,7 @@ export default function RootLayout() {
           <Stack.Screen name="guide/[slug]" />
           <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
           <Stack.Screen name="legal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="glossary" />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

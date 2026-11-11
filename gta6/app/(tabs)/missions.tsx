@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
+import { GameSwitch } from '@/components/GameSwitch';
 import { colors, spacing } from '@/constants/theme';
 import { STRINGS, t } from '@/constants/i18n';
 import { useContent } from '@/stores/contentStore';
@@ -12,11 +13,13 @@ import { useSettings } from '@/stores/settingsStore';
 export default function Missions() {
   const router = useRouter();
   const lang = useSettings((s) => s.lang);
-  const missions = useContent((s) => s.bundle.missions);
+  const game = useSettings((s) => s.game);
+  const all = useContent((s) => s.bundle.missions);
+  const missions = useMemo(() => all.filter((m) => m.game === game), [all, game]);
 
   return (
     <Screen>
-      <Header title={STRINGS.tabs.missions[lang]} subtitle={lang === 'tr' ? 'Altın madalya şartları, görev atlama ve taktikler.' : 'Gold requirements, skipping and tactics.'} />
+      <Header title={STRINGS.tabs.missions[lang]} subtitle={lang === 'tr' ? 'Altın madalya şartları, görev atlama ve taktikler.' : 'Gold requirements, skipping and tactics.'} right={<GameSwitch />} />
       {missions.length === 0 && (
         <>
           <Text style={styles.empty}>{STRINGS.common.emptyMissions[lang]}</Text>

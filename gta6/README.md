@@ -10,6 +10,21 @@ Rockstar Games / Take-Two ile bağlantılı değildir. Uygulama adı, ikon ve me
 - Çıkış öncesi (19 Kasım 2026) tüm hileler `unverified`. Ekip oyunu perakende sürümde test ettikçe Supabase'den `verified`/`debunked` yapılır, uygulama anında güncellenir.
 - Rockstar görseli, ekran görüntüsü, resmi harita kullanılmaz (DMCA riski).
 
+## Veri kaynakları
+
+| Veri | Kaynak | Lisans | Dosya |
+|---|---|---|---|
+| GTA VI Leonida konumları (1.427, 350'si isim-doğrulanmış, 26 bölge) | GTADB topluluk kataloğu (map.gtadb.org), jahid611/gta6map üzerinden normalize | Public domain / CC BY 4.0 (rolux, Yanis, Dupzor ve katkıda bulunanlar) | `content/data/leonida-locations.json`, yenilemek için `node scripts/import-leonida.js` |
+| GTA V hikaye modu hileleri (35 kod, PS/Xbox/PC/telefon) | Oyun içi, DuckDuckGo cheat-sheet veri setiyle çapraz kontrol | Apache-2.0 (DDG), kodlar kamuya açık | `content/gtav-cheats.ts` |
+| Sözlük (26 terim, TR/EN) | Kendi yazımımız | - | `content/glossary.ts` |
+| GTA VI hileler, rehberler, görevler | Çıkış günü ekip doğrulaması | - | Supabase + `content/seed.ts` |
+
+Denenip elenenler: EricSpencer00/gta-v-gold-checklist (MIT) sadece 18 görev içeriyor, eksik; nmec/gtav-vehicle-stats fiyat alanı boş. GTADB'nin kendi endpoint'i tarayıcı dışı istemcileri engelliyor, mirror kullanıldı.
+
+## TestFlight
+
+Apple hesabı gerektirdiği için kendi makinende: `scripts/testflight.sh`. Adımlar: EAS projesi bağla, iOS production build, otomatik submit. İlk çalıştırmada EAS bundle id (`com.batu.leonidacodes`), sertifika ve profili Apple hesabında kendisi oluşturur.
+
 ## Çalıştırma
 
 ```bash

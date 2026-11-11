@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import type { GamePlatform, Lang } from '@/types';
+import type { Game, GamePlatform, Lang } from '@/types';
 
 const KEY = 'leonida.settings.v1';
 
 interface Persisted {
   lang: Lang;
+  game: Game;
   platform: GamePlatform | null;
   pushToken: string | null;
   pushEnabled: boolean;
@@ -14,11 +15,12 @@ interface Persisted {
 interface SettingsState extends Persisted {
   hydrated: boolean;
   setLang: (lang: Lang) => void;
+  setGame: (game: Game) => void;
   setPlatform: (p: GamePlatform | null) => void;
   setPush: (enabled: boolean, token: string | null) => void;
 }
 
-const pick = (s: SettingsState): Persisted => ({ lang: s.lang, platform: s.platform, pushToken: s.pushToken, pushEnabled: s.pushEnabled });
+const pick = (s: SettingsState): Persisted => ({ lang: s.lang, game: s.game, platform: s.platform, pushToken: s.pushToken, pushEnabled: s.pushEnabled });
 
 async function save(s: SettingsState) {
   try {
@@ -31,11 +33,13 @@ async function save(s: SettingsState) {
 // Manual persistence: zustand/middleware's persist ships an .mjs with import.meta that Metro's web bundle cannot run.
 export const useSettings = create<SettingsState>((set, get) => ({
   lang: 'tr',
+  game: 'gta6',
   platform: null,
   pushToken: null,
   pushEnabled: false,
   hydrated: false,
   setLang: (lang) => { set({ lang }); save(get()); },
+  setGame: (game) => { set({ game }); save(get()); },
   setPlatform: (platform) => { set({ platform }); save(get()); },
   setPush: (pushEnabled, pushToken) => { set({ pushEnabled, pushToken }); save(get()); },
 }));
@@ -47,6 +51,7 @@ export async function hydrateSettings() {
       const p = JSON.parse(raw) as Partial<Persisted>;
       useSettings.setState({
         lang: p.lang === 'en' || p.lang === 'tr' ? p.lang : 'tr',
+        game: p.game === 'gta5' ? 'gta5' : 'gta6',
         platform: p.platform ?? null,
         pushToken: p.pushToken ?? null,
         pushEnabled: !!p.pushEnabled,

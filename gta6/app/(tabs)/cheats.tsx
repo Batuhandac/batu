@@ -5,6 +5,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
+import { GameSwitch } from '@/components/GameSwitch';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { STRINGS, t } from '@/constants/i18n';
 import { useContent } from '@/stores/contentStore';
@@ -18,7 +19,9 @@ export default function Cheats() {
   const router = useRouter();
   const lang = useSettings((s) => s.lang);
   const platform = useSettings((s) => s.platform);
-  const cheats = useContent((s) => s.bundle.cheats);
+  const game = useSettings((s) => s.game);
+  const all = useContent((s) => s.bundle.cheats);
+  const cheats = useMemo(() => all.filter((c) => c.game === game), [all, game]);
   const [cat, setCat] = useState<CheatCategory | 'all'>('all');
   const [status, setStatus] = useState<ContentStatus | 'all'>('all');
 
@@ -33,6 +36,7 @@ export default function Cheats() {
       <Header
         title={STRINGS.tabs.cheats[lang]}
         subtitle={lang === 'tr' ? `${verifiedCount} doğrulandı · ${cheats.length} toplam` : `${verifiedCount} verified · ${cheats.length} total`}
+        right={<GameSwitch />}
       />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {STATUSES.map((s) => (
@@ -47,7 +51,8 @@ export default function Cheats() {
 
       {list.length === 0 && <Text style={styles.empty}>{STRINGS.common.emptyCheats[lang]}</Text>}
       {list.map((c) => {
-        const code = platform ? c.codes[platform] : c.codes.ps5 ?? c.codes.xbox ?? c.codes.pc;
+        const raw = platform ? c.codes[platform] : c.codes.ps5 ?? c.codes.xbox ?? c.codes.pc;
+        const code = raw && raw !== '—' ? raw : c.codes.pc && c.codes.pc !== '—' ? c.codes.pc : undefined;
         return (
           <Card key={c.id} meta={STRINGS.cheatCategory[c.category][lang]} title={t(c.title, lang)} subtitle={t(c.effect, lang)} status={c.status} onPress={() => router.push(`/cheat/${c.slug}` as never)}>
             <View style={styles.codeRow}>

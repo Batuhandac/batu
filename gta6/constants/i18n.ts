@@ -58,6 +58,27 @@ export const STRINGS = {
     both: { tr: 'Jason & Lucia', en: 'Jason & Lucia' },
     unknown: { tr: 'Bilinmiyor', en: 'Unknown' },
   } satisfies Record<Protagonist, Localized>,
+  game: {
+    gta6: { tr: 'GTA VI', en: 'GTA VI' },
+    gta5: { tr: 'GTA V', en: 'GTA V' },
+  },
+  glossary: {
+    title: { tr: 'Sözlük', en: 'Glossary' },
+    subtitle: { tr: 'Oyun Türkçe değil. Ekranda göreceğin İngilizce terimler ve ne anlama geldikleri.', en: 'English UI terms a new player meets and what they mean.' },
+    cat: {
+      ui: { tr: 'Arayüz', en: 'UI' },
+      gameplay: { tr: 'Oynanış', en: 'Gameplay' },
+      police: { tr: 'Polis', en: 'Police' },
+      economy: { tr: 'Ekonomi', en: 'Economy' },
+      missions: { tr: 'Görevler', en: 'Missions' },
+    },
+  },
+  map: {
+    search: { tr: 'Konum ara', en: 'Search locations' },
+    namedOnly: { tr: 'Sadece doğrulanmış isimler', en: 'Confirmed names only' },
+    attribution: { tr: 'Konum verisi: GTADB topluluk kataloğu (rolux, Yanis, Dupzor ve katkıda bulunanlar). Koordinatlar fragman ve ekran görüntülerinden türetilmiş yaklaşık değerlerdir.', en: 'Location data: GTADB community catalogue (rolux, Yanis, Dupzor & contributors). Coordinates are approximate, derived from trailers and screenshots.' },
+    count: { tr: 'konum', en: 'locations' },
+  },
   common: {
     all: { tr: 'Tümü', en: 'All' },
     latest: { tr: 'Son güncellemeler', en: 'Latest updates' },

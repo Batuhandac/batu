@@ -2,10 +2,12 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE content_status AS ENUM ('verified','unverified','rumor','debunked');
+CREATE TYPE game_id AS ENUM ('gta6','gta5');
 
 CREATE TABLE cheats (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
+  game game_id NOT NULL DEFAULT 'gta6',
   title JSONB NOT NULL,            -- {"tr":"...","en":"..."}
   category TEXT NOT NULL CHECK (category IN ('player','weapon','vehicle','world','misc')),
   effect JSONB NOT NULL,
@@ -21,6 +23,7 @@ CREATE TABLE cheats (
 CREATE TABLE missions (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
+  game game_id NOT NULL DEFAULT 'gta6',
   order_no INTEGER NOT NULL DEFAULT 0,
   title JSONB NOT NULL,
   chapter JSONB NOT NULL,
@@ -37,6 +40,7 @@ CREATE TABLE missions (
 CREATE TABLE guides (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
+  game game_id NOT NULL DEFAULT 'gta6',
   title JSONB NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('money','weapons','vehicles','side','tricks','launch')),
   summary JSONB NOT NULL,
@@ -50,7 +54,8 @@ CREATE TABLE locations (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
   name JSONB NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('region','city','landmark','collectible','shop')),
+  type TEXT NOT NULL,
+  area TEXT,
   x NUMERIC(5,2) NOT NULL,
   y NUMERIC(5,2) NOT NULL,
   description JSONB NOT NULL,
@@ -95,4 +100,5 @@ CREATE POLICY "anon update own token" ON push_tokens FOR UPDATE USING (TRUE);
 CREATE POLICY "anon delete own token" ON push_tokens FOR DELETE USING (TRUE);
 
 CREATE INDEX idx_cheats_status ON cheats (status);
+CREATE INDEX idx_cheats_game ON cheats (game);
 CREATE INDEX idx_updates_created ON updates (created_at DESC);
