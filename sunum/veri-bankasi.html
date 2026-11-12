@@ -1,0 +1,453 @@
+<title>Veri Bankası</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: phone-first single column for students; #sunum view is a wide, large-type class screen */
+:root{
+  --bg:#F4F7FB; --surface:#FFFFFF; --fg:#0B1F3A; --muted:#5B6B82; --line:#D9E1EC;
+  --accent:#0E9C9C; --accent-ink:#FFFFFF; --amber:#E8A317; --good:#1E9E63; --bad:#D4493B;
+  --tint:#E3F4F4; --ink:#0B1F3A; --ink-soft:#132235; --on-ink:#EAF0F7; --on-ink-muted:#9FB0C5;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0B1624; --surface:#132235; --fg:#EAF0F7; --muted:#9FB0C5; --line:#24364D;
+  --accent:#2CC7C2; --accent-ink:#06202A; --amber:#F2B84B; --good:#3FC67F; --bad:#F06A5C; --tint:#143A3C;
+  --ink:#06101C; --ink-soft:#0F1C2E; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0B1624; --surface:#132235; --fg:#EAF0F7; --muted:#9FB0C5; --line:#24364D;
+  --accent:#2CC7C2; --accent-ink:#06202A; --amber:#F2B84B; --good:#3FC67F; --bad:#F06A5C; --tint:#143A3C;
+  --ink:#06101C; --ink-soft:#0F1C2E; color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.5;
+  padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:560px;margin:0 auto}
+.wrap.wide{max-width:1100px}
+header{padding:20px 0 8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:26px;line-height:1.15;margin:4px 0 6px;text-wrap:balance;font-weight:700}
+header p{margin:0;color:var(--muted);font-size:15px}
+nav{display:flex;gap:6px;margin:14px 0 18px;overflow-x:auto;padding-bottom:4px}
+nav a{flex:0 0 auto;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--surface);
+  padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
+nav a[aria-current="page"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+nav a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+section{display:grid;gap:14px}
+h2{font-size:20px;margin:0;line-height:1.2;text-wrap:balance}
+h3{font-size:15px;margin:0;line-height:1.3}
+.lead{color:var(--muted);margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.card.ink{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.q-label{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.06em}
+.q{font-size:18px;font-weight:600;margin:6px 0 14px;line-height:1.35}
+.opts{display:grid;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;font-size:15px;color:var(--fg);
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt .k{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--muted);min-width:18px}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--surface))}
+.opt.sel{border-color:var(--accent);background:var(--tint)}
+.opt[disabled]{cursor:default}
+.reveal{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--tint);font-size:14px}
+.reveal strong{display:block;font-size:15px;margin-bottom:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btn{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.ink .btn{color:var(--on-ink)}
+.btn[disabled]{opacity:.5;cursor:default}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+input[type=text]{font:inherit;font-size:17px;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.field{display:grid;gap:6px}
+.field label{font-size:14px;font-weight:600}
+.hint{font-size:12px;color:var(--muted)}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:44px;font-weight:600;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;background:var(--amber);color:#1a1200}
+.badge.risk{background:var(--bad);color:#fff}
+.badge.ok{background:var(--good);color:#fff}
+/* analysis animation */
+.feed{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--on-ink-muted);min-height:170px}
+.feed div{opacity:0;transform:translateY(4px);animation:in .35s forwards}
+.feed .hl{color:var(--accent)}
+.feed .warn{color:var(--amber)}
+@keyframes in{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.feed div{animation:none;opacity:1;transform:none}.progress i{transition:none}}
+/* profile card */
+.profile{display:grid;gap:14px}
+.seg{font-size:24px;font-weight:700;line-height:1.15;margin:4px 0 2px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:var(--bg);border-radius:10px;padding:12px;min-width:0}
+.card.ink .stat{background:var(--ink-soft)}
+.stat .n{font-family:var(--mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+.card.ink .stat .l{color:var(--on-ink-muted)}
+.why{display:grid;gap:8px;font-size:14px}
+.why div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.why .d{font-family:var(--mono);font-weight:600;font-size:13px;min-width:38px;text-align:right}
+.why .plus{color:var(--good)}.why .minus{color:var(--bad)}.why .zero{color:var(--muted)}
+.code{font-family:var(--mono);font-size:40px;font-weight:600;letter-spacing:.12em;text-align:center;padding:14px;border-radius:12px;background:var(--tint);color:var(--fg);user-select:all}
+.hash{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere;color:var(--on-ink-muted)}
+/* class screen */
+.screen{display:grid;gap:16px}
+.screen-head{display:flex;gap:14px;flex-wrap:wrap;align-items:end;justify-content:space-between}
+.codein{display:flex;gap:8px;flex-wrap:wrap}
+.codein input{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;width:230px;max-width:100%}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.kpi .n{font-family:var(--mono);font-size:34px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:13px;color:var(--muted);margin-top:6px}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.bar i{display:block;height:16px;border-radius:4px;background:var(--accent);min-width:2px;transition:width .4s}
+.bar b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0;animation:in .4s}
+.mini .who{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.mini .s{font-weight:700;font-size:16px;margin:2px 0}
+.mini .sc{font-family:var(--mono);font-size:22px;font-weight:600}
+.mini .fl{font-size:12px;color:var(--bad);font-weight:600}
+.insight{font-size:17px;line-height:1.5}
+.insight strong{color:var(--amber)}
+.err{color:var(--bad);font-size:14px;font-weight:600}
+.disc li{margin:6px 0}
+.src-list{margin:0;padding-left:18px;font-size:13px;line-height:1.45}
+.src-list li{margin:6px 0;min-width:0;overflow-wrap:anywhere}
+.src-list a{color:var(--accent)}
+footer{margin-top:28px;color:var(--muted);font-size:12px}
+.sr{position:absolute;left:-9999px}
+@media (max-width:480px){.bar{grid-template-columns:110px 1fr auto;font-size:13px}.code{font-size:32px}}
+</style>
+
+<div class="wrap" id="wrap">
+<header>
+  <div class="eyebrow">ISL 519 · Dijital Finans · Hafta 10</div>
+  <h1>Veri Bankası</h1>
+  <p id="tagline">Birkaç cevap verin. Bankanın sizi nasıl gördüğünü görün.</p>
+  <nav id="nav">
+    <a href="#profil" data-view="profil">Profilim</a>
+    <a href="#vaka" data-view="vaka">Sen Olsan?</a>
+    <a href="#kaynak" data-view="kaynak">Kaynaklar</a>
+    <a href="#sunum" data-view="sunum">Sınıf ekranı</a>
+  </nav>
+</header>
+
+<!-- ===== PROFİL (öğrenci) ===== -->
+<section id="v-profil">
+  <div class="progress" aria-hidden="true"><i id="pbar"></i></div>
+  <div class="card" id="step"></div>
+</section>
+
+<!-- ===== SINIF EKRANI (sunucu) ===== -->
+<section id="v-sunum" hidden>
+  <div class="screen">
+    <div class="screen-head">
+      <div>
+        <h2>Sınıfın verisi, canlı</h2>
+        <p class="lead">Kodunuzu söyleyin: profiliniz ekrana düşsün. Kodda adınız yok, sadece cevaplarınız ve adınızın parmak izi var.</p>
+      </div>
+      <form class="codein" id="codeform">
+        <label class="sr" for="codein">Profil kodu</label>
+        <input type="text" id="codein" maxlength="7" placeholder="A7K3MQ" autocomplete="off" spellcheck="false">
+        <button class="btn" type="submit">Ekle</button>
+        <button class="btn ghost" type="button" id="demo">Prova: örnek ekle</button>
+        <button class="btn ghost" type="button" id="clear">Temizle</button>
+      </form>
+    </div>
+    <div class="err" id="codeerr" hidden></div>
+    <div class="kpis">
+      <div class="kpi"><div class="n" id="k-n">0</div><div class="l">profil</div></div>
+      <div class="kpi"><div class="n" id="k-avg">–</div><div class="l">ortalama puan (300–900)</div></div>
+      <div class="kpi"><div class="n" id="k-risk">–</div><div class="l">ek doğrulama isteyen model</div></div>
+      <div class="kpi"><div class="n" id="k-loc">–</div><div class="l">konum izni açık</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Segment dağılımı</h3>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="card ink"><div class="insight" id="insight">Henüz veri yok. İlk kodu girin.</div></div>
+    <div class="grid" id="grid"></div>
+    <p class="lead">Tartışma: Hangi cevap kimin puanını düşürdü? Bu adil mi? Bankanıza bu altı sorudan hangisinin cevabını verirdiniz?</p>
+  </div>
+</section>
+
+<!-- ===== SEN OLSAN? ===== -->
+<section id="v-vaka" hidden>
+  <h2>Sen olsan ne yapardın?</h2>
+  <p class="lead">Üç gerçek vaka. Önce kararını ver, sonra gerçekte ne olduğunu gör.</p>
+  <div class="card case" data-case="0"></div>
+  <div class="card case" data-case="1"></div>
+  <div class="card case" data-case="2"></div>
+</section>
+
+<!-- ===== KAYNAKLAR ===== -->
+<section id="v-kaynak" hidden>
+  <h2>Tartışma soruları</h2>
+  <div class="card">
+    <ol class="disc" style="margin:0;padding-left:20px;font-size:15px">
+      <li>Daha fazla veri her zaman daha iyi karar demek mi? Zillow neden battı?</li>
+      <li>Bir kredi modeli cinsiyet verisi kullanmıyorsa ayrımcılık yapamaz mı?</li>
+      <li>Türkiye'de 21,5 milyon kişinin verisi sızdı, ceza 1,9 milyon TL. Caydırıcı mı?</li>
+      <li>Bankanız sosyal medya verinizle kredi notu hesaplasa kabul eder miydiniz?</li>
+      <li>"Veri yeni petroldür" benzetmesi nerede doğru, nerede yanlış?</li>
+    </ol>
+  </div>
+  <h2>Sunumda kullanılan kaynaklar</h2>
+  <div class="card">
+    <ol class="src-list">
+      <li>IDC / Seagate, <em>Data Age 2025</em> ve IDC Global DataSphere 2021–2025 tahmini (181 ZB). <a href="https://www.networkworld.com/article/966746/idc-expect-175-zettabytes-of-data-worldwide.html" target="_blank" rel="noopener">networkworld.com</a></li>
+      <li>Exploding Topics, "Data generated per day" (~402,7 milyon TB/gün). <a href="https://explodingtopics.com/blog/data-generated-per-day" target="_blank" rel="noopener">explodingtopics.com</a></li>
+      <li>BKM, 2024 Yıllık Bülten (15,8 trilyon TL, 18,4 milyar işlem). <a href="https://bkm.com.tr/wp-content/uploads/2025/01/BKM-2024-Yillik-Bulten-.pdf" target="_blank" rel="noopener">bkm.com.tr</a></li>
+      <li>TBB, Dijital, İnternet ve Mobil Bankacılık İstatistikleri, Aralık 2025 (127,7 milyon aktif dijital müşteri). <a href="https://www.alomaliye.com/2026/02/18/dijital-bankacilik-kullanimi-artiyor-128-milyon-kisi-dijital-bankacilik-hizmeti-kullaniyor/" target="_blank" rel="noopener">alomaliye.com (TBB verisi)</a></li>
+      <li>MYbank / Ant Group, "310 lending model" basın açıklamaları. <a href="https://thedigitalbanker.com/mybank-showcases-digital-solutions-for-sme-financing-at-the-singapore-fintech-festival-2023/" target="_blank" rel="noopener">thedigitalbanker.com</a></li>
+      <li>KKB, Findeks 12. yıl açıklaması (10 milyona yakın sorgu). <a href="https://www.ekonomist.com.tr/haberler/12-yilda-10-milyona-yakin-kredi-notu-sorgulandi-79321" target="_blank" rel="noopener">ekonomist.com.tr</a></li>
+      <li>Mastercard, Decision Intelligence / DI Pro açıklamaları. <a href="https://www.pymnts.com/artificial-intelligence-2/2024/mastercard-says-new-ai-model-ups-fraud-detection-by-20percent/" target="_blank" rel="noopener">pymnts.com</a></li>
+      <li>Nasdaq Verafin, <em>Global Financial Crime Report 2024</em> (485,6 milyar $ dolandırıcılık, 3,1 trilyon $ yasa dışı fon). <a href="https://www.nasdaq.com/global-financial-crime-report" target="_blank" rel="noopener">nasdaq.com</a></li>
+      <li>Neudata, alternatif veri harcaması 2025 (2,8 milyar $). <a href="https://www.aol.com/news/money-managers-hungrier-ever-obscure-140001573.html" target="_blank" rel="noopener">aol.com</a></li>
+      <li>Bloomberg (2017), JPMorgan COIN: 360.000 saat. <a href="https://www.abajournal.com/news/article/jpmorgan_chase_uses_tech_to_save_360000_hours_of_annual_work_by_lawyers_and" target="_blank" rel="noopener">abajournal.com</a></li>
+      <li>JPMorgan teknoloji bütçesi 2025 (18 milyar $). <a href="https://www.constellationr.com/blog-news/insights/jpmorgan-chase-s-it-ai-bets-where-returns-are" target="_blank" rel="noopener">constellationr.com</a></li>
+      <li>Garanti BBVA, "Ugi 10 yaşında" (1,6 milyon aylık aktif). <a href="https://www.garantibbva.com.tr/kurumsal-iletisim/akilli-asistan-ugi-10-yasinda" target="_blank" rel="noopener">garantibbva.com.tr</a></li>
+      <li>İş Bankası, Maxi (2,5 milyon aylık kullanıcı, 110 milyon diyalog). <a href="https://www.isbank.com.tr/bankamizi-taniyin/is-bankasina-orta-ve-dogu-avrupanin-en-iyi-dijital-bankasi-odulu-2025" target="_blank" rel="noopener">isbank.com.tr</a></li>
+      <li>Fortune (2012), "Why Knight lost $440 million in 45 minutes". <a href="https://fortune.com/2012/08/02/why-knight-lost-440-million-in-45-minutes/" target="_blank" rel="noopener">fortune.com</a></li>
+      <li>Fox Business (2021), Zillow Offers kapanışı (381 milyon $ çeyrek zararı). <a href="https://foxbusiness.com/real-estate/zillow-quits-home-flipping-business-cites-inability-to-forecast-prices" target="_blank" rel="noopener">foxbusiness.com</a></li>
+      <li>NYDFS (2021), Apple Card soruşturma raporu. <a href="https://s3.documentcloud.org/documents/20521283/rpt_202103_apple_card_investigation.pdf" target="_blank" rel="noopener">documentcloud.org</a></li>
+      <li>CNBC (2019), Equifax uzlaşması (700 milyon $'a kadar). <a href="https://www.cnbc.com/2019/07/22/equifax-to-pay-up-to-650-million-in-data-breach-settlement.html" target="_blank" rel="noopener">cnbc.com</a></li>
+      <li>KVKK Yemeksepeti kararı (21.504.083 kullanıcı, 1,9 milyon TL). <a href="https://www.bloomberght.com/kvkk-yemek-sepeti-ne-1-9-milyon-tl-idari-para-cezasi-verdi-2298324" target="_blank" rel="noopener">bloomberght.com</a></li>
+      <li>KVKK 2025 Faaliyet Raporu özeti (328 ihlal bildirimi, 352,5 milyon TL ceza). <a href="https://www.erdem-erdem.av.tr/bilgi-bankasi/kisisel-verileri-koruma-kurumu-2025-yili-faaliyet-raporunu-yayimladi" target="_blank" rel="noopener">erdem-erdem.av.tr</a></li>
+      <li>DLA Piper GDPR Fines Survey 2026 (2025'te ~1,2 milyar €). <a href="https://www.theregister.com/2026/01/22/europes_gdpr_cops_dished_out/" target="_blank" rel="noopener">theregister.com</a></li>
+      <li>Open Banking Ltd, Avrupa'da 63,8 milyon açık bankacılık kullanıcısı. <a href="https://paymentexpert.com/2026/04/27/european-open-banking-startups/" target="_blank" rel="noopener">paymentexpert.com</a></li>
+      <li>Duhigg, C. (2012). "How Companies Learn Your Secrets", <em>NYT Magazine</em> (Target vakası).</li>
+      <li>Laney, D. (2001). <em>3D Data Management: Controlling Data Volume, Velocity and Variety</em>. META Group.</li>
+      <li>Gozman, Liebenau &amp; Mangan (2018). <em>Digital Finance</em>. Routledge. · Chishti &amp; Barberis (2016). <em>The FinTech Book</em>. Wiley.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>Bu profil bir ders simülasyonudur: kurallar basittir ve bilerek şeffaftır. Cevaplarınız hiçbir sunucuya gönderilmez; yalnızca telefonunuzda hesaplanır.</footer>
+</div>
+
+<script>
+(function(){
+  // ---------- routing ----------
+  var views=['profil','sunum','vaka','kaynak'];
+  function show(){
+    var h=(location.hash||'#profil').slice(1); if(views.indexOf(h)<0)h='profil';
+    views.forEach(function(v){document.getElementById('v-'+v).hidden=(v!==h)});
+    document.querySelectorAll('#nav a').forEach(function(a){
+      if(a.dataset.view===h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+    });
+    document.getElementById('wrap').classList.toggle('wide',h==='sunum');
+    document.getElementById('tagline').textContent = h==='sunum' ? 'Sınıf ekranı: kodları girin, sınıfın profili canlı oluşsun.' : 'Birkaç cevap verin. Bankanın sizi nasıl gördüğünü görün.';
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',show); show();
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+
+  // ---------- model ----------
+  // Questions: each option has a score delta and a short reason the bank would log.
+  var Q=[
+    {k:'pay',q:'Günde kaç kez kartla ya da telefonla ödeme yapıyorsun?',o:[
+      {t:'0–1',d:-20,r:'Az işlem: banka seni tanımıyor, geçmiş ince'},
+      {t:'2–4',d:+30,r:'Düzenli kullanım: tahmin edilebilir müşteri'},
+      {t:'5 ve üzeri',d:+10,r:'Yoğun kullanım: değerli ama limit riski izlenir'}]},
+    {k:'cat',q:'Paran en çok nereye gidiyor?',o:[
+      {t:'Yemek ve kahve',d:0,r:'Küçük, sık harcama: kampanya hedefi'},
+      {t:'Ulaşım',d:+10,r:'Zorunlu harcama: istikrar sinyali'},
+      {t:'Giyim ve teknoloji',d:-15,r:'Taksitli harcama eğilimi: borç riski izlenir'},
+      {t:'Fatura ve market',d:+25,r:'Hane bütçesi: en güvenilir profil'},
+      {t:'Eğlence ve oyun',d:-25,r:'Dürtüsel harcama: dolandırıcılık modeli de bakar'}]},
+    {k:'time',q:'En çok hangi saatte alışveriş yapıyorsun?',o:[
+      {t:'Sabah (06–12)',d:+10,r:'Rutin saatler: düşük risk'},
+      {t:'Öğlen (12–18)',d:+5,r:'Normal dağılım'},
+      {t:'Akşam (18–24)',d:0,r:'Yaygın davranış'},
+      {t:'Gece (00–06)',d:-30,r:'Gece işlemi: dolandırıcılık modeli ek doğrulama ister',flag:true}]},
+    {k:'eom',q:'Ay sonunda hesabında genelde ne kalır?',o:[
+      {t:'Para artar',d:+40,r:'Tasarruf: yatırım ürünü teklifi'},
+      {t:'Tam biter',d:0,r:'Nakit akışı sıkı: kampanya hassasiyeti yüksek'},
+      {t:'Eksiye düşer / ek karta kalır',d:-40,r:'Nakit açığı: kredi fiyatlaması yükselir'}]},
+    {k:'loc',q:'Banka uygulamasına konum izni verdin mi?',o:[
+      {t:'Evet, açık',d:+20,r:'Daha fazla veri = daha az belirsizlik: puan artar'},
+      {t:'Hayır, kapalı',d:-10,r:'Az veri: model temkinli davranır'}]},
+    {k:'soc',q:'Günde kaç saat sosyal medyadasın?',o:[
+      {t:'1 saatten az',d:+5,r:'Alternatif skorlama için sinyal az'},
+      {t:'1–3 saat',d:0,r:'Ortalama profil'},
+      {t:'3 saatten fazla',d:-10,r:'Alternatif skorlamada "gece kuşu / dürtüsel" vekili sayılabilir'}]}
+  ];
+  var SEG=function(a){
+    if(a.time===3&&(a.cat===4||a.soc===2))return ['Gece Kuşu','Gece saatleri ve eğlence harcaması: dolandırıcılık modeli seni yakından izler.'];
+    if(a.eom===0&&(a.cat===3||a.cat===1))return ['Planlı Bütçeci','Fatura, market ve ay sonunda artan para: bankanın en sevdiği müşteri.'];
+    if(a.cat===2)return ['Teknoloji Avcısı','Giyim ve teknoloji: taksit kampanyaları ve limit artışı teklifleri sana gelir.'];
+    if(a.cat===0&&a.pay>=1)return ['Kahve Ekonomisti','Sık ve küçük harcama: kahve zinciri kampanyaları, puan programları.'];
+    if(a.pay===0&&a.loc===1)return ['Hayalet Müşteri','Az işlem, konum kapalı: banka seni tanımıyor; en yüksek belirsizlik.'];
+    if(a.eom===2)return ['Nakit Sıkışık','Ay sonu eksi: kredili mevduat ve nakit avans teklifleri sana gelir.'];
+    return ['Dengeli Kullanıcı','Ortalama davranış: standart fiyatlama, standart teklif.'];
+  };
+  var OFFER=function(a,seg){
+    if(seg==='Planlı Bütçeci')return 'Sana özel: günlük getirili yatırım hesabı, %0 komisyon.';
+    if(seg==='Gece Kuşu')return 'Gece işlemlerinde SMS doğrulama açıldı. Oyun platformlarında %10 iade.';
+    if(seg==='Teknoloji Avcısı')return 'Yeni telefon için 12 taksit, ilk 3 ay faizsiz.';
+    if(seg==='Kahve Ekonomisti')return 'Haftada 3 kahveye 1 bedava: kart kampanyası.';
+    if(seg==='Nakit Sıkışık')return 'Kredili mevduat limitin hazır. (Fiyatı okudun mu?)';
+    if(seg==='Hayalet Müşteri')return 'Konum iznini aç, 200 TL puan kazan.';
+    return 'Maaşını bize taşı, 1.000 TL hoş geldin puanı.';
+  };
+  function evaluate(a){
+    var score=600,why=[],flag=false;
+    Q.forEach(function(q,i){var o=q.o[a[q.k]];score+=o.d;why.push({d:o.d,t:o.r});if(o.flag)flag=true});
+    if(a.cat===4&&a.time===3)flag=true;
+    score=Math.max(300,Math.min(900,score));
+    var sg=SEG(a);
+    return {score:score,why:why,flag:flag,seg:sg[0],segd:sg[1],offer:OFFER(a,sg[0])};
+  }
+  // ---------- code (no name inside; 2-char name fingerprint + packed answers + check) ----------
+  var AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 symbols, no 0/O/1/I
+  var SIZES=Q.map(function(q){return q.o.length});
+  function pack(a){var n=0;Q.forEach(function(q,i){n=n*SIZES[i]+a[q.k]});return n} // < 1080
+  function unpack(n){var a={};for(var i=Q.length-1;i>=0;i--){a[Q[i].k]=n%SIZES[i];n=Math.floor(n/SIZES[i])}return a}
+  function enc(a,fp){var n=pack(a);var s=fp+AL[Math.floor(n/1024)]+AL[Math.floor(n/32)%32]+AL[n%32];var c=0;for(var i=0;i<s.length;i++)c+=AL.indexOf(s[i])*(i+1);return s+AL[c%32]}
+  function dec(code){
+    code=code.toUpperCase().replace(/[^A-Z2-9]/g,'').replace(/O/g,'0').replace(/[0I]/g,'');
+    if(code.length!==6)return null;
+    for(var i=0;i<6;i++)if(AL.indexOf(code[i])<0)return null;
+    var c=0;for(var i=0;i<5;i++)c+=AL.indexOf(code[i])*(i+1);
+    if(AL[c%32]!==code[5])return null;
+    var n=AL.indexOf(code[2])*1024+AL.indexOf(code[3])*32+AL.indexOf(code[4]);
+    if(n>=1080)return null;
+    return {fp:code.slice(0,2),a:unpack(n)};
+  }
+  async function sha(s){
+    try{var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return ('0'+x.toString(16)).slice(-2)}).join('')}
+    catch(e){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return ('00000000'+h.toString(16)).slice(-8).repeat(8)}
+  }
+  function fpFromHash(hex){var n=parseInt(hex.slice(0,4),16);return AL[n%32]+AL[Math.floor(n/32)%32]}
+
+  // ---------- student flow ----------
+  var step=document.getElementById('step'),pbar=document.getElementById('pbar');
+  var state={name:'',a:{}},qi=-1;
+  function renderName(){
+    pbar.style.width='0%';
+    step.innerHTML='<div class="q-label">VERİ BANKASI · MÜŞTERİ KAYDI</div><div class="q">Hoş geldin. Önce bir kullanıcı adı seç.</div>'+
+      '<div class="field"><label for="uname" class="sr">Kullanıcı adı</label><input type="text" id="uname" maxlength="24" placeholder="örn. kahvecanavari" autocomplete="off"><span class="hint">Gerçek adın olmak zorunda değil. Adın hiçbir yere gönderilmez; telefonunda şifrelenir (hash) ve sadece 2 karakterlik parmak izi kalır.</span></div>'+
+      '<div class="row" style="margin-top:14px"><span class="hint">6 soru · 1 dakika</span><button class="btn" id="start">Başla</button></div>';
+    var inp=document.getElementById('uname');
+    try{inp.value=localStorage.getItem('vb-name')||''}catch(e){}
+    function go(){var v=inp.value.trim();if(!v){inp.focus();return}state.name=v;try{localStorage.setItem('vb-name',v)}catch(e){}qi=0;renderQ()}
+    document.getElementById('start').addEventListener('click',go);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
+  }
+  function renderQ(){
+    var q=Q[qi]; pbar.style.width=((qi)/Q.length*100)+'%';
+    var html='<div class="q-label">SORU '+(qi+1)+' / '+Q.length+'</div><div class="q">'+esc(q.q)+'</div><div class="opts">';
+    q.o.forEach(function(o,i){html+='<button class="opt" data-i="'+i+'"><span class="k">'+String.fromCharCode(65+i)+'</span><span>'+esc(o.t)+'</span></button>'});
+    html+='</div>';
+    step.innerHTML=html;
+    step.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){
+      state.a[q.k]=+b.dataset.i; b.classList.add('sel');
+      setTimeout(function(){qi++; if(qi<Q.length)renderQ(); else analyze()},180);
+    })});
+  }
+  async function analyze(){
+    pbar.style.width='100%';
+    var hex=await sha(state.name.toLowerCase()); var fp=fpFromHash(hex);
+    var r=evaluate(state.a); var code=enc(state.a,fp);
+    step.className='card ink';
+    step.innerHTML='<div class="q-label">ANALİZ EDİLİYOR</div><div class="feed" id="feed"></div>';
+    var feed=document.getElementById('feed');
+    var lines=[
+      '> kullanıcı adı alındı: "'+esc(state.name)+'"',
+      '> SHA-256 ile şifreleniyor…',
+      '> <span class="hl">'+hex.slice(0,16)+'…'+hex.slice(-8)+'</span>',
+      '> ad siliniyor. kalan parmak izi: <span class="hl">'+fp+'</span>',
+      '> 6 davranış verisi okunuyor… 6/6',
+      '> segment modeli: <span class="hl">'+esc(r.seg)+'</span>',
+      '> skor modeli: <span class="hl">'+r.score+'</span> / 900',
+      r.flag?'> <span class="warn">dolandırıcılık modeli: ek doğrulama bayrağı</span>':'> dolandırıcılık modeli: temiz',
+      '> teklif motoru: 1 kampanya eşleşti',
+      '> profil hazır.'
+    ];
+    var i=0;(function next(){if(i<lines.length){var d=document.createElement('div');d.innerHTML=lines[i++];feed.appendChild(d);setTimeout(next,i<4?420:300)}else setTimeout(function(){renderProfile(r,code,fp,hex)},500)})();
+  }
+  function renderProfile(r,code,fp,hex){
+    step.className='card';
+    var why=r.why.map(function(w){var c=w.d>0?'plus':w.d<0?'minus':'zero';return '<div><span class="d '+c+'">'+(w.d>0?'+':'')+w.d+'</span><span>'+esc(w.t)+'</span></div>'}).join('');
+    step.innerHTML='<div class="profile">'+
+      '<div><span class="badge'+(r.flag?' risk':' ok')+'">'+(r.flag?'Ek doğrulama':'Standart müşteri')+'</span><div class="seg">'+esc(r.seg)+'</div><p class="lead" style="margin:0">'+esc(r.segd)+'</p></div>'+
+      '<div class="stats"><div class="stat"><div class="n">'+r.score+'</div><div class="l">simülasyon puanı (300–900)</div></div><div class="stat"><div class="n mono" style="font-size:18px">'+fp+'</div><div class="l">bankadaki kimliğin: adın değil, parmak izin</div></div></div>'+
+      '<div><div class="q-label">BANKA SANA NE TEKLİF EDER?</div><p style="margin:6px 0 0;font-weight:600">'+esc(r.offer)+'</p></div>'+
+      '<div><div class="q-label">PUANIN NEDEN BÖYLE? (MODELİN GÜNLÜĞÜ)</div><div class="why" style="margin-top:8px">'+why+'</div></div>'+
+      '<div><div class="q-label">SINIF EKRANI İÇİN KODUN</div><div class="code" id="mycode">'+code+'</div><p class="hint" style="margin:6px 0 0">Sunucu bu kodu girince profilin ekrana düşer. Kodda adın yok: yalnızca cevapların ve 2 karakterlik parmak izi.</p></div>'+
+      '<div class="row"><button class="btn ghost" id="again">Baştan</button><a class="btn" href="#vaka" style="text-decoration:none">Sen olsan? vakalarına geç</a></div>'+
+      '</div>';
+    document.getElementById('again').addEventListener('click',function(){state={name:'',a:{}};qi=-1;renderName()});
+  }
+  renderName();
+
+  // ---------- class screen ----------
+  var profiles=[];
+  try{profiles=JSON.parse(localStorage.getItem('vb-class')||'[]')}catch(e){profiles=[]}
+  function save(){try{localStorage.setItem('vb-class',JSON.stringify(profiles))}catch(e){}}
+  var SEGS=['Planlı Bütçeci','Dengeli Kullanıcı','Kahve Ekonomisti','Teknoloji Avcısı','Nakit Sıkışık','Gece Kuşu','Hayalet Müşteri'];
+  function renderClass(){
+    var n=profiles.length;
+    document.getElementById('k-n').textContent=n;
+    var ev=profiles.map(function(p){return evaluate(p.a)});
+    document.getElementById('k-avg').textContent=n?Math.round(ev.reduce(function(s,e){return s+e.score},0)/n):'–';
+    var fl=ev.filter(function(e){return e.flag}).length;
+    document.getElementById('k-risk').textContent=n?(fl+' kişi'):'–';
+    var loc=profiles.filter(function(p){return p.a.loc===0}).length;
+    document.getElementById('k-loc').textContent=n?('%'+Math.round(loc/n*100)):'–';
+    var counts={};SEGS.forEach(function(s){counts[s]=0});ev.forEach(function(e){counts[e.seg]=(counts[e.seg]||0)+1});
+    var max=Math.max(1,Math.max.apply(null,SEGS.map(function(s){return counts[s]})));
+    document.getElementById('bars').innerHTML=SEGS.map(function(s){return '<div class="bar"><span>'+esc(s)+'</span><i style="width:'+(counts[s]/max*100)+'%"></i><b>'+counts[s]+'</b></div>'}).join('');
+    document.getElementById('grid').innerHTML=ev.map(function(e,i){var p=profiles[i];return '<div class="mini"><div class="who">müşteri #'+esc(p.fp)+'</div><div class="s">'+esc(e.seg)+'</div><div class="sc">'+e.score+'</div>'+(e.flag?'<div class="fl">ek doğrulama bayrağı</div>':'')+'</div>'}).reverse().join('');
+    var ins=document.getElementById('insight');
+    if(!n){ins.textContent='Henüz veri yok. İlk kodu girin.';return}
+    var night=profiles.filter(function(p){return p.a.time===3}).length, minus=profiles.filter(function(p){return p.a.eom===2}).length, game=profiles.filter(function(p){return p.a.cat===4}).length;
+    var parts=['Bankanın gözünden bu sınıf: <strong>'+n+'</strong> müşteri, ortalama puan <strong>'+document.getElementById('k-avg').textContent+'</strong>.'];
+    if(night)parts.push('<strong>'+night+'</strong> kişi gece alışveriş yapıyor; model her birinden 30 puan düştü ve ek doğrulama istedi. Gece alışverişi gerçekten risk mi, yoksa öğrenci olmak mı?');
+    if(game)parts.push('<strong>'+game+'</strong> kişi parasını en çok eğlence ve oyuna harcıyor; teklif motoru onlara iade kampanyası gönderdi, skor motoru ise 25 puan kesti. Aynı veri, iki farklı karar.');
+    if(minus)parts.push('<strong>'+minus+'</strong> kişi ay sonunda eksiye düşüyor: en düşük puanlar onlarda, ama en çok kredi teklifi de onlara gidiyor.');
+    if(loc<n)parts.push('Konum iznini kapatan <strong>'+(n-loc)+'</strong> kişi 10 puan kaybetti: veriyi vermemek de bir sinyal.');
+    ins.innerHTML=parts.join(' ');
+  }
+  document.getElementById('codeform').addEventListener('submit',function(e){
+    e.preventDefault();var inp=document.getElementById('codein'),err=document.getElementById('codeerr');
+    var d=dec(inp.value);
+    if(!d){err.hidden=false;err.textContent='Kod okunamadı: 6 karakter olmalı (örn. A7K3MQ). Tekrar sorun.';return}
+    err.hidden=true;profiles.push({fp:d.fp,a:d.a,t:Date.now()});save();renderClass();inp.value='';inp.focus();
+  });
+  document.getElementById('clear').addEventListener('click',function(){profiles=[];save();renderClass()});
+  document.getElementById('demo').addEventListener('click',function(){
+    var a={};Q.forEach(function(q){a[q.k]=Math.floor(Math.random()*q.o.length)});
+    var fp=AL[Math.floor(Math.random()*32)]+AL[Math.floor(Math.random()*32)];
+    profiles.push({fp:fp,a:a,t:Date.now(),demo:true});save();renderClass();
+  });
+  renderClass();
+
+  // ---------- cases ----------
+  var C=[
+    {t:'VAKA 1 · APPLE CARD (2019)',q:'Bir yazılımcı, eşiyle aynı geliri ve daha iyi kredi notu olmasına rağmen kendisine 20 kat yüksek limit verildiğini Twitter\'da paylaştı. Apple\'ın kurucu ortağı Wozniak da aynı şeyi yaşadı. Sen New York finans düzenleyicisi olsan?',
+     o:['Goldman Sachs\'a ayrımcılık cezası keserim','Kanıt yok, dosyayı kapatırım','Ayrımcılık bulamam ama şeffaflık eksikliği için uyarırım'],a:2,
+     r:'NYDFS 2021 raporu: 400.000 başvuru incelendi, cinsiyet ayrımcılığı kanıtı bulunamadı. Ama bankanın kararları açıklayamaması "müşteri hizmetlerinde eksiklik" olarak eleştirildi.',x:'Ders: Model cinsiyeti girdi olarak kullanmıyordu, ama kimse neden farklı limit verdiğini açıklayamıyordu. Kara kutu problemi. Az önceki profilinizde "modelin günlüğü" vardı; Apple Card\'da yoktu.'},
+    {t:'VAKA 2 · TARGET (2012)',q:'Perakendeci Target, alışveriş verisinden bir "hamilelik skoru" üretti ve hamile olduğunu düşündüğü müşterilere bebek ürünü kuponu gönderdi. Bir baba, lise öğrencisi kızına gelen kuponlar için mağazaya gidip bağırdı; birkaç gün sonra kızının gerçekten hamile olduğunu öğrendi. Sen Target\'ın veri ekibinde olsan?',
+     o:['Modeli kapatırım, bu etik değil','Yasal, aynen devam ederim','Modeli tutar, kuponları alakasız ürünlerle karıştırıp gizlerim'],a:2,
+     r:'Target üçüncüyü yaptı: bebek kuponlarının yanına şarap ve çim biçme makinesi ekledi. Sonuç aynı derecede etkiliydi, ama "gözetleniyoruz" hissi azaldı.',x:'Ders: Yasal olan her şey kabul edilebilir değildir. Target\'ın sözcüsü: "Yasalara uysanız bile insanları rahatsız edecek şeyler yapabilirsiniz."'},
+    {t:'VAKA 3 · ZILLOW OFFERS (2021)',q:'Zillow\'un fiyat tahmin modeli (Zestimate) piyasadaki evlerde %1,9, piyasa dışı evlerde %6,9 medyan hata yapıyor. Şirket bu modelle ev satın alıp yenileyip satmak istiyor (iBuying). Sen CEO olsan?',
+     o:['Devam: %2 hata küçük, ölçekle büyürüz','Dururum: iBuying piyasa dışı evlerde çalışır, hata %7\'ye çıkar','Sadece piyasa dışı evlere girmem'],a:1,
+     r:'Zillow devam etti. 2021 3. çeyrekte 381 milyon $ zarar, binlerce ev alış fiyatının altında satıldı, iş kolu kapatıldı ve çalışanların %25\'i işten çıkarıldı.',x:'Ders: Modelin hata payı, kârın altındaysa her satın alma zarardır. Piyasa rejimi değişince eğitim verisi geçersiz kalır.'}
+  ];
+  document.querySelectorAll('.case').forEach(function(card){
+    var c=C[+card.dataset.case];
+    var html='<div class="q-label">'+esc(c.t)+'</div><div class="q">'+esc(c.q)+'</div><div class="opts">';
+    c.o.forEach(function(o,i){html+='<button class="opt" data-i="'+i+'"><span class="k">'+String.fromCharCode(65+i)+'</span><span>'+esc(o)+'</span></button>'});
+    html+='</div><div class="cr"></div>'; card.innerHTML=html;
+    card.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){
+      card.querySelectorAll('.opt').forEach(function(x){x.disabled=true; if(+x.dataset.i===c.a)x.classList.add('right')});
+      card.querySelector('.cr').innerHTML='<div class="reveal"><strong>Gerçekte ne oldu?</strong>'+esc(c.r)+'<br><br>'+esc(c.x)+'</div>';
+    })});
+  });
+})();
+</script>

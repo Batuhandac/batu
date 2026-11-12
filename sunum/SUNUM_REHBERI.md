@@ -3,23 +3,29 @@
 **Dosyalar**
 - `Buyuk_Veri_Sunum.pptx` – 32 slayt, her slaytta konuşma notu var (PowerPoint'te Notlar bölümü).
 - `Buyuk_Veri_Sunum.pdf` – yedek.
-- `buyuk-veri-oyunu.html` – öğrencilerin QR ile açtığı interaktif sayfanın kaynağı.
+- `veri-bankasi.html` – öğrencilerin QR ile açtığı interaktif sayfanın kaynağı.
 
 **İnteraktif sayfa:** https://claude.ai/artifact/4niWXLc9xP1hMPXKJRD73G
-Sekmeler: `#oyun` (tahmin oyunu), `#iz` (veri izi hesaplayıcı), `#vaka` (sen olsan?), `#kaynak` (tartışma soruları + kaynaklar).
+Sekmeler: `#profil` (öğrenci akışı, varsayılan), `#sunum` (sınıf ekranı, sen açarsın), `#vaka` (sen olsan?), `#kaynak` (tartışma soruları + kaynaklar).
+
+## Canlı demo nasıl çalışır
+- **Öğrenci (telefon):** kullanıcı adı yazar, 6 soruyu cevaplar. Ekranda "analiz ediliyor" akışı: ad SHA-256 ile şifrelenir, silinir, 2 karakterlik parmak izi kalır; segment (ör. Gece Kuşu, Planlı Bütçeci), 300–900 puan, risk bayrağı, "sana özel teklif" ve "puanın neden böyle" günlüğü çıkar. En altta 6 haneli **kod** (ör. `K7AVZC`).
+- **Sen (projeksiyon):** slayt 9'da tarayıcıya geç, `#sunum` sekmesini aç. Öğrenciler kodlarını söyler, sen yazarsın. Her kodla profil ekrana düşer; ortalama puan, segment dağılımı ve "kim neden puan kaybetti" metni canlı güncellenir. Kodda isim yok; sadece cevaplar + parmak izi (sözde anonimleştirme, KVKK bağlantısı).
+- Sunucu yok: her şey tarayıcıda hesaplanır. Sınıf ekranındaki liste senin tarayıcında saklanır; "Temizle" ile sıfırlanır. "Prova: örnek ekle" rastgele profil ekler, prova sonrası temizle.
+- Model bilerek basit ve şeffaf: gece alışverişi −30, ay sonu eksi −40, konum kapalı −10, fatura/market +25, para artar +40. Tartışma bunun üzerinden: "adil mi?" 
 
 ## Sunumdan önce (zorunlu)
 1. Sayfayı **Paylaş → Link ile herkes görebilsin** yap. Şu an sadece sen açabiliyorsun; öğrenciler QR okutunca giriş ekranı görür.
-2. Kendi telefonunla slayt 2'deki QR'ı okutup oyunun açıldığını dene.
+2. Kendi telefonunla slayt 2'deki QR'ı okut, bir profil çıkar; kodu laptopta `#sunum` ekranına gir, düştüğünü gör.
 3. Kapak slaytına adını ekle (slayt 1, "Öğrenci sunumu" satırı).
 4. Moodle'a .pptx'i yükle.
 
 ## Akış ve süre (yaklaşık 35–40 dk + tartışma)
 | Slayt | Bölüm | Süre | Not |
 |---|---|---|---|
-| 1–3 | Giriş, QR tahmin oyunu, yol haritası | 5 dk | Oyun 3 dk: "kaç doğru?" diye el kaldırt |
+| 1–3 | Giriş, Veri Bankası kaydı (QR), yol haritası | 5 dk | Kayıt 2–3 dk; "kodunuzu saklayın" de |
 | 4–8 | Kavram: tanım, 5V, veri patlaması, geleneksel vs büyük, değer zinciri | 7 dk | Hocanın 1. hafta notuna atıf var (slayt 4) |
-| 9 | Tartışma: "Bankanız ne biliyor?" + QR hesaplayıcı | 4 dk | Önce tahmin ettir, sonra hesaplat |
+| 9 | Sınıf ekranı: kodları topla, canlı profil | 5 dk | Tarayıcıya geç; 8–10 kod yeter |
 | 10–17 | Finansta kullanım: kredi, dolandırıcılık, alternatif veri, Türkiye, BKM grafiği, dünya panoraması | 9 dk | |
 | 18–24 | Hikayeler: MYbank, Knight, Zillow, Apple Card (+QR vaka), Equifax/Yemeksepeti, Target | 9 dk | Slayt 22'de QR: 3 vakada karar verdirt |
 | 25–28 | Riskler, regülasyon, gelecek | 5 dk | |
