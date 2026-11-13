@@ -114,6 +114,63 @@ input[type=text]{font:inherit;font-size:17px;width:100%;padding:12px 14px;border
 .insight{font-size:17px;line-height:1.5}
 .insight strong{color:var(--amber)}
 .err{color:var(--bad);font-size:14px;font-weight:600}
+.flow{display:grid;gap:14px}
+.compact header h1,.compact header #tagline{display:none}
+.compact header{padding-top:14px}
+.compact nav{margin:10px 0 14px}
+.hero{background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--accent) 34%,var(--ink)) 0%,var(--ink) 62%);color:var(--on-ink);border-radius:20px;padding:22px 20px 20px;display:grid;gap:12px;position:relative;overflow:hidden}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.18em;font-weight:600;color:var(--on-ink-muted);display:flex;align-items:center;gap:8px}
+.logo{width:14px;height:14px;border-radius:4px;background:var(--amber);display:inline-block;box-shadow:6px 6px 0 -2px var(--accent)}
+.hl{font-size:30px;line-height:1.08;font-weight:700;margin:8px 0 0;color:#fff;text-wrap:balance}
+.hsub{margin:0;font-size:17px;color:var(--on-ink-muted)}
+.hero input[type=text]{background:color-mix(in srgb,#fff 10%,transparent);border:1.5px solid color-mix(in srgb,#fff 28%,transparent);color:#fff;font-size:19px;padding:14px 16px;border-radius:12px;margin-top:6px}
+.hero input[type=text]::placeholder{color:color-mix(in srgb,#fff 50%,transparent)}
+.btn.big{width:100%;font-size:18px;padding:15px 18px;border-radius:12px;background:var(--amber);color:#1a1200}
+.hnote{margin:0;font-size:12px;color:var(--on-ink-muted)}
+.tease{padding:2px 4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:32px}
+.chips .chip{animation:in .35s both}
+.scan{min-height:430px;align-content:start}
+.scr{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.04em;overflow-wrap:anywhere;color:#fff;min-height:34px;transition:font-size .3s,color .3s}
+.scr.fp{font-size:54px;letter-spacing:.1em;color:var(--amber);line-height:1}
+.scrsub{font-size:13px;color:var(--on-ink-muted);min-height:20px}
+.cnt{display:flex;align-items:baseline;gap:10px;margin-top:8px;border-top:1px solid color-mix(in srgb,#fff 14%,transparent);padding-top:14px}
+.cnt #cntn{font-family:var(--mono);font-size:64px;font-weight:600;line-height:.9;color:var(--amber);font-variant-numeric:tabular-nums}
+.cntl{font-size:18px;font-weight:600;color:#fff}
+.pop{display:grid;gap:6px;margin-top:4px}
+.prow{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,#fff 7%,transparent);animation:in .3s both}
+.prow .pk{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-ink-muted);flex:0 0 auto}
+.prow .pv{text-align:right;color:#fff;overflow-wrap:anywhere;min-width:0}
+.bcard{--seg:var(--accent);aspect-ratio:1.586;max-width:100%;border-radius:18px;padding:18px 20px;color:#fff;display:grid;grid-template-rows:auto 1fr auto auto;gap:6px;
+  background:linear-gradient(135deg,#0B1F3A 0%,#0B1F3A 35%,var(--seg) 130%);box-shadow:0 14px 30px -14px rgba(11,31,58,.55);position:relative;overflow:hidden;animation:rise .6s both}
+.bcard::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:color-mix(in srgb,var(--seg) 45%,transparent);opacity:.5}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.bc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;font-weight:600;position:relative;z-index:1}
+.bc-tier{background:color-mix(in srgb,#fff 16%,transparent);padding:4px 9px;border-radius:999px;letter-spacing:.1em;text-align:right}
+.bc-chip{width:44px;height:32px;border-radius:7px;background:linear-gradient(135deg,#F2C766,#C9922A);align-self:center;position:relative;z-index:1}
+.bc-num{font-family:var(--mono);font-size:clamp(34px,11vw,46px);font-weight:600;letter-spacing:.2em;line-height:1;position:relative;z-index:1;user-select:all}
+.bc-bot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:color-mix(in srgb,#fff 80%,transparent);position:relative;z-index:1}
+.say{margin:0;text-align:center;font-weight:600;font-size:15px}
+.say small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:2px}
+.gaugecard{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.gauge{width:150px;height:96px}
+.gauge .trk{stroke:var(--line)}
+.gauge .val{stroke:var(--accent);transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)}
+.gauge.flag .val{stroke:var(--bad)}
+.gauge text{font-family:var(--mono);font-weight:600;fill:var(--fg)}
+.notif{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 8px 20px -14px rgba(11,31,58,.5);animation:rise .6s .5s both}
+.ni{width:36px;height:36px;border-radius:9px;background:var(--ink);position:relative}
+.ni::after{content:"";position:absolute;left:10px;top:10px;width:11px;height:11px;border-radius:3px;background:var(--amber);box-shadow:5px 5px 0 -1px var(--accent)}
+.nt{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.06em}
+.nm{font-weight:600;font-size:15px;line-height:1.35;margin-top:2px}
+details.card{padding:0}
+details.card summary{list-style:none;cursor:pointer;padding:14px 18px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:"+";font-family:var(--mono);font-size:20px;color:var(--accent)}
+details.card[open] summary::after{content:"–"}
+details.card .dbody{padding:0 18px 16px}
+@media (max-width:380px){.gaugecard{grid-template-columns:1fr}.gauge{margin:0 auto}}
+@media (prefers-reduced-motion: reduce){.bcard,.notif,.prow,.chips .chip{animation:none}.gauge .val{transition:none}}
 .lab{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .steps{display:grid;gap:12px;margin-top:10px}
 .stp{display:grid;gap:3px;min-width:0}
@@ -167,8 +224,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
 
 <!-- ===== PROFİL (öğrenci) ===== -->
 <section id="v-profil">
-  <div class="progress" aria-hidden="true"><i id="pbar"></i></div>
-  <div class="card" id="step"></div>
+  <div id="step" class="flow"></div>
 </section>
 
 <!-- ===== SINIF EKRANI (sunucu) ===== -->
@@ -300,7 +356,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
     document.querySelectorAll('#nav a').forEach(function(a){
       if(a.dataset.view===h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     });
-    document.getElementById('wrap').classList.toggle('wide',h==='sunum'||h==='sifre');
+    document.getElementById('wrap').classList.toggle('wide',h==='sunum'||h==='sifre');document.getElementById('wrap').classList.toggle('compact',h==='profil');
     document.getElementById('tagline').textContent = ({sunum:'Sınıf ekranı: kodları girin, sınıfın profili canlı oluşsun.',sifre:'Yazın ve izleyin: özet geri açılmaz, şifre anahtarla açılır.',kaynak:'Sunumdaki rakamların kaynakları.'})[h] || 'Sadece bir kullanıcı adı yazın. Bankanın sizden ne öğrendiğini görün.';
     window.scrollTo(0,0);
   }
@@ -397,57 +453,91 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
   }
 
   // ---------- student flow ----------
-  var step=document.getElementById('step'),pbar=document.getElementById('pbar');
+  var step=document.getElementById('step');
   var typing={start:0,keys:0,backspaces:0,msPerChar:999};
+  var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function $id(x){return document.getElementById(x)}
+  function pad2(n){return String(n).padStart(2,'0')}
+  function fmtPct(x){return Math.round(x*100)+'%'}
+  var SEGCOL={'Premium Profil':'#C9922A','Gece Kuşu':'#31429B','Şarjı Biten':'#C0463A','Masa Başı':'#3F6A8C','Kararsız':'#7A6A3D','Temkinli':'#2F7A5C','Standart Müşteri':'#0E9C9C'};
+  function quickFacts(){
+    var ua=navigator.userAgent||'',d=new Date();
+    var dev=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Android telefon':'bilgisayar';
+    var dark=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var F=['saat '+pad2(d.getHours())+':'+pad2(d.getMinutes()),dev,dark?'karanlık mod':'açık tema','ekran '+screen.width+'×'+screen.height];
+    var lang=(navigator.language||'').slice(0,2); if(lang)F.push('dil '+lang.toUpperCase());
+    return F;
+  }
   function renderName(){
-    pbar.style.width='0%'; step.className='card'; typing={start:0,keys:0,backspaces:0,msPerChar:999};
-    step.innerHTML='<div class="q-label">VERİ BANKASI · MÜŞTERİ KAYDI</div><div class="q">Hoş geldiniz. Bir kullanıcı adı yazın, gerisini biz hallederiz.</div>'+
-      '<div class="field"><label for="uname" class="sr">Kullanıcı adı</label><input type="text" id="uname" maxlength="24" placeholder="örn. kahvecanavari" autocomplete="off"><span class="hint">Gerçek adınız olmak zorunda değil. Hiçbir yere gönderilmez; telefonunuzda şifrelenir.</span></div>'+
-      '<div class="row" style="margin-top:14px"><span class="hint">Soru yok. 10 saniye.</span><button class="btn" id="start">Beni tanı</button></div>';
-    var inp=document.getElementById('uname');
+    typing={start:0,keys:0,backspaces:0,msPerChar:999};
+    step.innerHTML=
+      '<div class="hero">'+
+        '<div class="brand"><span class="logo"></span>VERİ BANKASI</div>'+
+        '<h2 class="hl">Sana tek bir şey soracağız.</h2>'+
+        '<p class="hsub">Gerisini telefonun zaten söylüyor.</p>'+
+        '<label class="sr" for="uname">Kullanıcı adı</label>'+
+        '<input type="text" id="uname" maxlength="24" placeholder="bir kullanıcı adı yaz" autocomplete="off" autocapitalize="off" spellcheck="false">'+
+        '<button class="btn big" id="start" type="button">Beni tanı</button>'+
+        '<p class="hnote">Gerçek adın olmak zorunda değil. Hiçbir şey gönderilmez; her şey bu telefonda kalır.</p>'+
+      '</div>'+
+      '<div class="tease"><div class="q-label">HENÜZ BİR ŞEY YAZMADIN. YİNE DE BİLİYORUZ:</div><div class="chips" id="tease"></div></div>';
+    var inp=$id('uname');
     inp.addEventListener('keydown',function(e){if(!typing.start)typing.start=Date.now();typing.keys++;if(e.key==='Backspace')typing.backspaces++;if(e.key==='Enter'){e.preventDefault();go()}});
     inp.addEventListener('input',function(){if(!typing.start)typing.start=Date.now()});
     function go(){var v=inp.value.trim();if(!v){inp.focus();return}var ms=Date.now()-(typing.start||Date.now());typing.msPerChar=v.length?ms/v.length:999;analyze(v)}
-    document.getElementById('start').addEventListener('click',go);
-    setTimeout(function(){try{inp.focus()}catch(e){}},50);
+    $id('start').addEventListener('click',go);
+    var F=quickFacts(),tz=$id('tease'),i=0;
+    (function next(){if(!tz.isConnected||i>=F.length)return;var c=document.createElement('span');c.className='chip';c.textContent=F[i++];tz.appendChild(c);setTimeout(next,reduce?0:450)})();
   }
-  function fmtPct(x){return Math.round(x*100)+'%'}
+  function scramble(name,hex,fp){return new Promise(function(res){
+    var el=$id('scr'),sub=$id('scrsub'),target=hex.slice(0,18),H='0123456789abcdef';
+    function finish(){el.textContent='#'+fp;el.classList.add('fp');sub.textContent='“'+name+'” silindi. Bankada kalan tek şey bu parmak izi.';setTimeout(res,reduce?0:1000)}
+    if(reduce)return finish();
+    el.textContent=name;var f=0,F=36;
+    var iv=setInterval(function(){f++;var out='',fixed=Math.floor(Math.max(0,f-8)/(F-8)*target.length);
+      for(var i=0;i<target.length;i++){if(i<fixed)out+=target[i];else if(f<8&&i<name.length)out+=name[i];else if(f<8)out+='';else out+=H[Math.floor(Math.random()*16)]}
+      el.textContent=out+(f>=8?'…':'');
+      if(f===8)sub.textContent='SHA-256 çalışıyor…';
+      if(f>=F){clearInterval(iv);sub.textContent='64 karakterlik özet hazır. Şimdi ilk karakterler alınıyor…';setTimeout(finish,800)}
+    },45);
+  })}
+  function popSignals(sig){return new Promise(function(res){
+    var pop=$id('pop'),n=$id('cntn'),l=$id('cntl');$id('ph').textContent='TELEFONUN KONUŞUYOR';l.textContent='şey öğrendik';var i=0;
+    (function next(){if(i>=sig.length)return setTimeout(res,reduce?0:800);
+      var x=sig[i++],d=document.createElement('div');d.className='prow';d.innerHTML='<span class="pk">'+esc(x.k)+'</span><span class="pv">'+esc(x.v)+'</span>';pop.appendChild(d);n.textContent=i;
+      try{d.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'})}catch(e){}
+      setTimeout(next,reduce?0:280)})();
+  })}
   async function analyze(name){
-    pbar.style.width='60%';
-    step.className='card ink';
-    step.innerHTML='<div class="q-label">ANALİZ EDİLİYOR</div><div class="feed" id="feed"></div>';
-    var feed=document.getElementById('feed');
-    var hex=await sha(name.toLowerCase()); var fp=fpFromHash(hex);
-    var a=await collect(typing); var r=evaluate(a); var code=enc(a,fp);
-    var sig=signals(a);
-    var lines=['> kullanıcı adı alındı: "'+esc(name)+'"','> SHA-256 ile şifreleniyor… <span class="hl">'+hex.slice(0,12)+'…</span>','> ad silindi. parmak izi: <span class="hl">'+fp+'</span>','> siz 1 şey yazdınız. tarayıcınız şunları söyledi:'];
-    sig.forEach(function(x){lines.push('> '+esc(x.k)+': <span class="hl">'+esc(x.v)+'</span>')});
-    lines.push('> segment: <span class="hl">'+esc(r.seg)+'</span> · puan: <span class="hl">'+r.score+'</span>');
-    lines.push(r.flag?'> <span class="warn">dolandırıcılık modeli: ek doğrulama bayrağı</span>':'> dolandırıcılık modeli: temiz');
-    lines.push('> profil hazır.');
-    var i=0;(function next(){if(i<lines.length){var d=document.createElement('div');d.innerHTML=lines[i++];feed.appendChild(d);feed.scrollTop=feed.scrollHeight;setTimeout(next,i<4?380:170)}else{pbar.style.width='100%';setTimeout(function(){renderProfile(a,r,code,fp,sig,name)},500)}})();
+    step.innerHTML='<div class="hero scan"><div class="brand"><span class="logo"></span>VERİ BANKASI</div><div class="q-label" id="ph">ADIN ÖZETLENİYOR</div><div class="scr" id="scr"></div><div class="scrsub" id="scrsub">&nbsp;</div><div class="cnt"><span id="cntn">1</span><span class="cntl" id="cntl">şey yazdın</span></div><div class="pop" id="pop"></div></div>';
+    window.scrollTo(0,0);
+    var hex=await sha(name.toLowerCase()),fp=fpFromHash(hex);
+    var a=await collect(typing),r=evaluate(a),code=enc(a,fp),sig=signals(a);
+    await scramble(name,hex,fp);
+    await popSignals(sig);
+    renderProfile(a,r,code,fp,sig,name);
   }
   function signals(a){
     var L=[];
-    L.push({k:'saat',v:String(a.hr).padStart(2,'0')+':xx · '+HOURN[a.hourB],i:a.hourB===0?'Gece bağlantısı: risk modeli dikkat kesildi.':'Günün hangi saatinde bankayla konuştuğunuz kayıt altında.'});
-    L.push({k:'cihaz',v:(a.model||(a.mobile?'mobil cihaz':'bilgisayar'))+(a.osname?' · '+a.osname:''),i:a.tier===0?'Cihaz fiyatı gelir vekili: bazı alternatif kredi uygulamaları telefon modelini puanlar.':a.tier===2?'Bilgisayar: ofis saati ve kurumsal ağ varsayımı.':'Orta segment cihaz: nötr.'});
-    L.push({k:'ekran',v:a.w+'×'+a.h+' @'+a.dpr+'x'+(a.mem?' · '+a.mem+' GB RAM':'')+(a.cores?' · '+a.cores+' çekirdek':''),i:'Donanım profili, cihaz parmak izinin parçası; aynı cihazdan açılan 5 hesap buradan yakalanır.'});
-    L.push({k:'şarj',v:a.bat?(fmtPct(a.bat.level)+(a.bat.charging?' · şarjda':'')):'erişim yok (iPhone, Safari ya da Firefox)',i:a.batB===0?'Düşük şarj: bazı uygulamalar "acil ihtiyaç" sinyali sayıp fiyatı değiştirir.':a.batB===3?'iPhone, Safari ve Firefox şarj verisini vermiyor; Chrome ve Android veriyor. Aynı soru, iki gizlilik politikası.':'Şarj seviyesi alışkanlık ve "evde mi, yolda mı" sinyali.'});
-    L.push({k:'bağlantı',v:(a.conn||'bilinmiyor')+(a.saveData?' · veri tasarrufu açık':''),i:a.saveData?'Veri tasarrufu açık: kota hassasiyeti, bütçe sinyali.':'Bağlantı tipi "evde Wi-Fi mi, sokakta mı" sorusuna cevap.'});
-    L.push({k:'dil · saat dilimi',v:(a.lang||'?')+' · '+(a.tz||'?'),i:'Nerede yaşadığınız ve hangi dilde düşündüğünüz; pazarlama segmenti.'});
-    L.push({k:'tema',v:a.dark?'karanlık mod':'açık tema',i:'Puana girmedi ama kaydedildi. Toplanan her şey bir gün bir modele girer.'});
-    L.push({k:'yazma',v:Math.round(a.typing.msPerChar)+' ms/karakter · '+a.typing.backspaces+' düzeltme',i:a.typB===2?'Düzeltme: sahte hesap modeli "ad uyduruyor mu" diye bakar.':'Klavye ritmi davranışsal biyometri: sizi şifreniz olmadan tanır.'});
-    L.push({k:'tarayıcı',v:a.browser+(a.ref?' · gelen sayfa: '+a.ref.replace(/^https?:\/\//,'').slice(0,30):' · doğrudan (QR)'),i:'Nereden geldiğiniz: kampanya mı, QR mu, reklam mı.'});
-    if(a.cfp)L.push({k:'cihaz parmak izi',v:a.cfp,i:'Canvas parmak izi: çerez silseniz de cihaz tanınır.'});
+    L.push({k:'saat',v:pad2(a.hr)+':'+pad2(new Date().getMinutes())+' · '+HOURN[a.hourB].replace(/ \(.*/,''),i:a.hourB===0?'Gece bağlantısı: risk modeli dikkat kesildi.':'Günün hangi saatinde bankayla konuştuğun kayıt altında.'});
+    L.push({k:'cihaz',v:(a.model||(a.mobile?'mobil cihaz':'bilgisayar'))+(a.osname?' · '+a.osname:''),i:a.tier===0?'Cihaz fiyatı gelir vekili sayıldı.':a.tier===2?'Bilgisayar: ofis saati varsayımı.':'Orta segment cihaz: nötr.'});
+    L.push({k:'ekran',v:a.w+'×'+a.h+' @'+a.dpr+'x'+(a.mem?' · '+a.mem+' GB':'')+(a.cores?' · '+a.cores+' çekirdek':''),i:'Donanım profili cihaz parmak izinin parçası.'});
+    L.push({k:'şarj',v:a.bat?(fmtPct(a.bat.level)+(a.bat.charging?' · şarjda':'')):'gizli (iPhone / Safari)',i:a.batB===0?'Düşük şarj: bazı uygulamalar "acil ihtiyaç" sinyali sayar.':a.batB===3?'iPhone, Safari ve Firefox şarj verisini vermiyor; Chrome ve Android veriyor.':'Şarj seviyesi "evde mi, yolda mı" sinyali.'});
+    L.push({k:'bağlantı',v:(a.conn||'bilinmiyor')+(a.saveData?' · veri tasarrufu':''),i:a.saveData?'Veri tasarrufu açık: bütçe sinyali.':'Bağlantı tipi "Wi-Fi mi, sokakta mı" sorusuna cevap.'});
+    L.push({k:'dil · bölge',v:(a.lang||'?')+' · '+(a.tz||'?'),i:'Nerede yaşadığın ve hangi dilde düşündüğün.'});
+    L.push({k:'tema',v:a.dark?'karanlık mod':'açık tema',i:'Puana girmedi ama kaydedildi.'});
+    L.push({k:'yazma',v:Math.round(a.typing.msPerChar)+' ms/harf · '+a.typing.backspaces+' düzeltme',i:a.typB===2?'Düzeltme: sahte hesap modeli "ad uyduruyor mu" diye bakar.':'Klavye ritmi davranışsal biyometri: seni şifresiz tanır.'});
+    L.push({k:'tarayıcı',v:a.browser+(a.ref?' · '+a.ref.replace(/^https?:\/\//,'').slice(0,24):' · QR ile geldi'),i:'Nereden geldiğin: kampanya mı, QR mı, reklam mı.'});
+    if(a.cfp)L.push({k:'cihaz izi',v:a.cfp,i:'Canvas parmak izi: çerez silsen de cihaz tanınır.'});
     return L;
   }
   function mapRows(a,name,fp){
     var R=[
       [name, fp+' (parmak izi)'],
-      [String(a.hr).padStart(2,'0')+':'+String(new Date().getMinutes()).padStart(2,'0'), HOURN[a.hourB].replace(/ \(.*/,'')],
+      [pad2(a.hr)+':'+pad2(new Date().getMinutes()), HOURN[a.hourB].replace(/ \(.*/,'')],
       [(a.model||(a.mobile?'mobil cihaz':'bilgisayar'))+(a.osname?' · '+a.osname:''), TIERN[a.tier]],
       [a.bat?(fmtPct(a.bat.level)+(a.bat.charging?' · şarjda':'')):'şarj okunamadı', BATN[a.batB]],
-      [Math.round(a.typing.msPerChar)+' ms/karakter · '+a.typing.backspaces+' düzeltme', TYPN[a.typB]],
+      [Math.round(a.typing.msPerChar)+' ms/harf · '+a.typing.backspaces+' düzeltme', TYPN[a.typB]],
       [(a.osname||'sistem')+(a.saveData?' · veri tasarrufu':''), a.osnet?'eski sistem / tasarruf':'güncel sistem'],
       [a.dark?'karanlık mod':'açık tema', a.dark?'karanlık':'açık']
     ];
@@ -456,22 +546,36 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
     return html;
   }
   function renderProfile(a,r,code,fp,sig,name){
-    step.className='card';
     var why=r.why.map(function(w){var c=w.d>0?'plus':w.d<0?'minus':'zero';return '<div><span class="d '+c+'">'+(w.d>0?'+':'')+w.d+'</span><span>'+esc(w.t)+'</span></div>'}).join('');
     var sl=sig.map(function(x){return '<div><span class="d zero" style="min-width:0;text-align:left;font-size:12px">'+esc(x.k)+'</span><span><b>'+esc(x.v)+'</b><br><span class="hint">'+esc(x.i)+'</span></span></div>'}).join('');
-    step.innerHTML='<div class="profile">'+
-      '<div><span class="badge'+(r.flag?' risk':' ok')+'">'+(r.flag?'Ek doğrulama':'Standart müşteri')+'</span><div class="seg">'+esc(r.seg)+'</div><p class="lead" style="margin:0">'+esc(r.segd)+'</p></div>'+
-      '<div class="stats"><div class="stat"><div class="n">'+r.score+'</div><div class="l">simülasyon puanı (300–900)</div></div><div class="stat"><div class="n mono" style="font-size:18px">'+fp+'</div><div class="l">bankadaki kimliğiniz: adınız değil, parmak iziniz</div></div></div>'+
-      '<div><div class="q-label">SINIF EKRANI İÇİN KODUNUZ</div><div class="code" id="mycode">'+code+'</div><p class="hint" style="margin:6px 0 0">Sunucu bu kodu girince profiliniz ekrana düşer. Kodda adınız yok.</p>'+
-      '<div class="anat"><div><b>'+code.slice(0,2)+'</b>adınızın parmak izi</div><div><b>'+code.slice(2,4)+'</b>6 sinyal, paketlenmiş</div><div><b>'+code.slice(4)+'</b>kontrol karakteri</div></div></div>'+
-      '<div><div class="q-label">NE YERİNE NE YAZILDI?</div><table class="maptable" style="margin-top:8px"><thead><tr><th>Telefonunuzda kalan</th><th>Koda giren</th></tr></thead><tbody>'+mapRows(a,name,fp)+'</tbody></table></div>'+
-      '<div><div class="q-label">BANKA SİZE NE TEKLİF EDER?</div><p style="margin:6px 0 0;font-weight:600">'+esc(r.offer)+'</p></div>'+
-      '<div><div class="q-label">PUANINIZ NEDEN BÖYLE? (MODELİN GÜNLÜĞÜ)</div><div class="why" style="margin-top:8px">'+why+'</div></div>'+
-      '<div><div class="q-label">SİZ 1 ŞEY YAZDINIZ, BİZ '+sig.length+' ŞEY ÖĞRENDİK</div><div class="why" style="margin-top:8px">'+sl+'</div></div>'+
-      '<div class="row"><button class="btn ghost" id="again">Baştan</button><a class="btn" href="#sifre" style="text-decoration:none">Şifreleme nasıl yapıldı?</a></div>'+
-      '</div>';
-    document.getElementById('again').addEventListener('click',function(){renderName()});
+    var ARC=251.3,frac=(r.score-300)/600;
+    step.innerHTML=
+      '<div class="bcard" style="--seg:'+(SEGCOL[r.seg]||'#0E9C9C')+'">'+
+        '<div class="bc-top"><span>VERİ BANKASI</span><span class="bc-tier">'+esc(r.seg.toLocaleUpperCase('tr-TR'))+'</span></div>'+
+        '<div class="bc-chip"></div>'+
+        '<div class="bc-num" id="mycode">'+code+'</div>'+
+        '<div class="bc-bot"><span>MÜŞTERİ #'+fp+'</span><span>PUAN '+r.score+'</span></div>'+
+      '</div>'+
+      '<p class="say">Karttaki 5 haneli kodu sunucuya söyle.<small>Profilin sınıf ekranına düşecek. Kodda adın yok.</small></p>'+
+      '<div class="card gaugecard">'+
+        '<svg class="gauge'+(r.flag?' flag':'')+'" viewBox="0 0 200 128" role="img" aria-label="Puan '+r.score+'"><path class="trk" d="M20 104 A80 80 0 0 1 180 104" fill="none" stroke-width="14" stroke-linecap="round"/><path class="val" id="garc" d="M20 104 A80 80 0 0 1 180 104" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="'+ARC+'" stroke-dashoffset="'+ARC+'"/><text id="gnum" x="100" y="100" text-anchor="middle" font-size="38">300</text><text x="20" y="124" text-anchor="middle" font-size="10">300</text><text x="180" y="124" text-anchor="middle" font-size="10">900</text></svg>'+
+        '<div><span class="badge'+(r.flag?' risk':' ok')+'">'+(r.flag?'Ek doğrulama gerekli':'Risk bayrağı yok')+'</span><div class="seg">'+esc(r.seg)+'</div><p class="lead" style="margin:0;font-size:14px">'+esc(r.segd)+'</p></div>'+
+      '</div>'+
+      '<div class="notif"><div class="ni"></div><div><div class="nt">VERİ BANKASI · şimdi</div><div class="nm">'+esc(r.offer)+'</div></div></div>'+
+      '<details class="card"><summary>Puanın neden böyle?</summary><div class="dbody"><div class="why">'+why+'</div></div></details>'+
+      '<details class="card"><summary>Ne yerine ne yazıldı?</summary><div class="dbody">'+
+        '<div class="anat" style="margin:0 0 12px"><div><b>'+code.slice(0,2)+'</b>adının parmak izi</div><div><b>'+code.slice(2,4)+'</b>6 sinyal, paketlenmiş</div><div><b>'+code.slice(4)+'</b>kontrol karakteri</div></div>'+
+        '<table class="maptable"><thead><tr><th>Telefonunda kalan</th><th>Koda giren</th></tr></thead><tbody>'+mapRows(a,name,fp)+'</tbody></table></div></details>'+
+      '<details class="card"><summary>1 şey yazdın, '+sig.length+' şey öğrendik</summary><div class="dbody"><div class="why">'+sl+'</div></div></details>'+
+      '<div class="row"><button class="btn ghost" id="again" type="button">Baştan</button><a class="btn" href="#sifre" style="text-decoration:none">Şifreleme nasıl yapıldı?</a></div>';
+    $id('again').addEventListener('click',function(){renderName();window.scrollTo(0,0)});
     window.scrollTo(0,0);
+    try{if(navigator.vibrate)navigator.vibrate(40)}catch(e){}
+    // animate gauge + number
+    var arc=$id('garc'),num=$id('gnum');
+    if(reduce){arc.setAttribute('stroke-dashoffset',ARC*(1-frac));num.textContent=r.score;return}
+    requestAnimationFrame(function(){requestAnimationFrame(function(){arc.style.strokeDashoffset=ARC*(1-frac)})});
+    var t0=performance.now();(function tickN(t){var k=Math.min(1,(t-t0)/1200);num.textContent=Math.round(300+(r.score-300)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(tickN)})(t0);
   }
   renderName();
 
