@@ -1,48 +1,51 @@
 # Büyük Veri Sunumu – Sunucu Rehberi
 
-**Dosyalar**
-- `Buyuk_Veri_Sunum.pptx` – 32 slayt, her slaytta konuşma notu var (PowerPoint'te Notlar bölümü).
+## Dosyalar
+- `Buyuk_Veri_Sunum.pptx` – 34 slayt. Her slaytın Notlar bölümünde konuşma metni var. Slaytlar arası yumuşak geçiş ve altta bölüm göstergesi içerir.
 - `Buyuk_Veri_Sunum.pdf` – yedek.
-- `veri-bankasi.html` – öğrencilerin QR ile açtığı interaktif sayfanın kaynağı.
+- `Konusma_Metni.md` – her slayt için konuşma metni (çevrimdışı kopya).
+- `veri-bankasi.html` – öğrencilerin QR ile açtığı canlı sayfanın kaynağı.
 
-**İnteraktif sayfa:** https://claude.ai/artifact/4niWXLc9xP1hMPXKJRD73G
-Sekmeler: `#profil` (öğrenci akışı, varsayılan), `#sunum` (sınıf ekranı, sen açarsın), `#vaka` (sen olsan?), `#kaynak` (tartışma soruları + kaynaklar).
+## Bağlantılar
+- Canlı sayfa (Veri Bankası): https://claude.ai/artifact/4niWXLc9xP1hMPXKJRD73G
+- Konuşma metni dokümanı (düzenlenebilir): https://claude.ai/artifact/Lw1TB4Dsn2knkVAJbkVuXp
 
-## Canlı demo nasıl çalışır (soru yok)
-- **Öğrenci (telefon):** yalnızca bir kullanıcı adı yazar, "Beni tanı" der. Ekranda "analiz ediliyor" akışı: ad SHA-256 ile şifrelenir, silinir, 2 karakterlik parmak izi kalır. Sonra tarayıcının sormadan verdiği sinyaller listelenir: saat, telefon modeli ve işletim sistemi, ekran/RAM, şarj seviyesi (Android ve Chrome verir; iPhone, Safari, Firefox vermez), bağlantı tipi, dil ve saat dilimi, karanlık mod, yazma hızı ve düzeltme sayısı, canvas cihaz parmak izi. Bunlardan segment (Premium Profil, Gece Kuşu, Şarjı Biten, Masa Başı...), 300–900 puan, risk bayrağı, "size özel teklif" ve "puanınız neden böyle" günlüğü çıkar. Mesaj: "Siz 1 şey yazdınız, biz 10 şey öğrendik." En altta 5 haneli **kod** (ör. `K7AVX`).
-- **Sen (projeksiyon):** slayt 9'da tarayıcıya geç, `#sunum` sekmesini aç. Öğrenciler kodlarını söyler, sen yazarsın. Her kodla profil düşer; ortalama puan, pahalı telefon oranı, düşük şarj sayısı, gece bağlananlar, karanlık mod oranı, segment dağılımı ve "kim neden puan kaybetti" metni canlı güncellenir. Kodda isim yok: sadece sinyaller + parmak izi (sözde anonimleştirme, KVKK bağlantısı).
-- Sunucu yok: her şey tarayıcıda hesaplanır, hiçbir veri gönderilmez. Sınıf ekranındaki liste senin tarayıcında saklanır; "Temizle" ile sıfırlanır. "Prova: örnek ekle" rastgele profil ekler, prova sonrası temizle.
-- Model bilerek basit ve şeffaf: pahalı telefon +25 (gelir vekili), gece saati −30 ve bayrak, şarj %20 altı −20, eski sistem/veri tasarrufu −10, yazarken düzeltme −10. Tartışma bunun üzerinden: kimse soru cevaplamadı, herkes puanlandı. Adil mi?
+## Canlı sayfanın sekmeleri
+| Sekme | Kim açar | Ne yapar |
+| --- | --- | --- |
+| Profilim | Öğrenci, slayt 2'deki QR | Kullanıcı adı yazar; soru yok. Tarayıcının sessizce verdiği sinyallerden segment, puan, teklif ve 5 haneli kod çıkar. "Ne yerine ne yazıldı" tablosu gösterir. |
+| Sınıf ekranı | Sen, slayt 10 | Kodları yazarsın; profiller düşer. Canlı sayaç, kod çözme şeridi, sınıf özeti. |
+| Şifreleme | Sen, slayt 11 (isteyen öğrenci de) | Yazdıkça SHA-256 özeti canlı değişir (çığ etkisi). Yanında gerçek şifreleme: anahtarla geri açılır, anahtarsız açılmaz. |
+| Kaynaklar | Slayt 33'teki QR | Tıklanabilir kaynak listesi. |
 
-## Sunumdan önce (zorunlu)
-1. Sayfayı **Paylaş → Link ile herkes görebilsin** yap. Şu an sadece sen açabiliyorsun; öğrenciler QR okutunca giriş ekranı görür.
-2. Kendi telefonunla slayt 2'deki QR'ı okut, bir profil çıkar; kodu laptopta `#sunum` ekranına gir, düştüğünü gör.
-3. Kapak slaytına adını ekle (slayt 1, "Öğrenci sunumu" satırı).
-4. Moodle'a .pptx'i yükle.
+Sunucu yoktur: her şey tarayıcıda hesaplanır, hiçbir veri gönderilmez. Sınıf ekranındaki liste yalnızca senin tarayıcında durur; "Temizle" sıfırlar. "Prova: örnek ekle" rastgele profil ekler.
 
-## Akış ve süre (yaklaşık 35–40 dk + tartışma)
-| Slayt | Bölüm | Süre | Not |
-|---|---|---|---|
-| 1–3 | Giriş, Veri Bankası kaydı (QR), yol haritası | 4 dk | Kayıt 1–2 dk; "kodunuzu saklayın" de |
-| 4–8 | Kavram: tanım, 5V, veri patlaması, geleneksel vs büyük, değer zinciri | 7 dk | Hocanın 1. hafta notuna atıf var (slayt 4) |
-| 9 | Sınıf ekranı: kodları topla, canlı profil | 5 dk | Tarayıcıya geç; 8–10 kod yeter |
-| 10–17 | Finansta kullanım: kredi, dolandırıcılık, alternatif veri, Türkiye, BKM grafiği, dünya panoraması | 9 dk | |
-| 18–24 | Hikayeler: MYbank, Knight, Zillow, Apple Card (+QR vaka), Equifax/Yemeksepeti, Target | 9 dk | Slayt 22'de QR: 3 vakada karar verdirt |
-| 25–28 | Riskler, regülasyon, gelecek | 5 dk | |
-| 29–32 | "Veri yeni petrol mü?", sonuç, kaynaklar, teşekkür | 5 dk | Slayt 29 sınıf tartışması |
+## Sunumdan önce
+1. Canlı sayfayı Paylaş menüsünden "link ile herkes" yap. Yapmazsan öğrenciler giriş ekranı görür.
+2. Projeksiyon bilgisayarında tarayıcıda sayfayı aç, "Sınıf ekranı"na geç, "Temizle"ye bas.
+3. Kendi telefonunla slayt 2'deki QR'ı okut, çıkan kodu sınıf ekranına gir.
+4. Kapak slaytına adını yaz.
+5. PowerPoint'i Sunucu Görünümü'nde aç; notlar yalnızca senin ekranında görünür.
+
+## Akış (yaklaşık 45 dk)
+| Slayt | Bölüm | Süre | Canlı kısım |
+| --- | --- | --- | --- |
+| 1–4 | Giriş | 5 dk | Slayt 2: QR, kullanıcı adı |
+| 5–11 | Kavram ve canlı demo | 13 dk | Slayt 10: sınıf ekranı. Slayt 11: şifreleme laboratuvarı |
+| 12–19 | Finansta kullanım | 9 dk | – |
+| 20–26 | Hikayeler | 9 dk | Slayt 25 ve 26: birer sınıf sorusu |
+| 27–30 | Risk ve regülasyon | 4 dk | – |
+| 31–34 | Tartışma ve kapanış | 5 dk | Slayt 31: sınıf tartışması |
 
 ## Değerlendirme kriterlerine karşılık
-- Araştırma derinliği (%40): 20+ kaynak, Türkiye/ABD/Avrupa/Dünya istatistikleri (slayt 17), şirket verisi olanlar "şirket açıklaması" diye işaretli.
-- Açıklık ve yapı (%20): 5 bölüm, bölüm ayırıcılar, özet slaytı hocanın "Sonuç olarak;" formatında.
-- Sunum becerileri (%20): 3 interaktif durak + 3 sınıf tartışması.
-- Görseller (%10): 2 yerel grafik, ikonlu kartlar, zaman çizelgeleri, QR.
-- Özgünlük / eleştirel düşünme (%10): slayt 29 "veri yeni petrol mü?" karşı argümanlar; slayt 23 ceza orantısı tartışması.
+- Araştırma derinliği (%40): 20'den fazla kaynak; Türkiye, ABD, Avrupa ve dünya istatistikleri; şirket açıklaması olan rakamlar öyle işaretli.
+- Açıklık ve yapı (%20): beş bölüm, bölüm göstergesi, hocanın formatında "Sonuç olarak;" slaytı.
+- Sunum becerileri (%20): iki canlı demo, üç sınıf sorusu.
+- Görseller (%10): iki grafik, ikonlu kartlar, zaman çizelgesi, QR kodlar.
+- Özgünlük ve eleştirel düşünme (%10): canlı profilleme deneyi; özet ile şifreleme ayrımı; "veri yeni petrol mü?" karşı argümanları.
 
-## Sorulabilecek sorular ve kısa cevaplar
-- "127,7 milyon Türkiye nüfusundan fazla?" → TBB verisi tekilleştirilmemiş; aynı kişi birden fazla bankada sayılıyor. Slayt notunda var.
-- "Pazar büyüklüğü neden 13–40 milyar $ aralığı?" → Raporlar kapsamı farklı tanımlıyor (bankacılık vs BFSI, yazılım vs toplam harcama). Bilerek aralık verildi.
-- "MYbank rakamları güvenilir mi?" → Şirketin kendi açıklaması, bağımsız denetim yok; slaytta belirtiliyor.
-- "Apple Card'da ayrımcılık yoksa sorun ne?" → Açıklanabilirlik: NYDFS, kararların müşteriye açıklanamamasını eleştirdi.
+## Demodaki puan kuralları (bilerek basit ve şeffaf)
+Başlangıç 620. Pahalı telefon +25. Gece saati −30 ve ek doğrulama bayrağı. Şarj %20 altı −20. Yazarken düzeltme −10. Eski sistem ya da veri tasarrufu −10. Bunlar gerçek bir bankanın kuralları değildir; tartışma başlatmak içindir.
 
 ## Rakamların tarihi
-IDC 181 ZB (2025 tahmini) · BKM 2024 yıllık bülten · TBB Aralık 2025 · KVKK 2025 faaliyet raporu · DLA Piper GDPR 2025 toplamı · Neudata 2025 · JPMorgan 2025 bütçesi · Garanti BBVA Mayıs 2026 (Ugi 10. yıl) · İş Bankası 2025.
+IDC 181 ZB (2025 tahmini) · BKM 2024 yıllık bülten · TBB Aralık 2025 · KVKK 2025 faaliyet raporu · GDPR 2025 toplamı (DLA Piper) · Neudata 2025 · JPMorgan 2025 bütçesi · Garanti BBVA Mayıs 2026 · İş Bankası 2025. Slayt 3'teki rakamlar yıllık toplamların 40 dakikaya oranlanmasıdır.

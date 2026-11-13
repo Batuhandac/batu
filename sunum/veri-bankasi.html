@@ -20,6 +20,7 @@
   --ink:#06101C; --ink-soft:#0F1C2E; color-scheme:dark }
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.5;
   padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -113,6 +114,35 @@ input[type=text]{font:inherit;font-size:17px;width:100%;padding:12px 14px;border
 .insight{font-size:17px;line-height:1.5}
 .insight strong{color:var(--amber)}
 .err{color:var(--bad);font-size:14px;font-weight:600}
+.lab{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.steps{display:grid;gap:12px;margin-top:10px}
+.stp{display:grid;gap:3px;min-width:0}
+.stp .sk{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card.ink .stp .sk{color:var(--on-ink-muted)}
+.stp .sv{font-family:var(--mono);font-size:15px;overflow-wrap:anywhere;line-height:1.5}
+.stp .sv.big2{font-size:26px;font-weight:600;letter-spacing:.08em}
+.hx{letter-spacing:.06em}
+.hx span{transition:color .25s}
+.hx .chg{color:var(--amber);font-weight:600}
+.hx .pick{background:var(--accent);color:var(--accent-ink);border-radius:3px;padding:0 1px}
+.gone{text-decoration:line-through;opacity:.6}
+.maptable{width:100%;border-collapse:collapse;font-size:13px}
+.maptable th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+.maptable td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+.maptable td:first-child{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.maptable td:last-child{font-weight:600}
+.maptable tr.kept td:last-child{color:var(--muted);font-weight:400}
+.anat{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.anat div{text-align:center;font-size:11px;color:var(--muted);max-width:120px}
+.anat b{display:block;font-family:var(--mono);font-size:22px;letter-spacing:.1em;color:var(--fg);background:var(--tint);border-radius:8px;padding:4px 10px;margin-bottom:4px}
+.live{padding:14px 18px}
+.livegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:8px}
+.ln{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--amber)}
+.ll{font-size:13px;color:var(--on-ink-muted);margin-top:4px}
+.dec{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
+.dec .tok{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.1em;background:var(--tint);border-radius:8px;padding:2px 10px}
+.dec .arrow{color:var(--muted)}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;background:var(--bg)}
 .disc li{margin:6px 0}
 .src-list{margin:0;padding-left:18px;font-size:13px;line-height:1.45}
 .src-list li{margin:6px 0;min-width:0;overflow-wrap:anywhere}
@@ -129,7 +159,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
   <p id="tagline">Sadece bir kullanıcı adı yazın. Bankanın sizden ne öğrendiğini görün.</p>
   <nav id="nav">
     <a href="#profil" data-view="profil">Profilim</a>
-    <a href="#vaka" data-view="vaka">Sen Olsan?</a>
+    <a href="#sifre" data-view="sifre">Şifreleme</a>
     <a href="#kaynak" data-view="kaynak">Kaynaklar</a>
     <a href="#sunum" data-view="sunum">Sınıf ekranı</a>
   </nav>
@@ -158,6 +188,15 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
       </form>
     </div>
     <div class="err" id="codeerr" hidden></div>
+    <div class="card ink live">
+      <div class="q-label">BU EKRAN AÇILDIĞINDAN BERİ</div>
+      <div class="livegrid">
+        <div><div class="ln" id="c-kart">0</div><div class="ll">Türkiye'de kartlı ödeme</div></div>
+        <div><div class="ln" id="c-tl">0 TL</div><div class="ll">bu ödemelerin tutarı</div></div>
+        <div><div class="ln" id="c-tb">0 TB</div><div class="ll">dünyada üretilen veri</div></div>
+      </div>
+    </div>
+    <div class="card" id="decode" hidden></div>
     <div class="kpis">
       <div class="kpi"><div class="n" id="k-n">0</div><div class="l">profil</div></div>
       <div class="kpi"><div class="n" id="k-avg">–</div><div class="l">ortalama puan (300–900)</div></div>
@@ -176,13 +215,33 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
   </div>
 </section>
 
-<!-- ===== SEN OLSAN? ===== -->
-<section id="v-vaka" hidden>
-  <h2>Sen olsan ne yapardın?</h2>
-  <p class="lead">Üç gerçek vaka. Önce kararını ver, sonra gerçekte ne olduğunu gör.</p>
-  <div class="card case" data-case="0"></div>
-  <div class="card case" data-case="1"></div>
-  <div class="card case" data-case="2"></div>
+<!-- ===== ŞİFRELEME LABORATUVARI ===== -->
+<section id="v-sifre" hidden>
+  <h2>Şifreleme laboratuvarı</h2>
+  <p class="lead">Bir şey yazın. Her tuşta ne yerine ne yazıldığını canlı izleyin.</p>
+  <div class="card">
+    <div class="field"><label for="labin">Kullanıcı adı ya da herhangi bir kelime</label>
+    <input type="text" id="labin" maxlength="32" placeholder="örn. kahvecanavari" autocomplete="off" spellcheck="false"></div>
+  </div>
+  <div class="lab">
+    <div class="card ink">
+      <div class="q-label">1 · ÖZET (HASH): GERİ AÇILMAZ</div>
+      <div class="steps" id="lab-steps"></div>
+    </div>
+    <div class="card">
+      <div class="q-label">2 · ŞİFRELEME: ANAHTARLA GERİ AÇILIR</div>
+      <div class="steps" id="lab-enc"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:8px">Az önce Veri Bankası'nda hangisi yapıldı?</h3>
+    <div class="why">
+      <div><span class="d plus" style="min-width:0">Özet</span><span>Adınız SHA-256'dan geçti, kendisi silindi, yalnızca 2 karakterlik parmak izi kaldı. Geri dönüşü yok: buna <b>takma adlı veri</b> (sözde anonimleştirme) denir.</span></div>
+      <div><span class="d zero" style="min-width:0">Çığ</span><span>Tek harf değişince özetin neredeyse bütün karakterleri değişir. Bu yüzden özetten ada geri gidilemez; ancak tahmin edip denenir.</span></div>
+      <div><span class="d zero" style="min-width:0">Zincir</span><span>2. haftada gördüğümüz blokzincir, blokları birbirine tam bu fonksiyonla bağlar.</span></div>
+      <div><span class="d minus" style="min-width:0">Dikkat</span><span>2 karakter = 1.024 olasılık. Sınıfta sizi ayırt eder, 85 milyonda etmez. Ama yanına telefon modeli ve saat eklenince yeniden tanınabilirsiniz: anonimlik veriyle birlikte erir.</span></div>
+    </div>
+  </div>
 </section>
 
 <!-- ===== KAYNAKLAR ===== -->
@@ -234,15 +293,15 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
 <script>
 (function(){
   // ---------- routing ----------
-  var views=['profil','sunum','vaka','kaynak'];
+  var views=['profil','sifre','sunum','kaynak'];
   function show(){
     var h=(location.hash||'#profil').slice(1); if(views.indexOf(h)<0)h='profil';
     views.forEach(function(v){document.getElementById('v-'+v).hidden=(v!==h)});
     document.querySelectorAll('#nav a').forEach(function(a){
       if(a.dataset.view===h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     });
-    document.getElementById('wrap').classList.toggle('wide',h==='sunum');
-    document.getElementById('tagline').textContent = h==='sunum' ? 'Sınıf ekranı: kodları girin, sınıfın profili canlı oluşsun.' : 'Birkaç cevap verin. Bankanın sizi nasıl gördüğünü görün.';
+    document.getElementById('wrap').classList.toggle('wide',h==='sunum'||h==='sifre');
+    document.getElementById('tagline').textContent = ({sunum:'Sınıf ekranı: kodları girin, sınıfın profili canlı oluşsun.',sifre:'Yazın ve izleyin: özet geri açılmaz, şifre anahtarla açılır.',kaynak:'Sunumdaki rakamların kaynakları.'})[h] || 'Sadece bir kullanıcı adı yazın. Bankanın sizden ne öğrendiğini görün.';
     window.scrollTo(0,0);
   }
   window.addEventListener('hashchange',show); show();
@@ -366,7 +425,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
     lines.push('> segment: <span class="hl">'+esc(r.seg)+'</span> · puan: <span class="hl">'+r.score+'</span>');
     lines.push(r.flag?'> <span class="warn">dolandırıcılık modeli: ek doğrulama bayrağı</span>':'> dolandırıcılık modeli: temiz');
     lines.push('> profil hazır.');
-    var i=0;(function next(){if(i<lines.length){var d=document.createElement('div');d.innerHTML=lines[i++];feed.appendChild(d);feed.scrollTop=feed.scrollHeight;setTimeout(next,i<4?380:170)}else{pbar.style.width='100%';setTimeout(function(){renderProfile(a,r,code,fp,sig)},500)}})();
+    var i=0;(function next(){if(i<lines.length){var d=document.createElement('div');d.innerHTML=lines[i++];feed.appendChild(d);feed.scrollTop=feed.scrollHeight;setTimeout(next,i<4?380:170)}else{pbar.style.width='100%';setTimeout(function(){renderProfile(a,r,code,fp,sig,name)},500)}})();
   }
   function signals(a){
     var L=[];
@@ -382,18 +441,34 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
     if(a.cfp)L.push({k:'cihaz parmak izi',v:a.cfp,i:'Canvas parmak izi: çerez silseniz de cihaz tanınır.'});
     return L;
   }
-  function renderProfile(a,r,code,fp,sig){
+  function mapRows(a,name,fp){
+    var R=[
+      [name, fp+' (parmak izi)'],
+      [String(a.hr).padStart(2,'0')+':'+String(new Date().getMinutes()).padStart(2,'0'), HOURN[a.hourB].replace(/ \(.*/,'')],
+      [(a.model||(a.mobile?'mobil cihaz':'bilgisayar'))+(a.osname?' · '+a.osname:''), TIERN[a.tier]],
+      [a.bat?(fmtPct(a.bat.level)+(a.bat.charging?' · şarjda':'')):'şarj okunamadı', BATN[a.batB]],
+      [Math.round(a.typing.msPerChar)+' ms/karakter · '+a.typing.backspaces+' düzeltme', TYPN[a.typB]],
+      [(a.osname||'sistem')+(a.saveData?' · veri tasarrufu':''), a.osnet?'eski sistem / tasarruf':'güncel sistem'],
+      [a.dark?'karanlık mod':'açık tema', a.dark?'karanlık':'açık']
+    ];
+    var html=R.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('');
+    html+='<tr class="kept"><td>'+esc(a.w+'×'+a.h+' · '+(a.lang||'?')+' · '+(a.tz||'?')+(a.cfp?' · '+a.cfp:''))+'</td><td>koda girmedi</td></tr>';
+    return html;
+  }
+  function renderProfile(a,r,code,fp,sig,name){
     step.className='card';
     var why=r.why.map(function(w){var c=w.d>0?'plus':w.d<0?'minus':'zero';return '<div><span class="d '+c+'">'+(w.d>0?'+':'')+w.d+'</span><span>'+esc(w.t)+'</span></div>'}).join('');
     var sl=sig.map(function(x){return '<div><span class="d zero" style="min-width:0;text-align:left;font-size:12px">'+esc(x.k)+'</span><span><b>'+esc(x.v)+'</b><br><span class="hint">'+esc(x.i)+'</span></span></div>'}).join('');
     step.innerHTML='<div class="profile">'+
       '<div><span class="badge'+(r.flag?' risk':' ok')+'">'+(r.flag?'Ek doğrulama':'Standart müşteri')+'</span><div class="seg">'+esc(r.seg)+'</div><p class="lead" style="margin:0">'+esc(r.segd)+'</p></div>'+
       '<div class="stats"><div class="stat"><div class="n">'+r.score+'</div><div class="l">simülasyon puanı (300–900)</div></div><div class="stat"><div class="n mono" style="font-size:18px">'+fp+'</div><div class="l">bankadaki kimliğiniz: adınız değil, parmak iziniz</div></div></div>'+
-      '<div><div class="q-label">SINIF EKRANI İÇİN KODUNUZ</div><div class="code" id="mycode">'+code+'</div><p class="hint" style="margin:6px 0 0">Sunucu bu kodu girince profiliniz ekrana düşer. Kodda adınız yok.</p></div>'+
+      '<div><div class="q-label">SINIF EKRANI İÇİN KODUNUZ</div><div class="code" id="mycode">'+code+'</div><p class="hint" style="margin:6px 0 0">Sunucu bu kodu girince profiliniz ekrana düşer. Kodda adınız yok.</p>'+
+      '<div class="anat"><div><b>'+code.slice(0,2)+'</b>adınızın parmak izi</div><div><b>'+code.slice(2,4)+'</b>6 sinyal, paketlenmiş</div><div><b>'+code.slice(4)+'</b>kontrol karakteri</div></div></div>'+
+      '<div><div class="q-label">NE YERİNE NE YAZILDI?</div><table class="maptable" style="margin-top:8px"><thead><tr><th>Telefonunuzda kalan</th><th>Koda giren</th></tr></thead><tbody>'+mapRows(a,name,fp)+'</tbody></table></div>'+
       '<div><div class="q-label">BANKA SİZE NE TEKLİF EDER?</div><p style="margin:6px 0 0;font-weight:600">'+esc(r.offer)+'</p></div>'+
       '<div><div class="q-label">PUANINIZ NEDEN BÖYLE? (MODELİN GÜNLÜĞÜ)</div><div class="why" style="margin-top:8px">'+why+'</div></div>'+
       '<div><div class="q-label">SİZ 1 ŞEY YAZDINIZ, BİZ '+sig.length+' ŞEY ÖĞRENDİK</div><div class="why" style="margin-top:8px">'+sl+'</div></div>'+
-      '<div class="row"><button class="btn ghost" id="again">Baştan</button><a class="btn" href="#vaka" style="text-decoration:none">Sen olsan? vakalarına geç</a></div>'+
+      '<div class="row"><button class="btn ghost" id="again">Baştan</button><a class="btn" href="#sifre" style="text-decoration:none">Şifreleme nasıl yapıldı?</a></div>'+
       '</div>';
     document.getElementById('again').addEventListener('click',function(){renderName()});
     window.scrollTo(0,0);
@@ -437,9 +512,16 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
     e.preventDefault();var inp=document.getElementById('codein'),err=document.getElementById('codeerr');
     var d=dec(inp.value);
     if(!d){err.hidden=false;err.textContent='Kod okunamadı: 5 karakter olmalı (örn. K7AVX). Tekrar sorun.';return}
-    err.hidden=true;profiles.push({fp:d.fp,a:d.a,t:Date.now()});save();renderClass();inp.value='';inp.focus();
+    err.hidden=true;profiles.push({fp:d.fp,a:d.a,t:Date.now()});save();renderClass();showDecode(inp.value,d);inp.value='';inp.focus();
   });
-  document.getElementById('clear').addEventListener('click',function(){profiles=[];save();renderClass()});
+  function showDecode(raw,d){
+    var c=String(raw).toUpperCase().replace(/[^A-Z2-9]/g,''); var e=evaluate(d.a); var a=d.a;
+    var chips=[HOURN[a.hourB].replace(/ \(.*/,''),TIERN[a.tier],BATN[a.batB],TYPN[a.typB],a.osnet?'eski sistem / tasarruf':'güncel sistem',a.dark?'karanlık mod':'açık tema'];
+    var el=document.getElementById('decode'); el.hidden=false;
+    el.innerHTML='<div class="q-label">KOD ÇÖZÜLDÜ</div><div class="dec" style="margin-top:8px"><span class="tok">'+esc(c.slice(0,2))+'</span><span class="tok">'+esc(c.slice(2,4))+'</span><span class="tok">'+esc(c.slice(4))+'</span><span class="arrow">→</span><span class="chip"><b>müşteri #'+esc(d.fp)+'</b></span>'+chips.map(function(x){return '<span class="chip">'+esc(x)+'</span>'}).join('')+'<span class="arrow">→</span><span class="chip"><b>'+esc(e.seg)+' · '+e.score+'</b></span></div>'+
+      '<p class="hint" style="margin:8px 0 0">İlk iki karakter adın parmak izi, sonraki ikisi altı sinyalin paketi, sonuncusu yazım hatasını yakalayan kontrol karakteri. Ad bu ekrana hiç gelmedi.</p>';
+  }
+  document.getElementById('clear').addEventListener('click',function(){profiles=[];save();renderClass();document.getElementById('decode').hidden=true});
   document.getElementById('demo').addEventListener('click',function(){
     var a={};KEYS.forEach(function(k,i){a[k]=Math.floor(Math.random()*SIZES[i])});a.dark=!!a.dark;
     var fp=AL[Math.floor(Math.random()*32)]+AL[Math.floor(Math.random()*32)];
@@ -447,27 +529,76 @@ footer{margin-top:28px;color:var(--muted);font-size:12px}
   });
   renderClass();
 
-  // ---------- cases ----------
-  var C=[
-    {t:'VAKA 1 · APPLE CARD (2019)',q:'Bir yazılımcı, eşiyle aynı geliri ve daha iyi kredi notu olmasına rağmen kendisine 20 kat yüksek limit verildiğini Twitter\'da paylaştı. Apple\'ın kurucu ortağı Wozniak da aynı şeyi yaşadı. Sen New York finans düzenleyicisi olsan?',
-     o:['Goldman Sachs\'a ayrımcılık cezası keserim','Kanıt yok, dosyayı kapatırım','Ayrımcılık bulamam ama şeffaflık eksikliği için uyarırım'],a:2,
-     r:'NYDFS 2021 raporu: 400.000 başvuru incelendi, cinsiyet ayrımcılığı kanıtı bulunamadı. Ama bankanın kararları açıklayamaması "müşteri hizmetlerinde eksiklik" olarak eleştirildi.',x:'Ders: Model cinsiyeti girdi olarak kullanmıyordu, ama kimse neden farklı limit verdiğini açıklayamıyordu. Kara kutu problemi. Az önceki profilinizde "modelin günlüğü" vardı; Apple Card\'da yoktu.'},
-    {t:'VAKA 2 · TARGET (2012)',q:'Perakendeci Target, alışveriş verisinden bir "hamilelik skoru" üretti ve hamile olduğunu düşündüğü müşterilere bebek ürünü kuponu gönderdi. Bir baba, lise öğrencisi kızına gelen kuponlar için mağazaya gidip bağırdı; birkaç gün sonra kızının gerçekten hamile olduğunu öğrendi. Sen Target\'ın veri ekibinde olsan?',
-     o:['Modeli kapatırım, bu etik değil','Yasal, aynen devam ederim','Modeli tutar, kuponları alakasız ürünlerle karıştırıp gizlerim'],a:2,
-     r:'Target üçüncüyü yaptı: bebek kuponlarının yanına şarap ve çim biçme makinesi ekledi. Sonuç aynı derecede etkiliydi, ama "gözetleniyoruz" hissi azaldı.',x:'Ders: Yasal olan her şey kabul edilebilir değildir. Target\'ın sözcüsü: "Yasalara uysanız bile insanları rahatsız edecek şeyler yapabilirsiniz."'},
-    {t:'VAKA 3 · ZILLOW OFFERS (2021)',q:'Zillow\'un fiyat tahmin modeli (Zestimate) piyasadaki evlerde %1,9, piyasa dışı evlerde %6,9 medyan hata yapıyor. Şirket bu modelle ev satın alıp yenileyip satmak istiyor (iBuying). Sen CEO olsan?',
-     o:['Devam: %2 hata küçük, ölçekle büyürüz','Dururum: iBuying piyasa dışı evlerde çalışır, hata %7\'ye çıkar','Sadece piyasa dışı evlere girmem'],a:1,
-     r:'Zillow devam etti. 2021 3. çeyrekte 381 milyon $ zarar, binlerce ev alış fiyatının altında satıldı, iş kolu kapatıldı ve çalışanların %25\'i işten çıkarıldı.',x:'Ders: Modelin hata payı, kârın altındaysa her satın alma zarardır. Piyasa rejimi değişince eğitim verisi geçersiz kalır.'}
-  ];
-  document.querySelectorAll('.case').forEach(function(card){
-    var c=C[+card.dataset.case];
-    var html='<div class="q-label">'+esc(c.t)+'</div><div class="q">'+esc(c.q)+'</div><div class="opts">';
-    c.o.forEach(function(o,i){html+='<button class="opt" data-i="'+i+'"><span class="k">'+String.fromCharCode(65+i)+'</span><span>'+esc(o)+'</span></button>'});
-    html+='</div><div class="cr"></div>'; card.innerHTML=html;
-    card.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){
-      card.querySelectorAll('.opt').forEach(function(x){x.disabled=true; if(+x.dataset.i===c.a)x.classList.add('right')});
-      card.querySelector('.cr').innerHTML='<div class="reveal"><strong>Gerçekte ne oldu?</strong>'+esc(c.r)+'<br><br>'+esc(c.x)+'</div>';
-    })});
-  });
+  // ---------- live counters (class screen) ----------
+  var T0=Date.now();
+  var RATE={kart:18.4e9/31536000, tl:15.845e12/31536000, tb:402.74e6/86400}; // BKM 2024; IDC / Exploding Topics
+  function fmtBig(n,unit){
+    if(n>=1e9)return (n/1e9).toLocaleString('tr-TR',{maximumFractionDigits:2})+' milyar'+unit;
+    if(n>=1e6)return (n/1e6).toLocaleString('tr-TR',{maximumFractionDigits:1})+' milyon'+unit;
+    return Math.round(n).toLocaleString('tr-TR')+unit;
+  }
+  function tick(){
+    var sec=(Date.now()-T0)/1000;
+    document.getElementById('c-kart').textContent=Math.round(sec*RATE.kart).toLocaleString('tr-TR');
+    document.getElementById('c-tl').textContent=fmtBig(sec*RATE.tl,' TL');
+    document.getElementById('c-tb').textContent=fmtBig(sec*RATE.tb,' TB');
+  }
+  var slow=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setInterval(tick,slow?1000:120); tick();
+
+  // ---------- encryption lab ----------
+  var labin=document.getElementById('labin'),labSteps=document.getElementById('lab-steps'),labEnc=document.getElementById('lab-enc');
+  var prevHex='',seq=0,aesKey=null,keyHex='',lastCt=null,lastIv=null;
+  function hexOf(buf){return Array.from(new Uint8Array(buf)).map(function(x){return ('0'+x.toString(16)).slice(-2)}).join('')}
+  function stp(k,v,cls){return '<div class="stp"><div class="sk">'+k+'</div><div class="sv'+(cls?' '+cls:'')+'">'+v+'</div></div>'}
+  async function ensureKey(){
+    if(aesKey||!(window.crypto&&crypto.subtle))return;
+    try{aesKey=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);keyHex=hexOf(await crypto.subtle.exportKey('raw',aesKey))}catch(e){aesKey=null}
+  }
+  async function labRender(){
+    var my=++seq; var v=labin.value;
+    if(!v){
+      labSteps.innerHTML=stp('yazdığınız','<span style="opacity:.6">henüz bir şey yok</span>')+stp('SHA-256 özeti','<span style="opacity:.6">yazmaya başlayın</span>');
+      labEnc.innerHTML=stp('şifreli metin','<span class="hint">yazmaya başlayın</span>');prevHex='';return;
+    }
+    var norm=v.trim().toLowerCase();
+    var hex=await sha(norm); if(my!==seq)return;
+    var fp=fpFromHash(hex);
+    var bytes=Array.from(new TextEncoder().encode(norm)).map(function(x){return ('0'+x.toString(16)).slice(-2)});
+    var changed=0,spans='';
+    for(var i=0;i<hex.length;i++){var ch=prevHex&&prevHex[i]!==hex[i];if(ch)changed++;var cls=i<4?'pick':(ch?'chg':'');spans+='<span'+(cls?' class="'+cls+'"':'')+'>'+hex[i]+'</span>'+((i+1)%16===0&&i<63?'<br>':'')}
+    var chgTxt=prevHex?('son tuşta 64 karakterin <b>'+changed+'</b> tanesi değişti (%'+Math.round(changed/64*100)+')'):'her tuşta özetin nasıl değiştiğini izleyin';
+    prevHex=hex;
+    labSteps.innerHTML=
+      stp('yazdığınız',esc(v))+
+      stp('bayta çevrildi',bytes.slice(0,14).join(' ')+(bytes.length>14?' …':''))+
+      stp('SHA-256 özeti · her zaman 64 karakter','<span class="hx">'+spans+'</span>')+
+      stp('çığ etkisi',chgTxt)+
+      stp('ilk 4 karakter → parmak izi','<span class="hx"><span class="pick">'+hex.slice(0,4)+'</span></span> → '+fp,'')+
+      stp('bankada kalan','müşteri #'+fp,'big2')+
+      stp('silinen','<span class="gone">'+esc(v)+'</span>');
+    // encryption side
+    await ensureKey(); if(my!==seq)return;
+    if(!aesKey){labEnc.innerHTML=stp('şifreleme','<span class="hint">Bu tarayıcı şifreleme arayüzünü vermiyor.</span>');return}
+    try{
+      lastIv=crypto.getRandomValues(new Uint8Array(12));
+      lastCt=await crypto.subtle.encrypt({name:'AES-GCM',iv:lastIv},aesKey,new TextEncoder().encode(v)); if(my!==seq)return;
+      var ct=hexOf(lastCt);
+      labEnc.innerHTML=
+        stp('yazdığınız',esc(v))+
+        stp('anahtar (AES-256) · yalnızca bankada',keyHex.slice(0,24)+'…')+
+        stp('şifreli metin · yazdıkça uzar','<span class="hx">'+ct.replace(/(.{16})/g,'$1<br>')+'</span>')+
+        '<div class="row" style="justify-content:flex-start"><button class="btn" id="decbtn" type="button">Anahtarla geri aç</button><button class="btn ghost" id="nokey" type="button">Anahtarsız dene</button></div>'+
+        '<div id="decout"></div>';
+      document.getElementById('decbtn').addEventListener('click',async function(){
+        try{var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:lastIv},aesKey,lastCt);document.getElementById('decout').innerHTML=stp('geri açıldı',esc(new TextDecoder().decode(pt)),'big2')}catch(e){document.getElementById('decout').innerHTML=stp('hata','açılamadı')}
+      });
+      document.getElementById('nokey').addEventListener('click',async function(){
+        try{var k2=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['decrypt']);await crypto.subtle.decrypt({name:'AES-GCM',iv:lastIv},k2,lastCt);document.getElementById('decout').innerHTML=stp('sonuç','açıldı?!')}
+        catch(e){document.getElementById('decout').innerHTML=stp('yanlış anahtar','<span style="color:var(--bad);font-weight:600">açılamadı</span> · anahtar olmadan şifreli metin anlamsız')}
+      });
+    }catch(e){labEnc.innerHTML=stp('şifreleme','<span class="hint">Şifreleme yapılamadı.</span>')}
+  }
+  labin.addEventListener('input',labRender); labRender();
 })();
 </script>
