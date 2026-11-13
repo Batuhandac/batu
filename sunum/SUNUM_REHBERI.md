@@ -8,11 +8,11 @@
 **İnteraktif sayfa:** https://claude.ai/artifact/4niWXLc9xP1hMPXKJRD73G
 Sekmeler: `#profil` (öğrenci akışı, varsayılan), `#sunum` (sınıf ekranı, sen açarsın), `#vaka` (sen olsan?), `#kaynak` (tartışma soruları + kaynaklar).
 
-## Canlı demo nasıl çalışır
-- **Öğrenci (telefon):** kullanıcı adı yazar, 6 soruyu cevaplar. Ekranda "analiz ediliyor" akışı: ad SHA-256 ile şifrelenir, silinir, 2 karakterlik parmak izi kalır; segment (ör. Gece Kuşu, Planlı Bütçeci), 300–900 puan, risk bayrağı, "sana özel teklif" ve "puanın neden böyle" günlüğü çıkar. En altta 6 haneli **kod** (ör. `K7AVZC`).
-- **Sen (projeksiyon):** slayt 9'da tarayıcıya geç, `#sunum` sekmesini aç. Öğrenciler kodlarını söyler, sen yazarsın. Her kodla profil ekrana düşer; ortalama puan, segment dağılımı ve "kim neden puan kaybetti" metni canlı güncellenir. Kodda isim yok; sadece cevaplar + parmak izi (sözde anonimleştirme, KVKK bağlantısı).
-- Sunucu yok: her şey tarayıcıda hesaplanır. Sınıf ekranındaki liste senin tarayıcında saklanır; "Temizle" ile sıfırlanır. "Prova: örnek ekle" rastgele profil ekler, prova sonrası temizle.
-- Model bilerek basit ve şeffaf: gece alışverişi −30, ay sonu eksi −40, konum kapalı −10, fatura/market +25, para artar +40. Tartışma bunun üzerinden: "adil mi?" 
+## Canlı demo nasıl çalışır (soru yok)
+- **Öğrenci (telefon):** yalnızca bir kullanıcı adı yazar, "Beni tanı" der. Ekranda "analiz ediliyor" akışı: ad SHA-256 ile şifrelenir, silinir, 2 karakterlik parmak izi kalır. Sonra tarayıcının sormadan verdiği sinyaller listelenir: saat, telefon modeli ve işletim sistemi, ekran/RAM, şarj seviyesi (Android ve Chrome verir; iPhone, Safari, Firefox vermez), bağlantı tipi, dil ve saat dilimi, karanlık mod, yazma hızı ve düzeltme sayısı, canvas cihaz parmak izi. Bunlardan segment (Premium Profil, Gece Kuşu, Şarjı Biten, Masa Başı...), 300–900 puan, risk bayrağı, "size özel teklif" ve "puanınız neden böyle" günlüğü çıkar. Mesaj: "Siz 1 şey yazdınız, biz 10 şey öğrendik." En altta 5 haneli **kod** (ör. `K7AVX`).
+- **Sen (projeksiyon):** slayt 9'da tarayıcıya geç, `#sunum` sekmesini aç. Öğrenciler kodlarını söyler, sen yazarsın. Her kodla profil düşer; ortalama puan, pahalı telefon oranı, düşük şarj sayısı, gece bağlananlar, karanlık mod oranı, segment dağılımı ve "kim neden puan kaybetti" metni canlı güncellenir. Kodda isim yok: sadece sinyaller + parmak izi (sözde anonimleştirme, KVKK bağlantısı).
+- Sunucu yok: her şey tarayıcıda hesaplanır, hiçbir veri gönderilmez. Sınıf ekranındaki liste senin tarayıcında saklanır; "Temizle" ile sıfırlanır. "Prova: örnek ekle" rastgele profil ekler, prova sonrası temizle.
+- Model bilerek basit ve şeffaf: pahalı telefon +25 (gelir vekili), gece saati −30 ve bayrak, şarj %20 altı −20, eski sistem/veri tasarrufu −10, yazarken düzeltme −10. Tartışma bunun üzerinden: kimse soru cevaplamadı, herkes puanlandı. Adil mi?
 
 ## Sunumdan önce (zorunlu)
 1. Sayfayı **Paylaş → Link ile herkes görebilsin** yap. Şu an sadece sen açabiliyorsun; öğrenciler QR okutunca giriş ekranı görür.
@@ -23,7 +23,7 @@ Sekmeler: `#profil` (öğrenci akışı, varsayılan), `#sunum` (sınıf ekranı
 ## Akış ve süre (yaklaşık 35–40 dk + tartışma)
 | Slayt | Bölüm | Süre | Not |
 |---|---|---|---|
-| 1–3 | Giriş, Veri Bankası kaydı (QR), yol haritası | 5 dk | Kayıt 2–3 dk; "kodunuzu saklayın" de |
+| 1–3 | Giriş, Veri Bankası kaydı (QR), yol haritası | 4 dk | Kayıt 1–2 dk; "kodunuzu saklayın" de |
 | 4–8 | Kavram: tanım, 5V, veri patlaması, geleneksel vs büyük, değer zinciri | 7 dk | Hocanın 1. hafta notuna atıf var (slayt 4) |
 | 9 | Sınıf ekranı: kodları topla, canlı profil | 5 dk | Tarayıcıya geç; 8–10 kod yeter |
 | 10–17 | Finansta kullanım: kredi, dolandırıcılık, alternatif veri, Türkiye, BKM grafiği, dünya panoraması | 9 dk | |
