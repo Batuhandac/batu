@@ -4,26 +4,36 @@
 - `Buyuk_Veri_Sunum.pptx` – 22 slayt, yaklaşık 25 dakika. Her slaytın Notlar bölümünde tek cümle ve birkaç ipucu var.
 - `Buyuk_Veri_Sunum.pdf` – yedek.
 - `Kopya_Kagidi.md` – tek sayfalık kopya kâğıdı: slayt başına bir cümle ve ipuçları.
-- `veri-bankasi.html` – öğrencilerin QR ile açtığı canlı sayfanın kaynağı.
+- `vb.html` – öğrencilerin QR ile açtığı "Veri Bankası" sayfası (tek dosya, kendi başına çalışır).
 
 ## Bağlantılar
-- Canlı sayfa (Veri Bankası): https://claude.ai/artifact/4niWXLc9xP1hMPXKJRD73G
+- Canlı sayfa: https://rawcdn.githack.com/Batuhandac/batu/048fa72214/sunum/vb.html
+- Sınıf ekranı (senin açacağın): aynı adres, sonuna `#sunum`
 - Kopya kâğıdı (düzenlenebilir doküman): https://claude.ai/artifact/Lw1TB4Dsn2knkVAJbkVuXp
 
+Canlı sayfa bu deponun içindeki `vb.html` dosyasından, githack adlı ücretsiz bir servis üzerinden yayınlanır. Doğrudan tarayıcıda açılır; giriş, hesap ya da uygulama istemez. Slaytlardaki QR kodlar bu adrese gider. Adres belirli bir kayda (commit) sabitlidir: `vb.html` değişirse QR kodların da yeniden üretilmesi gerekir.
+
+Yedek plan: servis o gün çalışmazsa `vb.html` dosyasını Netlify Drop gibi bir yere sürükleyip yeni adresi tahtaya yazabilirsin; sayfa tek dosyadır.
+
 ## Canlı sayfa
-| Sekme | Kim açar | Ne yapar |
+Öğrenci tarafı bir mobil bankacılık uygulaması gibi görünür.
+
+| Ekran | Kim görür | Ne yapar |
 | --- | --- | --- |
-| Profilim | Öğrenci, slayt 2'deki QR | Tek bir kullanıcı adı yazar. Ad ekranda özete dönüşür, telefonun söylediği şeyler sayaçla tek tek açılır, sonunda sanal banka kartı çıkar: üstünde 5 haneli kod, segment ve puan. |
-| Sınıf ekranı | Sen, slayt 7 | Kodları yazarsın; profiller düşer. Canlı sayaç, kod çözme şeridi, sınıf özeti. |
-| Şifreleme | Sen, slayt 8 | Yazdıkça SHA-256 özeti canlı değişir. Yanında gerçek şifreleme: anahtarla açılır, anahtarsız açılmaz. |
+| Hoş geldiniz | Öğrenci, slayt 2'deki QR | Tek bir kullanıcı adı ister. Altında kimsenin okumadığı "Aydınlatma Metni" bağlantısı var; tıklanınca nelerin okunduğunu söyler. |
+| Başvurunuz değerlendiriliyor | Öğrenci | Dört adım: kimlik (ad özete, sonra müşteri numarasına dönüşür), cihaz, risk analizi, teklifler. Altta sayaç: "sizden istenen 1 bilgi / cihazınızdan alınan N bilgi". |
+| Kartım | Öğrenci | Sanal banka kartı (üstünde 5 karakterlik kart numarası), müşteri puanı, segment, "size özel" teklif. |
+| Verilerim | Öğrenci, alt menü | Cihazın söylediği her şey ve kart numarasının ne anlattığı. |
+| Güvenlik | Öğrenci alt menü; sen slayt 8'de | Yazdıkça SHA-256 özeti canlı değişir. Yanında gerçek şifreleme: anahtarla açılır, anahtarsız açılmaz. |
+| Sınıf ekranı | Sen, slayt 7 | Kart numaralarını yazarsın; profiller düşer. Canlı sayaç, numara çözme şeridi, sınıf özeti. |
 | Kaynaklar | Slayt 21'deki QR | Tıklanabilir kaynak listesi. |
 
-Sunucu yoktur: her şey tarayıcıda hesaplanır, hiçbir veri gönderilmez. Sınıf ekranındaki liste yalnızca senin tarayıcında durur; "Temizle" sıfırlar. "Prova: örnek ekle" rastgele profil ekler.
+Sunucu yoktur: her şey tarayıcıda hesaplanır, hiçbir veri gönderilmez. Sayfanın altında bunun bir ders simülasyonu olduğu yazar. Sınıf ekranındaki liste yalnızca senin tarayıcında durur; "Temizle" sıfırlar. "Prova: örnek ekle" rastgele profil ekler.
 
 ## Sunumdan önce
-1. Canlı sayfayı Paylaş menüsünden "link ile herkes" yap. Yapmazsan öğrenciler giriş ekranı görür.
-2. Projeksiyon bilgisayarında tarayıcıda sayfayı aç, "Sınıf ekranı"na geç, "Temizle"ye bas.
-3. Kendi telefonunla slayt 2'deki QR'ı okut, karttaki kodu sınıf ekranına gir.
+1. Slayt 2'deki QR'ı kendi telefonunla okut. Sayfa tarayıcıda banka uygulaması gibi açılmalı.
+2. Bir kullanıcı adı yaz, çıkan kart numarasını not et.
+3. Projeksiyon bilgisayarında sınıf ekranı adresini aç, "Temizle"ye bas, kart numaranı girip profilin düştüğünü gör, sonra tekrar "Temizle".
 4. Kapak slaytına adını yaz.
 5. PowerPoint'i Sunucu Görünümü'nde aç; ipuçları yalnızca senin ekranında görünür.
 

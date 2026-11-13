@@ -7,7 +7,7 @@
 | Slayt | Söyleyeceğin cümle | İpuçları | Süre |
 | --- | --- | --- | --- |
 | 1 · Kapak | Bugün büyük veriyi önce sizin üzerinizde deneyeceğiz, sonra finansta nasıl kullanıldığını konuşacağız. | Konu: büyük veri · Önce deney, sonra anlatım · Telefonlar hazır olsun | 30 sn |
-| 2 · Veri Bankası'na kayıt | QR'ı okutun, bir kullanıcı adı yazın; banka sizi tanısın. | QR'ı okutun, kullanıcı adı yazın, “Beni tanı”ya basın · Tek şey yazdınız, telefonunuz 10 şey söyledi · Karttaki 5 haneli kodu saklayın · Hiçbir veri gönderilmedi; gerçek bankada gönderilirdi | 2 dk |
+| 2 · Veri Bankası'na kayıt | QR'ı okutun, bir kullanıcı adı yazın; banka sizi tanısın. | QR'ı okutun, kullanıcı adı yazın, “Beni tanı”ya basın · Tek şey yazdınız, telefonunuz 10 şey söyledi · Karttaki numarayı saklayın · Hiçbir veri gönderilmedi; gerçek bankada gönderilirdi | 2 dk |
 | 3 · Bu sunum bitene kadar | Bu sunum bitene kadar Türkiye'de 875 bin kartlı ödeme yapılacak; her biri bir veri noktası. | Dört rakamı soldan sağa oku · Her biri bir kayıt, yani bir veri noktası · Büyük veri bu akışın kendisi | 30 sn |
 
 ## Kavram ve canlı demo
@@ -17,7 +17,7 @@
 | 4 · Büyük veri nedir? | Veri, eldeki araçlar yetmediği an büyük olur. | Laney 2001: hacim, hız, çeşitlilik · Büyük = boyut değil, araçların yetmemesi · Örnek: az önce telefonunuzdan okunanlar bir tabloya sığmaz | 1 dk |
 | 5 · 5V | Beş V'nin hepsi finansta var, çünkü finansın kendisi veri. | Kartları sırayla oku: hacim, hız, çeşitlilik, doğruluk, değer · Son kart: neden finans? Analog kısmı yok | 1,5 dk |
 | 6 · Veri patlaması | On beş yılda doksan kat: 2 zettabayttan 181'e. | 2010: 2 ZB, 2025: 181 ZB · Günde 402 milyon TB · Çoğunu insanlar değil makineler üretiyor | 30 sn |
-| 7 · Sınıf ekranı | Kodlarınızı söyleyin; bankanın bu sınıfı nasıl gördüğüne bakalım. | Tarayıcıya geç, “Sınıf ekranı” sekmesini aç · 8–10 kod gir, düşen profili sesli oku · Ekrandaki özet metni oku · Sor: Telefon modeli kredi notunu etkilemeli mi? | 4 dk |
+| 7 · Sınıf ekranı | Kodlarınızı söyleyin; bankanın bu sınıfı nasıl gördüğüne bakalım. | Tarayıcıya geç, “Sınıf ekranı” sekmesini aç · 8–10 kart numarası gir, düşen profili sesli oku · Ekrandaki özet metni oku · Sor: Telefon modeli kredi notunu etkilemeli mi? | 4 dk |
 | 8 · Adınıza ne oldu? | Adınız şifrelenmedi, özetlendi: özet geri açılmaz, şifre anahtarla açılır. | Slayttaki zinciri oku: ad, SHA-256, özet, 2W · Tarayıcıda “Şifreleme” sekmesi: bir ad yaz, harf ekle, özet tamamen değişsin · “Anahtarla geri aç”, sonra “Anahtarsız dene” · 2. hafta bağlantısı: blokzincir aynı fonksiyonu kullanır · Uyarı: veri arttıkça anonimlik erir | 2,5 dk |
 
 ## Finansta kullanım
